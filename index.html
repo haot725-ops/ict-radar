@@ -358,6 +358,29 @@ function findFVGs(c, atr) {
   return out;
 }
 
+/* Đảo ngược: Breaker Block (OB bị đóng cửa xuyên qua) và IFVG (FVG bị đóng cửa xuyên qua) -> vùng đổi chiều */
+function findInversions(c, obs, fvgs, atr) {
+  var n = c.length, out = [];
+  function track(z, from, srcDir, kind, i0) {
+    var d = -srcDir, g = { kind: kind, dir: d, top: z.top, bottom: z.bottom, i: i0, formed: from, touched: null, dead: null };
+    for (var j = from + 1; j < n; j++) {
+      if (d === 1) { if (g.touched === null && c[j].l <= g.top) g.touched = j; if (c[j].c < g.bottom) { g.dead = j; break; } }
+      else { if (g.touched === null && c[j].h >= g.bottom) g.touched = j; if (c[j].c > g.top) { g.dead = j; break; } }
+    }
+    out.push(g);
+  }
+  obs.forEach(function (o) { if (o.broken !== null && o.broken < n - 0) track(o, o.broken, o.dir, "BRK", o.i); });
+  fvgs.forEach(function (f) {
+    var j;
+    if (f.top - f.bottom < 0.35 * atr[f.formed]) return;
+    for (j = f.formed + 1; j < n; j++) {
+      if (f.dir === 1 && c[j].c < f.bottom) { track(f, j, 1, "IFVG", f.i); break; }
+      if (f.dir === -1 && c[j].c > f.top) { track(f, j, -1, "IFVG", f.i); break; }
+    }
+  });
+  return out;
+}
+
 function findLiquidity(c, sw, atr, L) {
   var n = c.length, tol = 0.3 * atr[n - 1], eq = [], hs = sw.filter(function (s) { return s.type === "H"; }), ls = sw.filter(function (s) { return s.type === "L"; });
   function scan(list, isH) {
@@ -519,7 +542,8 @@ function buildBias(c, A) {
   else why.push("Chưa có phá vỡ cấu trúc rõ ràng.");
   if (last && last.kind === "CHoCH" && n - 1 - last.i <= 40) { s += last.dir; why.push("CHoCH " + (last.dir === 1 ? "tăng" : "giảm") + " mới xuất hiện (" + (n - 1 - last.i) + " nến trước), dấu hiệu đổi hướng."); }
   var zones = [];
-  A.obs.forEach(function (o) { if (o.broken === null) zones.push({ k: "OB", dir: o.dir, top: o.top, bottom: o.bottom, touched: o.touched !== null }); });
+  A.inv.forEach(function (g) { if (g.dead === null && g.touched === null) zones.push({ k: g.kind === "BRK" ? "Breaker" : "IFVG", dir: g.dir, top: g.top, bottom: g.bottom, touched: false }); });
+  A.obs.forEach(function (o) { if (o.broken === null && o.touched === null) zones.push({ k: "OB", dir: o.dir, top: o.top, bottom: o.bottom, touched: o.touched !== null }); });
   A.fvgs.forEach(function (g) { if (g.filled === null) zones.push({ k: "FVG", dir: g.dir, top: g.top, bottom: g.bottom, touched: g.touched !== null }); });
   var sup = null, res = null;
   zones.forEach(function (z) {
@@ -562,6 +586,7 @@ function analyze(c, tf, L) {
   A.struct = findStructure(c, A.swings, L);
   A.obs = findOBs(c, A.struct.ev);
   A.fvgs = findFVGs(c, A.atr);
+  A.inv = findInversions(c, A.obs, A.fvgs, A.atr);
   A.liq = findLiquidity(c, A.swings, A.atr, L);
   A.sweeps = findSweeps(c, A.swings, L);
   A.pd = premiumDiscount(c, A.swings);
@@ -580,9 +605,9 @@ function analyze(c, tf, L) {
   var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
-  var LAY = { struct: 1, ob: 1, fvg: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
+  var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
   if (window.innerWidth < 640) { LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
-  var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
+  var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", inv: "Đảo ngược (Breaker, IFVG)", tested: "Hiện cả OB/Breaker đã test", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
   var COL = { up: "#2ee59d", down: "#ff5c70", amber: "#ffc24a", cyan: "#4cd7f0", violet: "#9b7bff", dim: "#7b8ea3", line: "rgba(255,255,255,.06)", fg: "#e6eef7" };
 
   function setStatus(t, err) { var s = $("status"); s.textContent = t; s.className = "status" + (err ? " err" : ""); }
@@ -609,7 +634,7 @@ function analyze(c, tf, L) {
   Object.keys(LAY).forEach(function (k) {
     var b = document.createElement("button"); b.className = "swrow" + (LAY[k] ? " on" : "");
     b.innerHTML = "<span>" + LABELS[k] + "</span><span class=\"tg\"></span>";
-    b.addEventListener("click", function () { LAY[k] = LAY[k] ? 0 : 1; b.className = "swrow" + (LAY[k] ? " on" : ""); draw(); });
+    b.addEventListener("click", function () { LAY[k] = LAY[k] ? 0 : 1; b.className = "swrow" + (LAY[k] ? " on" : ""); if (A && (k === "tested" || k === "inv")) renderAll(); draw(); });
     $("layers").appendChild(b);
   });
   ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT"].forEach(function (s) {
@@ -878,11 +903,19 @@ function analyze(c, tf, L) {
       });
     }
     if (LAY.ob) {
-      A.obs.filter(function (o) { return o.broken === null && o.i <= i1; }).slice(-10).forEach(function (o) {
+      A.obs.filter(function (o) { return o.broken === null && (LAY.tested || o.touched === null) && o.i <= i1; }).slice(-10).forEach(function (o) {
         var xa = X(o.i) - bw / 2, col = o.dir === 1 ? "34,211,138" : "255,77,94";
         x.fillStyle = "rgba(" + col + (o.touched !== null ? ",.14)" : ",.26)"); x.fillRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
         x.strokeStyle = "rgba(" + col + ",.9)"; x.lineWidth = 1; x.strokeRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
         x.fillStyle = "rgba(" + col + ",1)"; x.fillText((o.dir === 1 ? "OB+" : "OB-") + (o.touched !== null ? " (đã test)" : ""), Math.max(xa + 3, 3), Y(o.top) + 10);
+      });
+    }
+    if (LAY.inv) {
+      A.inv.filter(function (g) { return g.dead === null && (LAY.tested || g.touched === null) && g.formed <= i1; }).slice(-4).forEach(function (g) {
+        var xa = Math.max(X(g.formed) - bw / 2, -2), col = g.dir === 1 ? "34,211,138" : "255,92,112", w = Math.max(pw - xa, 1), yt = Y(g.top), hh = Y(g.bottom) - yt;
+        x.fillStyle = "rgba(" + col + (g.touched !== null ? ",.10)" : ",.2)"); x.fillRect(xa, yt, w, hh);
+        x.strokeStyle = "rgba(155,123,255,.95)"; x.lineWidth = 1.2; x.setLineDash([6, 3]); x.strokeRect(xa, yt, w, hh); x.setLineDash([]); x.lineWidth = 1;
+        x.fillStyle = "rgba(180,155,255,1)"; x.fillText((g.kind === "BRK" ? "Breaker" : "IFVG") + (g.dir === 1 ? " ▲" : " ▼") + (g.touched !== null ? " (đã test)" : ""), Math.max(xa + 3, 3), yt + 10);
       });
     }
     function hline(p, i2, col, label, dash) {
@@ -1073,7 +1106,8 @@ function analyze(c, tf, L) {
   }
   function renderLevels() {
     var p = C[C.length - 1].c, rows = [];
-    A.obs.forEach(function (o) { if (o.broken === null) rows.push({ t: (o.dir === 1 ? "OB tăng" : "OB giảm") + (o.touched !== null ? " · đã test" : ""), a: o.bottom, b: o.top, c: o.dir === 1 ? "bull" : "bear" }); });
+    A.inv.forEach(function (g) { if (g.dead === null && (LAY.tested || g.touched === null)) rows.push({ t: (g.kind === "BRK" ? "Breaker " : "IFVG ") + (g.dir === 1 ? "tăng" : "giảm") + (g.touched !== null ? " · đã test" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
+    A.obs.forEach(function (o) { if (o.broken === null && (LAY.tested || o.touched === null)) rows.push({ t: (o.dir === 1 ? "OB tăng" : "OB giảm") + (o.touched !== null ? " · đã test" : ""), a: o.bottom, b: o.top, c: o.dir === 1 ? "bull" : "bear" }); });
     A.fvgs.forEach(function (g) { if (g.filled === null) rows.push({ t: (g.dir === 1 ? "FVG tăng" : "FVG giảm") + (g.touched !== null ? " · lấp 1 phần" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
     A.liq.eq.forEach(function (q) { if (q.swept === null) rows.push({ t: q.type, a: q.p, b: q.p, c: q.type === "EQH" ? "bear" : "bull" }); });
     A.levels.forEach(function (l) { rows.push({ t: l.n, a: l.p, b: l.p, c: "neu" }); });
