@@ -53,9 +53,11 @@ main { flex: 1 1 0; min-height: 0; position: relative; }
 .view.scroll { overflow-y: auto; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
 .view.scroll.on { display: flex; flex-direction: column; gap: 10px; }
 .cwrap { position: absolute; inset: 0; }
-#chart { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: crosshair; }
+#chart { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
 .ohlc { position: absolute; top: 6px; left: 8px; right: 70px; z-index: 2; pointer-events: none; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; font-variant-numeric: tabular-nums; text-shadow: 0 0 4px var(--bg), 0 0 4px var(--bg); }
 .ohlc b { color: var(--dim); font-weight: 500; margin-right: 3px; }
+.fab.sm { right: 12px; bottom: 26px; width: 34px; height: 34px; border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--dim); border-color: var(--line); }
+.fab.sm.on { color: var(--cyan); border-color: var(--cyan); }
 .fab { position: absolute; right: 72px; bottom: 26px; z-index: 3; width: 38px; height: 38px; border-radius: 19px; background: rgba(14, 24, 35, .92); border: 1px solid var(--cyan); display: grid; place-items: center; }
 
 /* tab dưới */
@@ -128,6 +130,7 @@ input { text-transform: uppercase; font-size: 14px; }
     <section class="view on" id="v-chart">
       <div class="cwrap">
         <canvas id="chart"></canvas>
+        <button class="fab sm on" id="autoBtn" aria-label="Tự động co giãn giá">A</button>
         <div class="ohlc" id="ohlc"></div>
         <button class="fab" id="reset" aria-label="Về nến mới nhất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l7 7-7 7"/><path d="M14 5l7 7-7 7"/></svg></button>
       </div>
@@ -508,7 +511,7 @@ function analyze(c, tf, L) {
   var TFMS = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m": 18e5, "1h": 36e5, "4h": 144e5, "1d": 864e5, "1w": 6048e5 };
   var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
-  var V = { start: 0, bars: 110 }, G = null, hover = -1, ws = null, statsFor = "", reTimer = null, tab = "chart";
+  var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
   if (window.innerWidth < 640) { LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
   var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
@@ -552,7 +555,8 @@ function analyze(c, tf, L) {
   $("sheetbg").addEventListener("click", closeSheet);
   $("go").addEventListener("click", function () { closeSheet(); load(); });
   $("sym").addEventListener("keydown", function (e) { if (e.key === "Enter") { closeSheet(); load(); } });
-  $("reset").addEventListener("click", function () { hover = -1; resetView(); draw(); });
+  $("reset").addEventListener("click", function () { hover = -1; hy = -1; resetView(); draw(); });
+  $("autoBtn").addEventListener("click", function () { V.auto = true; syncAuto(); draw(); });
   $("biasChip").addEventListener("click", function () { setTab("bias"); });
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.addEventListener("click", function () { setTab(b.dataset.v); }); });
   function setTab(v) {
@@ -585,13 +589,13 @@ function analyze(c, tf, L) {
       setStatus("Không tải được dữ liệu (" + e.message + "). Kiểm tra mã giao dịch và mạng; nếu Binance bị chặn ở vùng của bạn, thử bật VPN.", true);
       return;
     }
-    runAnalysis(); resetView(); renderAll(); setTab(tab);
+    snap = true; runAnalysis(); resetView(); renderAll(); setTab(tab);
     setStatus(C.length + " nến · " + S.sym + " " + S.tf + " · trực tiếp");
     connectWS();
     if (statsFor !== S.sym) { statsFor = S.sym; loadStats(); }
   }
   function runAnalysis() { A = analyze(C, tfms, S.sw); }
-  function resetView() { var n = C.length; V.bars = Math.min(n, window.innerWidth < 640 ? 60 : 120); V.start = n + 25 - V.bars; }
+  function resetView() { V.vel = 0; V.auto = true; syncAuto(); snap = true; var n = C.length; V.bars = Math.min(n, window.innerWidth < 640 ? 60 : 120); V.start = n + 25 - V.bars; }
 
   async function loadStats() {
     $("hourstat").textContent = "Đang tải…"; $("wkstat").textContent = "Đang tải…";
@@ -610,7 +614,7 @@ function analyze(c, tf, L) {
         var k = d.k, nk = { t: +k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v }; nk.ny = ny(nk.t);
         var last = C[C.length - 1];
         if (last && last.t === nk.t) C[C.length - 1] = nk; else if (last && nk.t > last.t) { C.push(nk); if (C.length > 1200) C.shift(); }
-        renderHead();
+        renderHead(); if (tab === "chart") draw();
         if (!reTimer) reTimer = setTimeout(function () { reTimer = null; runAnalysis(); renderAll(); if (tab === "chart") draw(); }, 2500);
       };
       ws.onclose = function () { ws = null; };
@@ -618,7 +622,16 @@ function analyze(c, tf, L) {
   }
 
   /* ----- vẽ biểu đồ ----- */
-  function draw() {
+  function draw() { if (!raf) raf = requestAnimationFrame(frame); }
+  function frame(ts) {
+    raf = 0;
+    var dt = Math.min(64, lastTs ? ts - lastTs : 16); lastTs = ts;
+    var moving = false;
+    if (Math.abs(V.vel) > 0.0004 && C.length) { V.start += V.vel * dt; V.vel *= Math.exp(-dt / 320); clampView(); moving = true; } else V.vel = 0;
+    busy = false; drawNow(dt);
+    if (moving || busy) raf = requestAnimationFrame(frame); else lastTs = 0;
+  }
+  function drawNow(dt) {
     var cv = $("chart"), d = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
     if (!W || !H) return;
     if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
@@ -626,9 +639,25 @@ function analyze(c, tf, L) {
     if (!C.length || !A) return;
     var AX = 58, AY = 20, pw = W - AX, ph = H - AY, bw = pw / V.bars, n = C.length;
     var i0 = Math.max(0, Math.floor(V.start)), i1 = Math.min(n - 1, Math.ceil(V.start + V.bars)), i, mn = 1e18, mx = -1e18;
-    for (i = i0; i <= i1; i++) { if (C[i].l < mn) mn = C[i].l; if (C[i].h > mx) mx = C[i].h; }
-    if (mn > mx) { mn = 0; mx = 1; }
-    var pd = (mx - mn) * 0.08 || 1; mn -= pd; mx += pd;
+    var ek = snap ? 1 : 1 - Math.exp(-(dt || 16) / 70), lk = C[n - 1], tol = Math.abs(lk.c) * 2e-6 + 1e-12;
+    if (snap || !D.init || D.t !== lk.t) { D.t = lk.t; D.c = lk.c; D.h = lk.h; D.l = lk.l; }
+    else {
+      D.c += (lk.c - D.c) * ek; D.h += (lk.h - D.h) * ek; D.l += (lk.l - D.l) * ek;
+      if (Math.abs(lk.c - D.c) > tol || Math.abs(lk.h - D.h) > tol || Math.abs(lk.l - D.l) > tol) busy = true;
+    }
+    var kc = function (j) { var q = C[j]; return j === n - 1 ? { o: q.o, h: Math.max(D.h, q.o, D.c), l: Math.min(D.l, q.o, D.c), c: D.c } : q; };
+    var tmn = 1e18, tmx = -1e18;
+    for (i = i0; i <= i1; i++) { var kq = kc(i); if (kq.l < tmn) tmn = kq.l; if (kq.h > tmx) tmx = kq.h; }
+    if (tmn > tmx) { tmn = 0; tmx = 1; }
+    var tp = (tmx - tmn) * 0.08 || 1; tmn -= tp; tmx += tp;
+    if (V.auto) {
+      if (snap || !D.init) { D.mn = tmn; D.mx = tmx; }
+      else {
+        D.mn += (tmn - D.mn) * ek; D.mx += (tmx - D.mx) * ek;
+        var rg = (tmx - tmn) * 1e-4; if (Math.abs(tmn - D.mn) > rg || Math.abs(tmx - D.mx) > rg) busy = true;
+      }
+    } else { D.mn = V.yc - V.yr / 2; D.mx = V.yc + V.yr / 2; }
+    D.init = true; snap = false; mn = D.mn; mx = D.mx;
     function X(j) { return (j - V.start) * bw + bw / 2; }
     function Y(p) { return 22 + (mx - p) / (mx - mn) * (ph - 30); }
     G = { bw: bw, pw: pw, ph: ph, mn: mn, mx: mx, X: X, Y: Y };
@@ -699,7 +728,7 @@ function analyze(c, tf, L) {
     }
     var cw = Math.max(1, bw * 0.68);
     for (i = i0; i <= i1; i++) {
-      var k = C[i], up = k.c >= k.o, col2 = up ? COL.up : COL.down, cx = X(i);
+      var k = kc(i), up = k.c >= k.o, col2 = up ? COL.up : COL.down, cx = X(i);
       x.strokeStyle = col2; x.fillStyle = col2; x.lineWidth = 1;
       x.beginPath(); x.moveTo(Math.round(cx) + .5, Y(k.h)); x.lineTo(Math.round(cx) + .5, Y(k.l)); x.stroke();
       x.fillRect(cx - cw / 2, Y(Math.max(k.o, k.c)), cw, Math.max(1, Math.abs(Y(k.o) - Y(k.c))));
@@ -730,16 +759,23 @@ function analyze(c, tf, L) {
       if (A.cyc.nextA) vline(A.cyc.nextA, "rgba(56,208,232,.9)", "swing~");
     }
     if (hover >= 0 && hover < n) {
-      x.strokeStyle = "rgba(214,228,237,.4)"; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(Math.round(X(hover)) + .5, 0); x.lineTo(Math.round(X(hover)) + .5, ph); x.stroke(); x.setLineDash([]);
+      x.strokeStyle = "rgba(214,228,237,.4)"; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(Math.round(X(hover)) + .5, 0); x.lineTo(Math.round(X(hover)) + .5, ph); x.stroke();
+      if (hy > 0 && hy < ph) { x.beginPath(); x.moveTo(0, Math.round(hy) + .5); x.lineTo(pw, Math.round(hy) + .5); x.stroke(); }
+      x.setLineDash([]);
     }
     x.restore();
 
     x.fillStyle = COL.dim; x.textAlign = "left"; x.strokeStyle = COL.line;
     for (i = 0; i <= 6; i++) { var pr = mx - (mx - mn) * i / 6; x.fillText(fmtP(pr), pw + 4, Math.min(ph - 2, Math.max(10, Y(pr) + 3))); }
-    var lp = C[n - 1].c, ly = Y(lp);
+    var lp = D.c, ly = Y(lp);
     if (ly > 0 && ly < ph) {
       x.fillStyle = C[n - 1].c >= C[n - 1].o ? COL.up : COL.down; x.fillRect(pw, ly - 8, AX, 16);
       x.fillStyle = "#04070a"; x.fillText(fmtP(lp), pw + 3, ly + 4);
+    }
+    if (hover >= 0 && hover < n && hy > 0 && hy < ph) {
+      var hp = mx - (hy - 22) / (ph - 30) * (mx - mn);
+      x.fillStyle = "#1b2a37"; x.fillRect(pw, hy - 8, AX, 16); x.strokeStyle = COL.cyan; x.strokeRect(pw + .5, hy - 7.5, AX - 1, 15);
+      x.fillStyle = COL.fg; x.fillText(fmtP(hp), pw + 3, hy + 4);
     }
     x.fillStyle = COL.dim; x.textAlign = "center";
     var every = Math.max(1, Math.round(80 / bw));
@@ -750,6 +786,7 @@ function analyze(c, tf, L) {
     }
     x.textAlign = "left";
     showOhlc(hover >= 0 && hover < n ? hover : n - 1);
+    return busy;
   }
   function showOhlc(i) {
     var k = C[i]; if (!k) return;
@@ -765,32 +802,62 @@ function analyze(c, tf, L) {
     $("chg").textContent = (ch >= 0 ? "+" : "") + ch.toFixed(2) + "% (24h)"; $("chg").className = ch >= 0 ? "bull" : "bear";
   }
 
-  /* ----- tương tác biểu đồ ----- */
-  var cv = $("chart"), ptrs = {}, lastDist = 0;
+  /* ----- tương tác biểu đồ (giống TradingView) -----
+     Kéo ngang: dời thời gian, có quán tính. Kéo dọc trên thanh giá: co giãn giá.
+     Khi đã co giãn tay, kéo dọc trên biểu đồ để dời giá. Chạm 2 lần vào thanh giá hoặc nút A: tự động. */
+  var cv = $("chart"), ptrs = {}, lastDist = 0, drag = null, lastTap = 0;
+  function syncAuto() { var b = $("autoBtn"); if (b) b.className = "fab sm" + (V.auto ? " on" : ""); }
   function clampView() { var n = C.length; V.bars = Math.max(20, Math.min(400, V.bars)); V.start = Math.max(-V.bars * 0.4, Math.min(n + 60 - V.bars * 0.6, V.start)); }
   function idxAt(px) { return G ? Math.round(px / G.bw + V.start - 0.5) : -1; }
+  function enterManual() { if (V.auto && G) { V.auto = false; V.yc = (G.mn + G.mx) / 2; V.yr = G.mx - G.mn; syncAuto(); } }
+  function posOf(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
   cv.addEventListener("pointerdown", function (e) {
-    cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
-    var r = cv.getBoundingClientRect(); hover = idxAt(e.clientX - r.left); draw();
+    cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; V.vel = 0;
+    var p = posOf(e);
+    if (Object.keys(ptrs).length === 1) {
+      drag = { axis: !!(G && p.x > G.pw), t: performance.now(), vx: 0, moved: false };
+      if (drag.axis) { var now = performance.now(); if (now - lastTap < 320) { V.auto = true; syncAuto(); } lastTap = now; }
+      else { hover = idxAt(p.x); hy = p.y; }
+    }
+    draw();
   });
   cv.addEventListener("pointermove", function (e) {
-    var r = cv.getBoundingClientRect(), ids = Object.keys(ptrs);
-    if (!ptrs[e.pointerId]) { hover = idxAt(e.clientX - r.left); draw(); return; }
-    if (ids.length === 1 && G) { V.start -= (e.clientX - ptrs[e.pointerId].x) / G.bw; ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; hover = idxAt(e.clientX - r.left); clampView(); draw(); }
-    else if (ids.length === 2) {
+    var p = posOf(e), ids = Object.keys(ptrs);
+    if (!ptrs[e.pointerId]) { hover = idxAt(p.x); hy = p.y; draw(); return; }
+    if (ids.length === 1 && G && drag) {
+      var dx = e.clientX - ptrs[e.pointerId].x, dy = e.clientY - ptrs[e.pointerId].y;
+      ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (drag.axis) {
+        enterManual(); V.yr = Math.max(V.yr * Math.exp(-dy * 0.006), Math.abs(D.c) * 1e-5);
+      } else {
+        V.start -= dx / G.bw;
+        var now = performance.now(), el = Math.max(1, now - drag.t); drag.t = now;
+        drag.vx = 0.7 * drag.vx + 0.3 * (-dx / G.bw / el);
+        if (!V.auto) V.yc += dy / (G.ph - 30) * V.yr;
+        hover = idxAt(p.x); hy = p.y;
+      }
+      clampView(); draw();
+    } else if (ids.length === 2) {
       ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
       var a = ptrs[ids[0]], b = ptrs[ids[1]], dist = Math.abs(a.x - b.x);
       if (lastDist && dist > 10) { V.bars = V.bars * lastDist / dist; clampView(); draw(); }
       lastDist = dist;
     }
   });
-  function up(e) { delete ptrs[e.pointerId]; lastDist = 0; }
+  function up(e) {
+    var one = Object.keys(ptrs).length === 1;
+    delete ptrs[e.pointerId]; lastDist = 0;
+    if (one && drag && !drag.axis && performance.now() - drag.t < 90 && Math.abs(drag.vx) > 0.002) { V.vel = Math.max(-0.08, Math.min(0.08, drag.vx)); draw(); }
+    if (!Object.keys(ptrs).length) drag = null;
+  }
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-  cv.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") { hover = -1; draw(); } });
+  cv.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") { hover = -1; hy = -1; draw(); } });
   cv.addEventListener("wheel", function (e) {
     if (!G) return; e.preventDefault();
-    var r = cv.getBoundingClientRect(), px = e.clientX - r.left, anchor = px / G.bw + V.start, f = e.deltaY > 0 ? 1.12 : 0.89;
-    V.bars *= f; V.start = anchor - px / (G.pw / V.bars); clampView(); draw();
+    var p = posOf(e), up2 = e.deltaY > 0;
+    if (p.x > G.pw) { enterManual(); V.yr *= up2 ? 1.1 : 0.9; }
+    else { var anchor = p.x / G.bw + V.start; V.bars *= up2 ? 1.12 : 0.89; V.start = anchor - p.x / (G.pw / V.bars); clampView(); }
+    draw();
   }, { passive: false });
   if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe($("v-chart")); else window.addEventListener("resize", draw);
 
