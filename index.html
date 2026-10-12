@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06090d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ICT Radar">
+<title>ICT Radar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root {
+  --bg: #06090d; --panel: #0b121a; --panel2: #0e1823; --line: #182633; --fg: #d6e4ed; --dim: #6a8191;
+  --up: #22d38a; --down: #ff4d5e; --amber: #f5b83d; --cyan: #38d0e8; --violet: #a779ff;
+  --display: "Chakra Petch", "Arial Narrow", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: 12px; overflow: hidden; overscroll-behavior: none; }
+button, input, select { font: inherit; color: var(--fg); }
+button { border: 0; background: none; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+
+#app { height: 100%; height: 100dvh; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; position: relative; }
+
+/* thanh trên */
+.top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 6px; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; flex: none; }
+.row1 { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sym { display: flex; align-items: baseline; gap: 5px; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: .06em; padding: 2px 0; }
+.sym i { font-style: normal; color: var(--dim); font-size: 11px; }
+.px { display: flex; flex-direction: column; line-height: 1.15; font-variant-numeric: tabular-nums; min-width: 0; }
+.px b { font-size: 15px; } .px span { font-size: 10px; }
+.sp { flex: 1 1 0; }
+.bchip { font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: .08em; padding: 5px 8px; border: 1px solid currentColor; white-space: nowrap; }
+.icon { width: 36px; height: 36px; display: grid; place-items: center; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; }
+.tfs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tfs::-webkit-scrollbar { display: none; }
+.tf { flex: none; padding: 6px 11px; min-height: 30px; border-radius: 15px; background: var(--panel2); border: 1px solid var(--line); color: var(--dim); font-size: 11px; font-weight: 500; }
+.tf.on { background: #14333d; border-color: var(--cyan); color: var(--fg); }
+.status { font-size: 10px; color: var(--dim); min-height: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status.err { color: var(--down); white-space: normal; }
+
+/* vùng nội dung */
+main { flex: 1 1 0; min-height: 0; position: relative; }
+.view { position: absolute; inset: 0; display: none; }
+.view.on { display: block; }
+.view.scroll { overflow-y: auto; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
+.view.scroll.on { display: flex; flex-direction: column; gap: 10px; }
+.cwrap { position: absolute; inset: 0; }
+#chart { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: crosshair; }
+.ohlc { position: absolute; top: 6px; left: 8px; right: 70px; z-index: 2; pointer-events: none; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; font-variant-numeric: tabular-nums; text-shadow: 0 0 4px var(--bg), 0 0 4px var(--bg); }
+.ohlc b { color: var(--dim); font-weight: 500; margin-right: 3px; }
+.fab { position: absolute; right: 72px; bottom: 26px; z-index: 3; width: 38px; height: 38px; border-radius: 19px; background: rgba(14, 24, 35, .92); border: 1px solid var(--cyan); display: grid; place-items: center; }
+
+/* tab dưới */
+.tabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px 7px; color: var(--dim); font-size: 10px; letter-spacing: .04em; }
+.tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--cyan); }
+
+/* thẻ */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card h2 { margin: 0; font-family: var(--display); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.card h2 span { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: .06em; font-weight: 400; text-transform: none; }
+.badge { display: inline-block; padding: 5px 12px; font-family: var(--display); font-weight: 700; letter-spacing: .12em; font-size: 15px; border: 1px solid currentColor; align-self: flex-start; }
+.bull { color: var(--up); } .bear { color: var(--down); } .neu { color: var(--amber); }
+ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; line-height: 1.55; }
+.sc { border-left: 3px solid var(--line); padding: 4px 0 4px 10px; line-height: 1.55; }
+.sc.l { border-color: var(--up); } .sc.s { border-color: var(--down); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 9px; letter-spacing: .1em; color: var(--dim); font-weight: 500; text-transform: uppercase; padding: 3px 4px; }
+td { padding: 6px 4px; border-top: 1px solid #101c26; white-space: nowrap; }
+.tw { overflow-x: auto; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; line-height: 1.4; }
+.kv span:nth-child(odd) { color: var(--dim); }
+.hist { display: flex; align-items: flex-end; gap: 2px; height: 70px; }
+.hist i { flex: 1 1 0; min-width: 0; background: #1d4a58; }
+.hist i.now { background: var(--amber); }
+.hist.lo i { background: #5a2430; } .hist.lo i.now { background: var(--amber); }
+.axis { display: flex; justify-content: space-between; font-size: 9px; color: var(--dim); }
+.muted { color: var(--dim); }
+.warn { font-size: 10px; color: var(--dim); line-height: 1.5; padding: 4px 2px; }
+
+/* bảng cài đặt trượt lên */
+.sheetbg { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); z-index: 20; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-width: 1100px; margin: 0 auto; background: var(--panel); border-top: 1px solid var(--cyan); border-radius: 16px 16px 0 0; max-height: 86dvh; max-height: 86vh; overflow-y: auto; padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); display: flex; flex-direction: column; gap: 14px; animation: up .22s ease-out; }
+[hidden] { display: none !important; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.grab { width: 40px; height: 4px; background: var(--line); border-radius: 2px; align-self: center; }
+.sheet h3 { margin: 0 0 6px; font-family: var(--display); font-size: 11px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f label { font-size: 9px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+input, select { background: var(--panel2); border: 1px solid var(--line); padding: 9px 10px; border-radius: 8px; min-height: 40px; width: 100%; }
+input { text-transform: uppercase; font-size: 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick button { padding: 7px 11px; min-height: 34px; border-radius: 17px; background: var(--panel2); border: 1px solid var(--line); }
+.go { background: #12303a; border: 1px solid #1d5361; font-weight: 700; letter-spacing: .08em; min-height: 44px; border-radius: 8px; font-family: var(--display); font-size: 14px; }
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 2px; border-top: 1px solid #101c26; width: 100%; text-align: left; }
+.swrow:first-of-type { border-top: 0; }
+.tg { width: 40px; height: 22px; border-radius: 11px; background: #1b2a37; position: relative; flex: none; transition: background .15s; }
+.tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--dim); transition: transform .15s, background .15s; }
+.swrow.on .tg { background: #14505f; } .swrow.on .tg::after { transform: translateX(18px); background: var(--cyan); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="row1">
+      <button class="sym" id="symBtn" aria-label="Đổi mã"><span id="symTxt">BTCUSDT</span><i>▾</i></button>
+      <div class="px"><b id="lastPx">–</b><span id="chg" class="muted">–</span></div>
+      <div class="sp"></div>
+      <button class="bchip neu" id="biasChip" aria-label="Xem nhận định">…</button>
+      <button class="icon" id="gear" aria-label="Cài đặt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+    <div class="tfs" id="tfs"></div>
+    <div class="status" id="status">Sẵn sàng.</div>
+  </header>
+
+  <main>
+    <section class="view on" id="v-chart">
+      <div class="cwrap">
+        <canvas id="chart"></canvas>
+        <div class="ohlc" id="ohlc"></div>
+        <button class="fab" id="reset" aria-label="Về nến mới nhất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l7 7-7 7"/><path d="M14 5l7 7-7 7"/></svg></button>
+      </div>
+    </section>
+
+    <section class="view scroll" id="v-bias">
+      <div class="card"><h2>Nhận định <span>tự động từ cấu trúc, vùng, thời gian</span></h2><div id="bias">Đang chờ dữ liệu…</div></div>
+      <div class="warn">Công cụ hỗ trợ phân tích kỹ thuật. Các mức và nhận định do thuật toán tự đánh dấu theo định nghĩa phổ biến của SMC/ICT, có thể khác cách bạn vẽ tay. Đây không phải lời khuyên đầu tư. Quản lý vốn và tự chịu trách nhiệm với lệnh của mình.</div>
+    </section>
+
+    <section class="view scroll" id="v-levels">
+      <div class="card"><h2>Mức &amp; vùng gần giá <span>sắp theo khoảng cách</span></h2><div class="tw" id="levels"></div></div>
+    </section>
+
+    <section class="view scroll" id="v-time">
+      <div class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div>
+      <div class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div>
+      <div class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div>
+      <div class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div>
+    </section>
+  </main>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-v="chart"><svg viewBox="0 0 24 24"><path d="M6 4v3M6 17v3M6 7h0M4 7h4v10H4zM18 3v4M18 15v6M16 7h4v8h-4zM12 9v2M12 19v2M10 11h4v8h-4z"/></svg>Biểu đồ</button>
+    <button class="tab" data-v="bias"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Nhận định</button>
+    <button class="tab" data-v="levels"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16M8 3v6M15 9v6M10 15v6"/></svg>Mức giá</button>
+    <button class="tab" data-v="time"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5h4M17 3v4h4"/></svg>Thời gian</button>
+  </nav>
+</div>
+
+<div id="sheetbg" class="sheetbg" hidden></div>
+<div id="sheet" class="sheet" hidden role="dialog" aria-label="Cài đặt">
+  <div class="grab"></div>
+  <div>
+    <h3>Mã giao dịch</h3>
+    <div class="f"><label for="sym">Gõ mã USDT (vd: BTCUSDT, SOLUSDT)</label><input id="sym" list="symlist" value="BTCUSDT" autocomplete="off" spellcheck="false" autocapitalize="characters"><datalist id="symlist"></datalist></div>
+    <div class="quick" id="quick" style="margin-top:8px"></div>
+  </div>
+  <div class="two">
+    <div class="f"><label for="lim">Số nến</label><select id="lim"><option>300</option><option selected>500</option><option>1000</option></select></div>
+    <div class="f"><label for="swl">Độ nhạy cấu trúc</label><select id="swl"><option value="3">Nhạy (3)</option><option value="5" selected>Vừa (5)</option><option value="8">Chắc (8)</option></select></div>
+  </div>
+  <button class="go" id="go">PHÂN TÍCH</button>
+  <button class="go" id="install" hidden style="background:#1b2a37;border-color:var(--cyan)">CÀI APP LÊN MÀN HÌNH CHÍNH</button>
+  <div><h3>Lớp hiển thị trên biểu đồ</h3><div id="layers"></div></div>
+</div>
+
+<script id="core">
+/* ===================== CORE: phân tích thuần, không đụng DOM ===================== */
+var NYF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short" });
+var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function ny(t) {
+  var p = {};
+  NYF.formatToParts(new Date(t)).forEach(function (x) { p[x.type] = x.value; });
+  var h = (+p.hour) % 24, mi = +p.minute, wd = WD.indexOf(p.weekday);
+  return { y: +p.year, mo: +p.month, d: +p.day, h: h, mi: mi, wd: wd, min: h * 60 + mi, key: p.year + "-" + p.month + "-" + p.day,
+    wk: Date.UTC(+p.year, +p.month - 1, +p.day - ((wd + 6) % 7)) };
+}
+function median(a) { if (!a.length) return null; var b = a.slice().sort(function (x, y) { return x - y; }), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; }
+function diffs(a) { var o = []; for (var i = 1; i < a.length; i++) o.push(a[i] - a[i - 1]); return o; }
+function atrArr(c, len) {
+  var a = [], prev = 0, sum = 0;
+  for (var i = 0; i < c.length; i++) {
+    var tr = i ? Math.max(c[i].h - c[i].l, Math.abs(c[i].h - c[i - 1].c), Math.abs(c[i].l - c[i - 1].c)) : c[i].h - c[i].l;
+    if (i < len) { sum += tr; prev = sum / (i + 1); } else { prev = (prev * (len - 1) + tr) / len; }
+    a.push(prev);
+  }
+  return a;
+}
+
+var KZ = [
+  { id: "asia", n: "Asia", a: 1200, b: 1440, col: "167,121,255" },
+  { id: "lon", n: "London", a: 120, b: 300, col: "56,208,232" },
+  { id: "nyam", n: "NY AM", a: 420, b: 600, col: "34,211,138" },
+  { id: "lc", n: "London Close", a: 600, b: 720, col: "245,184,61" },
+  { id: "nypm", n: "NY PM", a: 810, b: 960, col: "255,138,76" }
+];
+var SB = [{ n: "London Silver Bullet", a: 180, b: 240 }, { n: "NY AM Silver Bullet", a: 600, b: 660 }, { n: "NY PM Silver Bullet", a: 840, b: 900 }];
+function kzOf(min) { for (var i = 0; i < KZ.length; i++) if (min >= KZ[i].a && min < KZ[i].b) return KZ[i]; return null; }
+function sbOf(min) { for (var i = 0; i < SB.length; i++) if (min >= SB[i].a && min < SB[i].b) return SB[i]; return null; }
+
+function findSwings(c, L) {
+  var sw = [];
+  for (var i = L; i < c.length - L; i++) {
+    var hi = true, lo = true;
+    for (var k = 1; k <= L; k++) {
+      if (c[i - k].h >= c[i].h || c[i + k].h > c[i].h) hi = false;
+      if (c[i - k].l <= c[i].l || c[i + k].l < c[i].l) lo = false;
+    }
+    if (hi) sw.push({ i: i, type: "H", p: c[i].h });
+    if (lo) sw.push({ i: i, type: "L", p: c[i].l });
+  }
+  return sw;
+}
+
+function findStructure(c, sw, L) {
+  var ev = [], trend = 0, hi = null, lo = null, ptr = 0;
+  for (var i = 0; i < c.length; i++) {
+    while (ptr < sw.length && sw[ptr].i + L <= i) {
+      var s = sw[ptr++];
+      if (s.type === "H") hi = { i: s.i, p: s.p, broken: false }; else lo = { i: s.i, p: s.p, broken: false };
+    }
+    if (hi && !hi.broken && c[i].c > hi.p) { hi.broken = true; ev.push({ kind: trend === -1 ? "CHoCH" : "BOS", dir: 1, i: i, from: hi.i, p: hi.p }); trend = 1; }
+    if (lo && !lo.broken && c[i].c < lo.p) { lo.broken = true; ev.push({ kind: trend === 1 ? "CHoCH" : "BOS", dir: -1, i: i, from: lo.i, p: lo.p }); trend = -1; }
+  }
+  return { ev: ev, trend: trend };
+}
+
+function findOBs(c, ev) {
+  var seen = {}, out = [], n = c.length;
+  ev.forEach(function (e) {
+    var m = e.from, j, q, k;
+    if (e.dir === 1) {
+      for (j = e.from; j <= e.i; j++) if (c[j].l < c[m].l) m = j;
+      k = m;
+      for (q = m; q >= Math.max(0, m - 3); q--) if (c[q].c < c[q].o) { k = q; break; }
+    } else {
+      for (j = e.from; j <= e.i; j++) if (c[j].h > c[m].h) m = j;
+      k = m;
+      for (q = m; q >= Math.max(0, m - 3); q--) if (c[q].c > c[q].o) { k = q; break; }
+    }
+    var key = k + "|" + e.dir;
+    if (seen[key] || k >= e.i) return;
+    seen[key] = 1;
+    var ob = { dir: e.dir, i: k, formed: e.i, top: c[k].h, bottom: c[k].l, touched: null, broken: null, ev: e.kind };
+    for (j = e.i + 1; j < n; j++) {
+      if (e.dir === 1) {
+        if (ob.touched === null && c[j].l <= ob.top) ob.touched = j;
+        if (c[j].c < ob.bottom) { ob.broken = j; break; }
+      } else {
+        if (ob.touched === null && c[j].h >= ob.bottom) ob.touched = j;
+        if (c[j].c > ob.top) { ob.broken = j; break; }
+      }
+    }
+    out.push(ob);
+  });
+  return out;
+}
+
+function findFVGs(c, atr) {
+  var out = [], n = c.length;
+  for (var i = 2; i < n; i++) {
+    var g = null;
+    if (c[i - 2].h < c[i].l) g = { dir: 1, top: c[i].l, bottom: c[i - 2].h };
+    else if (c[i - 2].l > c[i].h) g = { dir: -1, top: c[i - 2].l, bottom: c[i].h };
+    if (!g || g.top - g.bottom < 0.12 * atr[i]) continue;
+    g.i = i - 2; g.formed = i; g.touched = null; g.filled = null;
+    for (var j = i + 1; j < n; j++) {
+      if (g.dir === 1) {
+        if (g.touched === null && c[j].l <= g.top) g.touched = j;
+        if (c[j].l <= g.bottom) { g.filled = j; break; }
+      } else {
+        if (g.touched === null && c[j].h >= g.bottom) g.touched = j;
+        if (c[j].h >= g.top) { g.filled = j; break; }
+      }
+    }
+    out.push(g);
+  }
+  return out;
+}
+
+function findLiquidity(c, sw, atr, L) {
+  var n = c.length, tol = 0.3 * atr[n - 1], eq = [], hs = sw.filter(function (s) { return s.type === "H"; }), ls = sw.filter(function (s) { return s.type === "L"; });
+  function scan(list, isH) {
+    var used = {};
+    for (var a = list.length - 1; a >= 1; a--) {
+      for (var b = a - 1; b >= Math.max(0, a - 30); b--) {
+        if (Math.abs(list[a].p - list[b].p) <= tol && list[a].i - list[b].i >= 3 && !used[a] && !used[b]) {
+          used[a] = used[b] = 1;
+          var lvl = isH ? Math.max(list[a].p, list[b].p) : Math.min(list[a].p, list[b].p), sw2 = null;
+          for (var j = list[a].i + 1; j < n; j++) { if (isH ? c[j].h > lvl : c[j].l < lvl) { sw2 = j; break; } }
+          eq.push({ type: isH ? "EQH" : "EQL", p: lvl, i1: list[b].i, i2: list[a].i, swept: sw2 });
+          break;
+        }
+      }
+    }
+  }
+  scan(hs, true); scan(ls, false);
+  /* thanh khoản mở: đỉnh/đáy swing chưa bị quét */
+  function open(list, isH) {
+    var o = [];
+    list.forEach(function (s) {
+      var hit = false;
+      for (var j = s.i + L + 1; j < n; j++) { if (isH ? c[j].h > s.p : c[j].l < s.p) { hit = true; break; } }
+      if (!hit) o.push(s);
+    });
+    return o;
+  }
+  return { eq: eq, bsl: open(hs, true), ssl: open(ls, false) };
+}
+
+function findSweeps(c, sw, L) {
+  var out = [], n = c.length;
+  sw.forEach(function (s) {
+    for (var j = s.i + L + 1; j < n; j++) {
+      if (s.type === "H" && c[j].h > s.p) { if (c[j].c < s.p) out.push({ side: "BSL", i: j, p: s.p, dir: -1 }); break; }
+      if (s.type === "L" && c[j].l < s.p) { if (c[j].c > s.p) out.push({ side: "SSL", i: j, p: s.p, dir: 1 }); break; }
+    }
+  });
+  out.sort(function (a, b) { return a.i - b.i; });
+  return out;
+}
+
+function premiumDiscount(c, sw) {
+  var H = null, Lw = null;
+  for (var i = sw.length - 1; i >= 0 && !(H && Lw); i--) { if (sw[i].type === "H" && !H) H = sw[i]; if (sw[i].type === "L" && !Lw) Lw = sw[i]; }
+  if (!H || !Lw) return null;
+  var top = H.p, bot = Lw.p, p = c[c.length - 1].c, legUp = H.i > Lw.i, j;
+  for (j = H.i + 1; j < c.length; j++) if (c[j].h > top) top = c[j].h;
+  for (j = Lw.i + 1; j < c.length; j++) if (c[j].l < bot) bot = c[j].l;
+  var r = top - bot;
+  if (r <= 0) return null;
+  var ote = legUp ? { a: top - 0.79 * r, b: top - 0.62 * r, side: "mua" } : { a: bot + 0.62 * r, b: bot + 0.79 * r, side: "bán" };
+  return { top: top, bot: bot, eq: bot + r / 2, from: Math.min(H.i, Lw.i), ote: ote, legUp: legUp, zone: p > bot + r / 2 ? "premium" : "discount", pct: (p - bot) / r };
+}
+
+function timeLevels(c, tf) {
+  var n = c.length, lv = [], out = { levels: lv, sessions: [] };
+  if (!n) return out;
+  if (tf >= 604800000) return out;
+  if (tf >= 86400000) {
+    if (n >= 2) { lv.push({ n: "PDH", p: c[n - 2].h, i: n - 2, col: "#8fb4c8" }); lv.push({ n: "PDL", p: c[n - 2].l, i: n - 2, col: "#8fb4c8" }); }
+    return out;
+  }
+  var days = [], cur = null, i;
+  for (i = 0; i < n; i++) {
+    var k = c[i].ny.key;
+    if (!cur || cur.key !== k) { cur = { key: k, s: i, e: i, hi: c[i].h, lo: c[i].l, o: c[i].o, wd: c[i].ny.wd }; days.push(cur); }
+    else { cur.e = i; if (c[i].h > cur.hi) cur.hi = c[i].h; if (c[i].l < cur.lo) cur.lo = c[i].l; }
+  }
+  var today = days[days.length - 1], prev = days[days.length - 2];
+  if (prev) { lv.push({ n: "PDH", p: prev.hi, i: prev.s, col: "#8fb4c8" }); lv.push({ n: "PDL", p: prev.lo, i: prev.s, col: "#8fb4c8" }); }
+  lv.push({ n: "Midnight Open", p: today.o, i: today.s, col: "#f5b83d", open: true });
+  for (i = days.length - 1; i >= 0; i--) { if (days[i].wd === 1) { lv.push({ n: "Weekly Open", p: days[i].o, i: days[i].s, col: "#ff8a4c", open: true }); break; }
+    if (days.length - 1 - i > 7) break; }
+  if (tf <= 1800000) {
+    for (i = today.s; i <= today.e; i++) if (c[i].ny.min === 510) { lv.push({ n: "NY 08:30", p: c[i].o, i: i, col: "#f5b83d", open: true }); break; }
+  }
+  /* tuần trước */
+  var wks = [], wc = null;
+  for (i = 0; i < n; i++) {
+    if (!wc || wc.k !== c[i].ny.wk) { wc = { k: c[i].ny.wk, s: i, hi: c[i].h, lo: c[i].l }; wks.push(wc); } else { if (c[i].h > wc.hi) wc.hi = c[i].h; if (c[i].l < wc.lo) wc.lo = c[i].l; }
+  }
+  if (wks.length >= 2) { var pw = wks[wks.length - 2]; lv.push({ n: "PWH", p: pw.hi, i: pw.s, col: "#6f93a8" }); lv.push({ n: "PWL", p: pw.lo, i: pw.s, col: "#6f93a8" }); }
+  /* phiên Asia / London */
+  if (tf <= 3600000) {
+    var map = {}, order = [];
+    for (i = 0; i < n; i++) {
+      var z = kzOf(c[i].ny.min);
+      if (!z || (z.id !== "asia" && z.id !== "lon")) continue;
+      var id = z.id + "|" + c[i].ny.key;
+      if (!map[id]) { map[id] = { z: z, s: i, e: i, hi: c[i].h, lo: c[i].l }; order.push(id); }
+      else { var m = map[id]; m.e = i; if (c[i].h > m.hi) m.hi = c[i].h; if (c[i].l < m.lo) m.lo = c[i].l; }
+    }
+    ["asia", "lon"].forEach(function (zid) {
+      var last = null;
+      order.forEach(function (id) { if (map[id].z.id === zid) last = map[id]; });
+      if (last) {
+        var col = "rgb(" + last.z.col + ")";
+        lv.push({ n: last.z.n + " H", p: last.hi, i: last.s, col: col, sess: true });
+        lv.push({ n: last.z.n + " L", p: last.lo, i: last.s, col: col, sess: true });
+        out.sessions.push({ n: last.z.n, hi: last.hi, lo: last.lo, live: last.e >= n - 1 });
+      }
+    });
+  }
+  return out;
+}
+
+function cyclesCalc(c, sw, tf) {
+  var n = c.length, Hs = sw.filter(function (s) { return s.type === "H"; }).map(function (s) { return s.i; }),
+      Ls = sw.filter(function (s) { return s.type === "L"; }).map(function (s) { return s.i; }), all = sw.map(function (s) { return s.i; });
+  var mH = median(diffs(Hs)), mL = median(diffs(Ls)), mA = median(diffs(all));
+  function nextAfter(last, m) { if (!m || last == null) return null; var x = last + m; var g = 0; while (x <= n - 1 && g++ < 50) x += m; return x - (n - 1) <= 60 ? Math.round(x) : null; }
+  var anchor = sw.length ? sw[sw.length - 1] : null;
+  var fib = [];
+  if (anchor) [1, 2, 3, 5, 8, 13, 21, 34, 55, 89].forEach(function (f) { fib.push({ f: f, i: anchor.i + f }); });
+  return { mH: mH, mL: mL, mA: mA, nextH: nextAfter(Hs[Hs.length - 1], mH), nextL: nextAfter(Ls[Ls.length - 1], mL), nextA: nextAfter(all[all.length - 1], mA), fib: fib, anchor: anchor, tf: tf };
+}
+
+function hourStats(c1h) {
+  var days = {}, order = [];
+  c1h.forEach(function (k) {
+    var p = ny(k.t), id = p.key;
+    if (!days[id]) { days[id] = { hi: -1e18, lo: 1e18, hh: 0, lh: 0, n: 0 }; order.push(id); }
+    var d = days[id]; d.n++;
+    if (k.h > d.hi) { d.hi = k.h; d.hh = p.h; } if (k.l < d.lo) { d.lo = k.l; d.lh = p.h; }
+  });
+  var H = [], L = [], i, cnt = 0;
+  for (i = 0; i < 24; i++) { H.push(0); L.push(0); }
+  order.forEach(function (id) { if (days[id].n >= 22) { H[days[id].hh]++; L[days[id].lh]++; cnt++; } });
+  return { H: H, L: L, days: cnt };
+}
+function weekStats(c1d) {
+  var wk = {}, order = [];
+  c1d.forEach(function (k) {
+    var d = new Date(k.t), wd = d.getUTCDay(), id = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((wd + 6) % 7));
+    if (!wk[id]) { wk[id] = { hi: -1e18, lo: 1e18, hd: 0, ld: 0, n: 0 }; order.push(id); }
+    var w = wk[id]; w.n++;
+    var idx = (wd + 6) % 7;
+    if (k.h > w.hi) { w.hi = k.h; w.hd = idx; } if (k.l < w.lo) { w.lo = k.l; w.ld = idx; }
+  });
+  var H = [0, 0, 0, 0, 0, 0, 0], L = [0, 0, 0, 0, 0, 0, 0], cnt = 0;
+  order.forEach(function (id) { if (wk[id].n >= 7) { H[wk[id].hd]++; L[wk[id].ld]++; cnt++; } });
+  return { H: H, L: L, weeks: cnt };
+}
+
+function fmtP(p) {
+  var a = Math.abs(p);
+  if (a >= 1000) return p.toFixed(1); if (a >= 100) return p.toFixed(2); if (a >= 1) return p.toFixed(3);
+  if (a >= 0.1) return p.toFixed(4); if (a >= 0.01) return p.toFixed(5); return p.toFixed(7);
+}
+
+function buildBias(c, A) {
+  var n = c.length, p = c[n - 1].c, atr = A.atr[n - 1], s = 0, why = [], i;
+  var tr = A.struct.trend, last = A.struct.ev[A.struct.ev.length - 1];
+  if (tr === 1) { s += 2; why.push("Cấu trúc đang tăng: giá đóng trên đỉnh swing gần nhất (BOS tăng)."); }
+  else if (tr === -1) { s -= 2; why.push("Cấu trúc đang giảm: giá đóng dưới đáy swing gần nhất (BOS giảm)."); }
+  else why.push("Chưa có phá vỡ cấu trúc rõ ràng.");
+  if (last && last.kind === "CHoCH" && n - 1 - last.i <= 40) { s += last.dir; why.push("CHoCH " + (last.dir === 1 ? "tăng" : "giảm") + " mới xuất hiện (" + (n - 1 - last.i) + " nến trước), dấu hiệu đổi hướng."); }
+  var zones = [];
+  A.obs.forEach(function (o) { if (o.broken === null) zones.push({ k: "OB", dir: o.dir, top: o.top, bottom: o.bottom, touched: o.touched !== null }); });
+  A.fvgs.forEach(function (g) { if (g.filled === null) zones.push({ k: "FVG", dir: g.dir, top: g.top, bottom: g.bottom, touched: g.touched !== null }); });
+  var sup = null, res = null;
+  zones.forEach(function (z) {
+    if (z.dir === 1 && z.bottom <= p + 0.2 * atr && (!sup || z.top > sup.top)) sup = z;
+    if (z.dir === -1 && z.top >= p - 0.2 * atr && (!res || z.bottom < res.bottom)) res = z;
+  });
+  if (sup && p - sup.top <= 3 * atr) { s += 1; why.push("Có " + sup.k + " tăng chưa bị phá ngay dưới giá (" + fmtP(sup.bottom) + " – " + fmtP(sup.top) + "), hỗ trợ gần."); }
+  if (res && res.bottom - p <= 3 * atr) { s -= 1; why.push("Có " + res.k + " giảm chưa bị phá ngay trên giá (" + fmtP(res.bottom) + " – " + fmtP(res.top) + "), kháng cự gần."); }
+  var sw = A.sweeps.length ? A.sweeps[A.sweeps.length - 1] : null;
+  if (sw && n - 1 - sw.i <= 25) { s += sw.dir; why.push("Vừa quét thanh khoản " + (sw.side === "SSL" ? "phía dưới (SSL), đóng cửa lấy lại → nghiêng tăng" : "phía trên (BSL), đóng cửa lấy lại → nghiêng giảm") + " (" + (n - 1 - sw.i) + " nến trước)."); }
+  var mo = null;
+  A.levels.forEach(function (l) { if (l.n === "Midnight Open") mo = l; });
+  if (mo) { var above = p > mo.p; s += above ? 0.5 : -0.5; why.push("Giá " + (above ? "trên" : "dưới") + " Midnight Open (" + fmtP(mo.p) + "): " + (above ? "premium của ngày, ưu tiên canh bán nếu có tín hiệu giảm, hoặc mua khi hồi về." : "discount của ngày, ưu tiên canh mua nếu có tín hiệu tăng.")); }
+  if (A.pd) why.push("Giá đang ở vùng " + (A.pd.zone === "premium" ? "PREMIUM (trên 50%)" : "DISCOUNT (dưới 50%)") + " của dải " + fmtP(A.pd.bot) + " – " + fmtP(A.pd.top) + " (" + (A.pd.pct * 100).toFixed(0) + "%).");
+  var label = s >= 2 ? "THIÊN TĂNG" : s <= -2 ? "THIÊN GIẢM" : "TRUNG LẬP / CHỜ";
+  var cls = s >= 2 ? "bull" : s <= -2 ? "bear" : "neu";
+
+  var bsl = A.liq.bsl.filter(function (x) { return x.p > p; }).sort(function (a, b) { return a.p - b.p; })[0];
+  var ssl = A.liq.ssl.filter(function (x) { return x.p < p; }).sort(function (a, b) { return b.p - a.p; })[0];
+  var lastL = null, lastH = null;
+  for (i = A.swings.length - 1; i >= 0; i--) { if (A.swings[i].type === "L" && !lastL) lastL = A.swings[i]; if (A.swings[i].type === "H" && !lastH) lastH = A.swings[i]; }
+  var plans = [];
+  var longZ = sup || (A.pd && A.pd.ote.side === "mua" ? { k: "OTE", bottom: A.pd.ote.a, top: A.pd.ote.b } : null);
+  if (longZ && bsl) {
+    var inv = Math.min(longZ.bottom, lastL ? lastL.p : longZ.bottom) - 0.1 * atr, entry = (longZ.top + longZ.bottom) / 2, rr = (bsl.p - entry) / (entry - inv);
+    plans.push({ side: "l", t: "Kịch bản MUA: chờ giá hồi về " + longZ.k + " " + fmtP(longZ.bottom) + " – " + fmtP(longZ.top) + " rồi có nến xác nhận (tốt nhất trong killzone). Mục tiêu thanh khoản phía trên " + fmtP(bsl.p) + ", vô hiệu nếu đóng dưới " + fmtP(inv) + (isFinite(rr) && rr > 0 ? " (RR xấp xỉ " + rr.toFixed(1) + ")." : ".") });
+  }
+  var shortZ = res || (A.pd && A.pd.ote.side === "bán" ? { k: "OTE", bottom: A.pd.ote.a, top: A.pd.ote.b } : null);
+  if (shortZ && ssl) {
+    var inv2 = Math.max(shortZ.top, lastH ? lastH.p : shortZ.top) + 0.1 * atr, entry2 = (shortZ.top + shortZ.bottom) / 2, rr2 = (entry2 - ssl.p) / (inv2 - entry2);
+    plans.push({ side: "s", t: "Kịch bản BÁN: chờ giá hồi lên " + shortZ.k + " " + fmtP(shortZ.bottom) + " – " + fmtP(shortZ.top) + " rồi có nến xác nhận. Mục tiêu thanh khoản phía dưới " + fmtP(ssl.p) + ", vô hiệu nếu đóng trên " + fmtP(inv2) + (isFinite(rr2) && rr2 > 0 ? " (RR xấp xỉ " + rr2.toFixed(1) + ")." : ".") });
+  }
+  return { score: s, label: label, cls: cls, why: why, plans: plans };
+}
+
+function analyze(c, tf, L) {
+  var A = {}, n = c.length;
+  A.atr = atrArr(c, 14);
+  A.swings = findSwings(c, L);
+  A.struct = findStructure(c, A.swings, L);
+  A.obs = findOBs(c, A.struct.ev);
+  A.fvgs = findFVGs(c, A.atr);
+  A.liq = findLiquidity(c, A.swings, A.atr, L);
+  A.sweeps = findSweeps(c, A.swings, L);
+  A.pd = premiumDiscount(c, A.swings);
+  var T = timeLevels(c, tf);
+  A.levels = T.levels; A.sessions = T.sessions;
+  A.cyc = cyclesCalc(c, A.swings, tf);
+  A.bias = buildBias(c, A);
+  return A;
+}
+</script>
+
+<script id="ui">
+(function () {
+  function $(id) { return document.getElementById(id); }
+  var TFMS = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m": 18e5, "1h": 36e5, "4h": 144e5, "1d": 864e5, "1w": 6048e5 };
+  var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
+  var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
+  var V = { start: 0, bars: 110 }, G = null, hover = -1, ws = null, statsFor = "", reTimer = null, tab = "chart";
+  var LAY = { struct: 1, ob: 1, fvg: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
+  if (window.innerWidth < 640) { LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
+  var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
+  var COL = { up: "#22d38a", down: "#ff4d5e", amber: "#f5b83d", cyan: "#38d0e8", violet: "#a779ff", dim: "#6a8191", line: "#182633", fg: "#d6e4ed" };
+
+  function setStatus(t, err) { var s = $("status"); s.textContent = t; s.className = "status" + (err ? " err" : ""); }
+  async function bget(path) {
+    var last;
+    for (var i = 0; i < BASES.length; i++) {
+      try { var r = await fetch(BASES[i] + path); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); } catch (e) { last = e; }
+    }
+    throw last;
+  }
+  function mapK(a) { return a.map(function (k) { return { t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }; }); }
+  function tOf(i) { return i < C.length ? C[i].t : C[C.length - 1].t + (i - (C.length - 1)) * tfms; }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtNY(t) { var p = ny(t); return pad2(p.d) + "/" + pad2(p.mo) + " " + pad2(p.h) + ":" + pad2(p.mi); }
+  function fmtLocal(t) { var d = new Date(t); return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()); }
+
+  /* ----- điều khiển ----- */
+  var tfsEl = $("tfs");
+  Object.keys(TFMS).forEach(function (k) {
+    var b = document.createElement("button"); b.className = "tf" + (k === S.tf ? " on" : ""); b.textContent = k; b.dataset.tf = k;
+    b.addEventListener("click", function () { S.tf = k; markTf(); load(); }); tfsEl.appendChild(b);
+  });
+  function markTf() { Array.prototype.forEach.call(tfsEl.children, function (b) { b.className = "tf" + (b.dataset.tf === S.tf ? " on" : ""); }); }
+  Object.keys(LAY).forEach(function (k) {
+    var b = document.createElement("button"); b.className = "swrow" + (LAY[k] ? " on" : "");
+    b.innerHTML = "<span>" + LABELS[k] + "</span><span class=\"tg\"></span>";
+    b.addEventListener("click", function () { LAY[k] = LAY[k] ? 0 : 1; b.className = "swrow" + (LAY[k] ? " on" : ""); draw(); });
+    $("layers").appendChild(b);
+  });
+  ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT"].forEach(function (s) {
+    var b = document.createElement("button"); b.textContent = s.replace("USDT", "");
+    b.addEventListener("click", function () { $("sym").value = s; closeSheet(); load(); }); $("quick").appendChild(b);
+  });
+  function openSheet() { $("sheet").hidden = false; $("sheetbg").hidden = false; }
+  function closeSheet() { $("sheet").hidden = true; $("sheetbg").hidden = true; }
+  $("gear").addEventListener("click", openSheet);
+  $("symBtn").addEventListener("click", openSheet);
+  $("sheetbg").addEventListener("click", closeSheet);
+  $("go").addEventListener("click", function () { closeSheet(); load(); });
+  $("sym").addEventListener("keydown", function (e) { if (e.key === "Enter") { closeSheet(); load(); } });
+  $("reset").addEventListener("click", function () { hover = -1; resetView(); draw(); });
+  $("biasChip").addEventListener("click", function () { setTab("bias"); });
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.addEventListener("click", function () { setTab(b.dataset.v); }); });
+  function setTab(v) {
+    tab = v;
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.className = "tab" + (b.dataset.v === v ? " on" : ""); });
+    ["chart", "bias", "levels", "time"].forEach(function (k) { var el = $("v-" + k); el.className = "view" + (k !== "chart" ? " scroll" : "") + (k === v ? " on" : ""); });
+    if (v === "chart") requestAnimationFrame(draw);
+  }
+
+  async function loadSymbols() {
+    try {
+      var t = await bget("/api/v3/ticker/24hr");
+      var l = t.filter(function (x) { return /USDT$/.test(x.symbol) && !/(UP|DOWN|BULL|BEAR)USDT$/.test(x.symbol); })
+        .sort(function (a, b) { return +b.quoteVolume - +a.quoteVolume; }).slice(0, 200);
+      $("symlist").innerHTML = l.map(function (x) { return "<option value=\"" + x.symbol + "\">"; }).join("");
+    } catch (e) { /* gợi ý không bắt buộc */ }
+  }
+
+  async function load() {
+    S.sym = $("sym").value.trim().toUpperCase() || "BTCUSDT";
+    if (!/USDT$|BTC$|ETH$|BNB$|FDUSD$|USDC$/.test(S.sym)) S.sym += "USDT";
+    $("sym").value = S.sym; $("symTxt").textContent = S.sym.replace(/USDT$/, "") + "/USDT";
+    S.lim = +$("lim").value; S.sw = +$("swl").value; tfms = TFMS[S.tf]; markTf();
+    setStatus("Đang tải " + S.sym + " " + S.tf + " từ Binance…");
+    try {
+      var k = await bget("/api/v3/klines?symbol=" + S.sym + "&interval=" + S.tf + "&limit=" + S.lim);
+      if (!k.length) throw new Error("Không có dữ liệu");
+      C = mapK(k); C.forEach(function (x) { x.ny = ny(x.t); });
+    } catch (e) {
+      setStatus("Không tải được dữ liệu (" + e.message + "). Kiểm tra mã giao dịch và mạng; nếu Binance bị chặn ở vùng của bạn, thử bật VPN.", true);
+      return;
+    }
+    runAnalysis(); resetView(); renderAll(); setTab(tab);
+    setStatus(C.length + " nến · " + S.sym + " " + S.tf + " · trực tiếp");
+    connectWS();
+    if (statsFor !== S.sym) { statsFor = S.sym; loadStats(); }
+  }
+  function runAnalysis() { A = analyze(C, tfms, S.sw); }
+  function resetView() { var n = C.length; V.bars = Math.min(n, window.innerWidth < 640 ? 60 : 120); V.start = n + 25 - V.bars; }
+
+  async function loadStats() {
+    $("hourstat").textContent = "Đang tải…"; $("wkstat").textContent = "Đang tải…";
+    try {
+      var r = await Promise.all([bget("/api/v3/klines?symbol=" + S.sym + "&interval=1h&limit=1000"), bget("/api/v3/klines?symbol=" + S.sym + "&interval=1d&limit=400")]);
+      renderHour(hourStats(mapK(r[0]))); renderWeek(weekStats(mapK(r[1])));
+    } catch (e) { $("hourstat").textContent = "Không tải được thống kê."; $("wkstat").textContent = "Không tải được thống kê."; }
+  }
+
+  function connectWS() {
+    if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
+    try {
+      ws = new WebSocket("wss://stream.binance.com:9443/ws/" + S.sym.toLowerCase() + "@kline_" + S.tf);
+      ws.onmessage = function (m) {
+        var d = JSON.parse(m.data); if (!d.k) return;
+        var k = d.k, nk = { t: +k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v }; nk.ny = ny(nk.t);
+        var last = C[C.length - 1];
+        if (last && last.t === nk.t) C[C.length - 1] = nk; else if (last && nk.t > last.t) { C.push(nk); if (C.length > 1200) C.shift(); }
+        renderHead();
+        if (!reTimer) reTimer = setTimeout(function () { reTimer = null; runAnalysis(); renderAll(); if (tab === "chart") draw(); }, 2500);
+      };
+      ws.onclose = function () { ws = null; };
+    } catch (e) { ws = null; }
+  }
+
+  /* ----- vẽ biểu đồ ----- */
+  function draw() {
+    var cv = $("chart"), d = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
+    if (!W || !H) return;
+    if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+    var x = cv.getContext("2d"); x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, W, H);
+    if (!C.length || !A) return;
+    var AX = 58, AY = 20, pw = W - AX, ph = H - AY, bw = pw / V.bars, n = C.length;
+    var i0 = Math.max(0, Math.floor(V.start)), i1 = Math.min(n - 1, Math.ceil(V.start + V.bars)), i, mn = 1e18, mx = -1e18;
+    for (i = i0; i <= i1; i++) { if (C[i].l < mn) mn = C[i].l; if (C[i].h > mx) mx = C[i].h; }
+    if (mn > mx) { mn = 0; mx = 1; }
+    var pd = (mx - mn) * 0.08 || 1; mn -= pd; mx += pd;
+    function X(j) { return (j - V.start) * bw + bw / 2; }
+    function Y(p) { return 22 + (mx - p) / (mx - mn) * (ph - 30); }
+    G = { bw: bw, pw: pw, ph: ph, mn: mn, mx: mx, X: X, Y: Y };
+    x.font = "10px JetBrains Mono, monospace";
+    x.save(); x.beginPath(); x.rect(0, 0, pw, ph); x.clip();
+
+    if (LAY.kz && tfms <= 36e5) {
+      var rs = -1, rz = null;
+      for (i = i0; i <= i1 + 1; i++) {
+        var z = i <= i1 ? kzOf(C[i].ny.min) : null;
+        if (rz && z !== rz) { x.fillStyle = "rgba(" + rz.col + ",.07)"; x.fillRect(X(rs) - bw / 2, 0, X(i - 1) - X(rs) + bw, ph);
+          if (X(i - 1) - X(rs) > 34) { x.fillStyle = "rgba(" + rz.col + ",.9)"; x.fillText(rz.n, Math.max(2, X(rs) - bw / 2 + 3), ph - 5); } rz = null; }
+        if (z && !rz) { rz = z; rs = i; }
+      }
+    }
+    if (LAY.m90 && tfms <= 18e5) {
+      x.strokeStyle = "rgba(167,121,255,.28)"; x.lineWidth = 1; x.setLineDash([2, 4]);
+      for (i = i0; i <= i1; i++) if (C[i].ny.min % 90 === 0) { x.beginPath(); x.moveTo(X(i) - bw / 2, 0); x.lineTo(X(i) - bw / 2, ph); x.stroke(); }
+      x.setLineDash([]);
+    }
+    x.strokeStyle = COL.line; x.lineWidth = 1;
+    for (i = 1; i < 6; i++) { var gy = Math.round(i * ph / 6) + .5; x.beginPath(); x.moveTo(0, gy); x.lineTo(pw, gy); x.stroke(); }
+
+    if (LAY.pd && A.pd) {
+      var p0 = Math.max(0, X(A.pd.from) - bw / 2), yT = Y(A.pd.top), yE = Y(A.pd.eq), yB = Y(A.pd.bot);
+      x.fillStyle = "rgba(255,77,94,.05)"; x.fillRect(p0, yT, pw - p0, yE - yT);
+      x.fillStyle = "rgba(34,211,138,.05)"; x.fillRect(p0, yE, pw - p0, yB - yE);
+      x.fillStyle = "rgba(245,184,61,.13)"; x.fillRect(p0, Y(A.pd.ote.b), pw - p0, Y(A.pd.ote.a) - Y(A.pd.ote.b));
+      x.strokeStyle = "rgba(214,228,237,.35)"; x.setLineDash([5, 4]); x.beginPath(); x.moveTo(p0, yE); x.lineTo(pw, yE); x.stroke(); x.setLineDash([]);
+      x.fillStyle = "rgba(214,228,237,.6)"; x.fillText("EQ 50%", pw - 46, yE - 3);
+      x.fillStyle = "rgba(245,184,61,.9)"; x.fillText("OTE " + A.pd.ote.side, pw - 62, Y(A.pd.ote.b) - 3);
+    }
+    if (LAY.fvg) {
+      A.fvgs.filter(function (g) { return g.filled === null && g.i <= i1; }).slice(-18).forEach(function (g) {
+        var xa = X(g.i) - bw / 2, col = g.dir === 1 ? "34,211,138" : "255,77,94";
+        x.fillStyle = "rgba(" + col + (g.touched !== null ? ",.10)" : ",.2)"); x.fillRect(xa, Y(g.top), pw - xa, Y(g.bottom) - Y(g.top));
+        x.strokeStyle = "rgba(" + col + ",.55)"; x.setLineDash([3, 3]); x.strokeRect(xa, Y(g.top), pw - xa, Y(g.bottom) - Y(g.top)); x.setLineDash([]);
+        x.fillStyle = "rgba(" + col + ",.95)"; x.fillText("FVG", Math.max(xa + 3, 3), Y(g.top) + 10);
+      });
+    }
+    if (LAY.ob) {
+      A.obs.filter(function (o) { return o.broken === null && o.i <= i1; }).slice(-10).forEach(function (o) {
+        var xa = X(o.i) - bw / 2, col = o.dir === 1 ? "34,211,138" : "255,77,94";
+        x.fillStyle = "rgba(" + col + (o.touched !== null ? ",.14)" : ",.26)"); x.fillRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
+        x.strokeStyle = "rgba(" + col + ",.9)"; x.lineWidth = 1; x.strokeRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
+        x.fillStyle = "rgba(" + col + ",1)"; x.fillText((o.dir === 1 ? "OB+" : "OB-") + (o.touched !== null ? " (đã test)" : ""), Math.max(xa + 3, 3), Y(o.top) + 10);
+      });
+    }
+    function hline(p, i2, col, label, dash) {
+      if (p < mn || p > mx) return;
+      var xa = Math.max(0, X(i2) - bw / 2), y = Math.round(Y(p)) + .5;
+      x.strokeStyle = col; x.lineWidth = 1; x.setLineDash(dash || [6, 4]); x.beginPath(); x.moveTo(xa, y); x.lineTo(pw, y); x.stroke(); x.setLineDash([]);
+      x.fillStyle = col; x.fillText(label, Math.max(xa + 3, 3), y - 3);
+    }
+    A.levels.forEach(function (l) {
+      if (l.open && !LAY.opens) return; if (l.sess && !LAY.sess) return;
+      if (!l.open && !l.sess && !LAY.opens) return;
+      hline(l.p, l.i, l.col, l.n + " " + fmtP(l.p), l.open ? [2, 3] : null);
+    });
+    if (LAY.liq) {
+      A.liq.eq.slice(-8).forEach(function (q) {
+        var col = q.type === "EQH" ? COL.down : COL.up, xa = X(q.i1) - bw / 2, xb = q.swept !== null ? X(q.swept) : pw;
+        if (q.p < mn || q.p > mx) return;
+        var y = Math.round(Y(q.p)) + .5;
+        x.strokeStyle = col; x.globalAlpha = q.swept !== null ? .35 : 1; x.setLineDash([2, 3]); x.beginPath(); x.moveTo(xa, y); x.lineTo(xb, y); x.stroke(); x.setLineDash([]);
+        x.fillStyle = col; x.fillText(q.type + (q.swept !== null ? " ✓" : ""), Math.max(xa + 3, 3), y - 3); x.globalAlpha = 1;
+      });
+    }
+    var cw = Math.max(1, bw * 0.68);
+    for (i = i0; i <= i1; i++) {
+      var k = C[i], up = k.c >= k.o, col2 = up ? COL.up : COL.down, cx = X(i);
+      x.strokeStyle = col2; x.fillStyle = col2; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(Math.round(cx) + .5, Y(k.h)); x.lineTo(Math.round(cx) + .5, Y(k.l)); x.stroke();
+      x.fillRect(cx - cw / 2, Y(Math.max(k.o, k.c)), cw, Math.max(1, Math.abs(Y(k.o) - Y(k.c))));
+    }
+    if (LAY.struct) {
+      A.struct.ev.slice(-26).forEach(function (e) {
+        if (e.i < i0 - 2 || e.from > i1) return;
+        var col = e.dir === 1 ? COL.up : COL.down, y = Math.round(Y(e.p)) + .5;
+        x.strokeStyle = col; x.setLineDash(e.kind === "CHoCH" ? [] : [5, 3]); x.lineWidth = e.kind === "CHoCH" ? 1.4 : 1;
+        x.beginPath(); x.moveTo(X(e.from), y); x.lineTo(X(e.i), y); x.stroke(); x.setLineDash([]);
+        x.fillStyle = col; x.textAlign = "center"; x.fillText(e.kind, (X(e.from) + X(e.i)) / 2, e.dir === 1 ? y - 4 : y + 12); x.textAlign = "left";
+      });
+      A.sweeps.slice(-8).forEach(function (s) {
+        if (s.i < i0 || s.i > i1) return;
+        var up2 = s.dir === 1, yy = up2 ? Y(C[s.i].l) + 12 : Y(C[s.i].h) - 6;
+        x.fillStyle = COL.amber; x.textAlign = "center"; x.fillText(up2 ? "▲ sweep" : "▼ sweep", X(s.i), yy); x.textAlign = "left";
+      });
+    }
+    if (LAY.cyc && A.cyc) {
+      var vline = function (j, col, label) {
+        var xx = Math.round(X(j)) + .5; if (xx < 0 || xx > pw) return;
+        x.strokeStyle = col; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(xx, 0); x.lineTo(xx, ph); x.stroke(); x.setLineDash([]);
+        x.fillStyle = col; x.fillText(label, xx + 3, ph - 17);
+      };
+      A.cyc.fib.forEach(function (f) { if (f.i >= i0 - 5) vline(f.i, "rgba(245,184,61,.45)", "F" + f.f); });
+      if (A.cyc.nextH) vline(A.cyc.nextH, "rgba(255,77,94,.9)", "đỉnh~");
+      if (A.cyc.nextL) vline(A.cyc.nextL, "rgba(34,211,138,.9)", "đáy~");
+      if (A.cyc.nextA) vline(A.cyc.nextA, "rgba(56,208,232,.9)", "swing~");
+    }
+    if (hover >= 0 && hover < n) {
+      x.strokeStyle = "rgba(214,228,237,.4)"; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(Math.round(X(hover)) + .5, 0); x.lineTo(Math.round(X(hover)) + .5, ph); x.stroke(); x.setLineDash([]);
+    }
+    x.restore();
+
+    x.fillStyle = COL.dim; x.textAlign = "left"; x.strokeStyle = COL.line;
+    for (i = 0; i <= 6; i++) { var pr = mx - (mx - mn) * i / 6; x.fillText(fmtP(pr), pw + 4, Math.min(ph - 2, Math.max(10, Y(pr) + 3))); }
+    var lp = C[n - 1].c, ly = Y(lp);
+    if (ly > 0 && ly < ph) {
+      x.fillStyle = C[n - 1].c >= C[n - 1].o ? COL.up : COL.down; x.fillRect(pw, ly - 8, AX, 16);
+      x.fillStyle = "#04070a"; x.fillText(fmtP(lp), pw + 3, ly + 4);
+    }
+    x.fillStyle = COL.dim; x.textAlign = "center";
+    var every = Math.max(1, Math.round(80 / bw));
+    for (i = Math.ceil(V.start); i <= V.start + V.bars; i += every) {
+      var xx2 = X(i); if (xx2 < 20 || xx2 > pw - 20) continue;
+      var pn = ny(tOf(i));
+      x.fillText(tfms >= 864e5 ? pad2(pn.d) + "/" + pad2(pn.mo) : pad2(pn.h) + ":" + pad2(pn.mi), xx2, H - 5);
+    }
+    x.textAlign = "left";
+    showOhlc(hover >= 0 && hover < n ? hover : n - 1);
+  }
+  function showOhlc(i) {
+    var k = C[i]; if (!k) return;
+    var cls = k.c >= k.o ? "bull" : "bear";
+    $("ohlc").innerHTML = "<span><b>" + fmtNY(k.t) + " NY</b></span><span><b>O</b>" + fmtP(k.o) + "</span><span><b>H</b>" + fmtP(k.h) + "</span><span><b>L</b>" + fmtP(k.l) + "</span><span class=\"" + cls + "\"><b>C</b>" + fmtP(k.c) + "</span>";
+  }
+  function renderHead() {
+    if (!C.length) return;
+    var last = C[C.length - 1], ref = C[0], j;
+    for (j = C.length - 1; j >= 0; j--) { if (C[j].t <= last.t - 864e5) { ref = C[j]; break; } }
+    var ch = (last.c - ref.o) / ref.o * 100;
+    $("lastPx").textContent = fmtP(last.c); $("lastPx").className = last.c >= last.o ? "bull" : "bear";
+    $("chg").textContent = (ch >= 0 ? "+" : "") + ch.toFixed(2) + "% (24h)"; $("chg").className = ch >= 0 ? "bull" : "bear";
+  }
+
+  /* ----- tương tác biểu đồ ----- */
+  var cv = $("chart"), ptrs = {}, lastDist = 0;
+  function clampView() { var n = C.length; V.bars = Math.max(20, Math.min(400, V.bars)); V.start = Math.max(-V.bars * 0.4, Math.min(n + 60 - V.bars * 0.6, V.start)); }
+  function idxAt(px) { return G ? Math.round(px / G.bw + V.start - 0.5) : -1; }
+  cv.addEventListener("pointerdown", function (e) {
+    cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    var r = cv.getBoundingClientRect(); hover = idxAt(e.clientX - r.left); draw();
+  });
+  cv.addEventListener("pointermove", function (e) {
+    var r = cv.getBoundingClientRect(), ids = Object.keys(ptrs);
+    if (!ptrs[e.pointerId]) { hover = idxAt(e.clientX - r.left); draw(); return; }
+    if (ids.length === 1 && G) { V.start -= (e.clientX - ptrs[e.pointerId].x) / G.bw; ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; hover = idxAt(e.clientX - r.left); clampView(); draw(); }
+    else if (ids.length === 2) {
+      ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], dist = Math.abs(a.x - b.x);
+      if (lastDist && dist > 10) { V.bars = V.bars * lastDist / dist; clampView(); draw(); }
+      lastDist = dist;
+    }
+  });
+  function up(e) { delete ptrs[e.pointerId]; lastDist = 0; }
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") { hover = -1; draw(); } });
+  cv.addEventListener("wheel", function (e) {
+    if (!G) return; e.preventDefault();
+    var r = cv.getBoundingClientRect(), px = e.clientX - r.left, anchor = px / G.bw + V.start, f = e.deltaY > 0 ? 1.12 : 0.89;
+    V.bars *= f; V.start = anchor - px / (G.pw / V.bars); clampView(); draw();
+  }, { passive: false });
+  if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe($("v-chart")); else window.addEventListener("resize", draw);
+
+  /* ----- panel ----- */
+  function dist(p) { var pr = C[C.length - 1].c; return (p - pr) / pr * 100; }
+  function sgn(v) { return (v >= 0 ? "+" : "") + v.toFixed(2) + "%"; }
+  function renderBias() {
+    var b = A.bias, h = "<div class=\"badge " + b.cls + "\">" + b.label + "</div><ul>";
+    b.why.forEach(function (w) { h += "<li>" + w + "</li>"; });
+    h += "</ul>";
+    if (!b.plans.length) h += "<div class=\"muted\">Chưa đủ vùng và mục tiêu thanh khoản để dựng kịch bản rõ ràng. Thử đổi khung thời gian hoặc độ nhạy.</div>";
+    b.plans.forEach(function (p) { h += "<div class=\"sc " + p.side + "\">" + p.t + "</div>"; });
+    $("bias").innerHTML = h;
+    var chip = $("biasChip"); chip.textContent = b.label; chip.className = "bchip " + b.cls;
+  }
+  function renderLevels() {
+    var p = C[C.length - 1].c, rows = [];
+    A.obs.forEach(function (o) { if (o.broken === null) rows.push({ t: (o.dir === 1 ? "OB tăng" : "OB giảm") + (o.touched !== null ? " · đã test" : ""), a: o.bottom, b: o.top, c: o.dir === 1 ? "bull" : "bear" }); });
+    A.fvgs.forEach(function (g) { if (g.filled === null) rows.push({ t: (g.dir === 1 ? "FVG tăng" : "FVG giảm") + (g.touched !== null ? " · lấp 1 phần" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
+    A.liq.eq.forEach(function (q) { if (q.swept === null) rows.push({ t: q.type, a: q.p, b: q.p, c: q.type === "EQH" ? "bear" : "bull" }); });
+    A.levels.forEach(function (l) { rows.push({ t: l.n, a: l.p, b: l.p, c: "neu" }); });
+    if (A.pd) { rows.push({ t: "OTE " + A.pd.ote.side, a: A.pd.ote.a, b: A.pd.ote.b, c: "neu" }); rows.push({ t: "Equilibrium", a: A.pd.eq, b: A.pd.eq, c: "neu" }); }
+    rows.forEach(function (r) { var mid = (r.a + r.b) / 2; r.d = dist(mid); if (p >= r.a && p <= r.b) r.d = 0; });
+    rows.sort(function (x, y) { return Math.abs(x.d) - Math.abs(y.d); });
+    var h = "<table><tr><th>Loại</th><th>Giá</th><th>Cách giá</th></tr>";
+    rows.slice(0, 20).forEach(function (r) {
+      h += "<tr><td class=\"" + r.c + "\">" + r.t + "</td><td>" + (r.a === r.b ? fmtP(r.a) : fmtP(r.a) + " – " + fmtP(r.b)) + "</td><td>" + (r.d === 0 ? "đang trong vùng" : sgn(r.d)) + "</td></tr>";
+    });
+    $("levels").innerHTML = h + "</table>";
+  }
+  function renderTime() {
+    var now = ny(Date.now()), kz = kzOf(now.min), sb = sbOf(now.min), next = null, i;
+    var cand = KZ.concat().sort(function (a, b) { return ((a.a - now.min + 1440) % 1440) - ((b.a - now.min + 1440) % 1440); });
+    for (i = 0; i < cand.length; i++) { if (cand[i] !== kz) { next = cand[i]; break; } }
+    var wait = next ? (next.a - now.min + 1440) % 1440 : 0;
+    var h = "<div class=\"kv\">";
+    h += "<span>Giờ New York</span><span>" + pad2(now.h) + ":" + pad2(now.mi) + " (" + WD[now.wd] + ")</span>";
+    h += "<span>Killzone</span><span class=\"" + (kz ? "bull" : "muted") + "\">" + (kz ? kz.n + (sb ? " · " + sb.n : "") : "Ngoài killzone") + "</span>";
+    if (next) h += "<span>Tiếp theo</span><span>" + next.n + " sau " + Math.floor(wait / 60) + "g" + pad2(wait % 60) + "</span>";
+    A.sessions.forEach(function (s) { h += "<span>" + s.n + " range</span><span>" + fmtP(s.lo) + " – " + fmtP(s.hi) + (s.live ? " (đang chạy)" : "") + "</span>"; });
+    var mo = null; A.levels.forEach(function (l) { if (l.n === "Midnight Open") mo = l; });
+    if (mo) h += "<span>Midnight Open</span><span>" + fmtP(mo.p) + " · giá " + (C[C.length - 1].c > mo.p ? "trên" : "dưới") + " (" + sgn(-dist(mo.p)) + ")</span>";
+    h += "</div><div class=\"muted\" style=\"line-height:1.5\">Killzone (giờ NY): Asia 20:00–00:00 · London 02:00–05:00 · NY AM 07:00–10:00 · London Close 10:00–12:00 · NY PM 13:30–16:00. Silver Bullet: 03–04, 10–11, 14–15.</div>";
+    if (tfms > 36e5) h += "<div class=\"muted\">Khung " + S.tf + " quá lớn để tô killzone và phiên, hãy chọn khung 1H trở xuống.</div>";
+    $("time").innerHTML = h;
+  }
+  function renderCycle() {
+    var c = A.cyc;
+    function hrs(b) { return b == null ? "–" : b.toFixed(1) + " nến (≈ " + (b * tfms / 36e5 >= 48 ? (b * tfms / 864e5).toFixed(1) + " ngày" : (b * tfms / 36e5).toFixed(1) + " giờ") + ")"; }
+    function when(j) { if (j == null) return "–"; var t = tOf(j); return fmtNY(t) + " NY · " + fmtLocal(t) + " giờ máy"; }
+    var h = "<div class=\"kv\"><span>Đỉnh→đỉnh</span><span>" + hrs(c.mH) + "</span><span>Đáy→đáy</span><span>" + hrs(c.mL) + "</span><span>Nửa sóng</span><span>" + hrs(c.mA) + "</span>" +
+      "<span>Đỉnh kế tiếp</span><span class=\"bear\">" + when(c.nextH) + "</span><span>Đáy kế tiếp</span><span class=\"bull\">" + when(c.nextL) + "</span><span>Swing kế tiếp</span><span style=\"color:var(--cyan)\">" + when(c.nextA) + "</span></div>";
+    if (c.anchor) h += "<div class=\"muted\" style=\"line-height:1.5\">Vạch F1, F2, F3, F5, F8… trên biểu đồ là vùng thời gian Fibonacci tính từ swing " + (c.anchor.type === "H" ? "đỉnh" : "đáy") + " gần nhất (nến " + fmtNY(tOf(c.anchor.i)) + " NY). Thời điểm ước tính chỉ là trung vị khoảng cách các swing trước đó, dùng làm vùng chú ý chứ không phải dự báo chắc chắn.</div>";
+    $("cycle").innerHTML = h;
+  }
+  function bars(arr, nowIdx, cls, labels) {
+    var m = Math.max.apply(null, arr) || 1, h = "<div class=\"hist " + cls + "\">";
+    arr.forEach(function (v, i) { h += "<i class=\"" + (i === nowIdx ? "now" : "") + "\" style=\"height:" + Math.max(3, v / m * 100) + "%\" title=\"" + labels[i] + ": " + v + "\"></i>"; });
+    h += "</div><div class=\"axis\">";
+    var step = arr.length > 10 ? 3 : 1;
+    labels.forEach(function (l, i) { if (i % step === 0) h += "<span>" + l + "</span>"; });
+    return h + "</div>";
+  }
+  function renderHour(s) {
+    var lab = [], i; for (i = 0; i < 24; i++) lab.push(pad2(i));
+    var now = ny(Date.now()).h, top = function (a) { var b = a.map(function (v, i) { return [v, i]; }).sort(function (x, y) { return y[0] - x[0]; }); return b.slice(0, 3).map(function (x) { return pad2(x[1]) + "h"; }).join(", "); };
+    $("hourstat").innerHTML = "<div class=\"muted\">Mẫu " + s.days + " ngày · cột vàng là giờ hiện tại</div><div class=\"muted\" style=\"margin-top:4px\">ĐỈNH ngày hay hình thành lúc: <b style=\"color:var(--fg)\">" + top(s.H) + "</b></div>" + bars(s.H, now, "hi", lab) +
+      "<div class=\"muted\" style=\"margin-top:6px\">ĐÁY ngày hay hình thành lúc: <b style=\"color:var(--fg)\">" + top(s.L) + "</b></div>" + bars(s.L, now, "lo", lab);
+  }
+  function renderWeek(s) {
+    var lab = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+    var tn = function (a) { var m = Math.max.apply(null, a), i = a.indexOf(m); return lab[i] + " (" + m + "/" + s.weeks + " tuần)"; };
+    $("wkstat").innerHTML = "<div class=\"muted\">Đỉnh tuần hay rơi vào: <b style=\"color:var(--fg)\">" + tn(s.H) + "</b></div>" + bars(s.H, -1, "hi", lab) +
+      "<div class=\"muted\" style=\"margin-top:6px\">Đáy tuần hay rơi vào: <b style=\"color:var(--fg)\">" + tn(s.L) + "</b></div>" + bars(s.L, -1, "lo", lab);
+  }
+  function renderAll() { if (!A) return; renderHead(); renderBias(); renderLevels(); renderTime(); renderCycle(); }
+
+  loadSymbols(); load();
+})();
+</script>
+<script>
+/* PWA: đăng ký service worker và nút cài app */
+(function () {
+  if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  }
+  var ev = null, b = document.getElementById("install");
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); ev = e; if (b) b.hidden = false; });
+  if (b) b.addEventListener("click", function () { if (!ev) return; ev.prompt(); ev.userChoice.then(function () { ev = null; b.hidden = true; }); });
+  window.addEventListener("appinstalled", function () { if (b) b.hidden = true; });
+})();
+</script>
+</body>
+</html>
