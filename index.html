@@ -696,7 +696,7 @@ function buildPlan(c, A, tf) {
     A.inv.forEach(function (g) { if (g.dir === d && g.dead === null && g.touched === null && g.sc >= 2) cand.push({ k: g.kind === "BRK" ? "Breaker" : "IFVG", top: g.top, bottom: g.bottom, sc: g.sc, base: 2 }); });
     var ote = null;
     if (A.pd && ((d === 1 && A.pd.ote.side === "mua") || (d === -1 && A.pd.ote.side === "bán"))) { ote = { k: "OTE", top: A.pd.ote.b, bottom: A.pd.ote.a, sc: 1, base: 1 }; cand.push(ote); }
-    cand = cand.filter(function (z) { return d === 1 ? (z.bottom < p && z.top <= p + 0.3 * atr && p - z.top <= 10 * atr) : (z.top > p && z.bottom >= p - 0.3 * atr && z.bottom - p <= 10 * atr); });
+    cand = cand.filter(function (z) { return d === 1 ? (z.bottom < p && z.top <= p + 0.3 * atr && p - z.top <= 3 * atr) : (z.top > p && z.bottom >= p - 0.3 * atr && z.bottom - p <= 3 * atr); });
     if (!cand.length) return null;
     var best = null;
     cand.forEach(function (z) {
@@ -718,9 +718,10 @@ function buildPlan(c, A, tf) {
       if (of && of.has) { if (of.score * d > 0) { pts += Math.min(2, of.score * d); why.push("Order flow ủng hộ (delta/CVD/hấp thụ)"); } else if (of.score * d < 0) { pts -= 1; why.push("Order flow đang ngược hướng"); } }
       if (kz) { pts += 1; why.push("Đang trong " + (kz.n || "killzone")); }
       var dist = d === 1 ? p - mid : mid - p;
+      pts -= 0.3 * Math.max(0, Math.abs(dist) / atr - 1);          /* càng xa giá càng ít khả năng khớp */
       if (!best || pts > best.pts || (pts === best.pts && Math.abs(dist) < Math.abs(best.dist))) best = { z: z, zz: zz, pts: pts, why: why, dist: dist, mid: (zz.top + zz.bottom) / 2 };
     });
-    var entry = best.mid, zone = best.zz, k = best.z.k;
+    var zone = best.zz, k = best.z.k, entry = d === 1 ? zone.top - 0.15 * (zone.top - zone.bottom) : zone.bottom + 0.15 * (zone.top - zone.bottom);   /* entry nằm sát mép gần giá (sâu 15% vùng) để dễ khớp */
     /* ----- SL ----- */
     var swl = A.swings.filter(function (s) { return s.type === (d === 1 ? "L" : "H"); }).map(function (s) { return s.p; });
     var sl1 = d === 1 ? zone.bottom - 0.25 * atr : zone.top + 0.25 * atr;
@@ -732,7 +733,8 @@ function buildPlan(c, A, tf) {
     var R = Math.abs(entry - sl2);
     /* ----- TP: các hồ thanh khoản / mức giá phía trước ----- */
     var pool = [];
-    function add(pr, lb) { if (d === 1 ? pr > entry + 0.3 * atr : pr < entry - 0.3 * atr) pool.push({ p: pr, l: lb }); }
+    var ref = d === 1 ? Math.max(entry, p) : Math.min(entry, p);   /* TP phải nằm xa hơn cả giá hiện tại lẫn entry */
+    function add(pr, lb) { if (d === 1 ? pr > ref + 0.3 * atr : pr < ref - 0.3 * atr) pool.push({ p: pr, l: lb }); }
     A.liq.eq.forEach(function (q) { if (q.swept === null && (d === 1 ? q.type === "EQH" : q.type === "EQL")) add(q.p, q.type); });
     (d === 1 ? A.liq.bsl : A.liq.ssl).forEach(function (s) { add(s.p, d === 1 ? "BSL (đỉnh chưa quét)" : "SSL (đáy chưa quét)"); });
     A.levels.forEach(function (l) { if (d === 1 ? /H$/.test(l.n) : /L$/.test(l.n)) add(l.p, l.n); });
@@ -746,9 +748,9 @@ function buildPlan(c, A, tf) {
     function rw(t) { return Math.abs(t.p - entry) / R; }
     var tps = [], need = [0.9, 1.8, 3];
     need.forEach(function (nd, idx) {
-      var prev = tps.length ? tps[tps.length - 1].p : entry, f = null, q;
+      var prev = tps.length ? tps[tps.length - 1].p : ref, f = null, q;
       for (q = 0; q < merged.length; q++) { var m = merged[q]; if ((d === 1 ? m.p > prev + 0.3 * atr : m.p < prev - 0.3 * atr) && rw(m) >= nd) { f = m; break; } }
-      if (!f) { var base = idx === 0 ? 1 : idx === 1 ? 2 : 3.5; f = { p: d === 1 ? entry + base * R : entry - base * R, l: "Theo RR " + base + "R (không có mức giá rõ)" }; if (tps.length && (d === 1 ? f.p <= prev : f.p >= prev)) f.p = d === 1 ? prev + R : prev - R; }
+      if (!f) { var base = idx === 0 ? 1 : idx === 1 ? 2 : 3.5; f = { p: d === 1 ? Math.max(entry + base * R, ref + 0.5 * atr) : Math.min(entry - base * R, ref - 0.5 * atr), l: "Theo RR " + base + "R (không có mức giá rõ)" }; if (tps.length && (d === 1 ? f.p <= prev : f.p >= prev)) f.p = d === 1 ? prev + R : prev - R; }
       tps.push(f);
     });
     var inZone = p <= zone.top + 0.05 * atr && p >= zone.bottom - 0.05 * atr;
