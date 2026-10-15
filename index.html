@@ -73,8 +73,8 @@ main { flex: 1 1 0; min-height: 0; position: relative; }
 .fab.sm.on { color: var(--cyan); border-color: rgba(76,215,240,.5); }
 
 /* thanh tab nổi */
-.tabs { flex: none; margin: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 10px); padding: 6px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; background: rgba(19,28,44,.92); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
-.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 18px; color: var(--dim); font-size: 9.5px; letter-spacing: -.02em; font-weight: 700; transition: background .18s, color .18s; }
+.tabs { flex: none; margin: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 10px); padding: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: rgba(19,28,44,.92); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 18px; color: var(--dim); font-size: 11px; position: relative; font-weight: 700; transition: background .18s, color .18s; }
 .tab svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { background: rgba(76,215,240,.13); color: var(--cyan); }
 
@@ -198,6 +198,12 @@ a.na { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-
 .dc { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 46px; border-radius: 10px; background: rgba(255,255,255,.03); font-weight: 700; padding: 3px 0; } .dc small { font-size: 9px; color: var(--dim); } .dc span { font-size: 10px; font-family: var(--mono); font-weight: 800; }
 .dc.up { background: rgba(46,229,157,var(--a)); color: #eafff5; } .dc.dn { background: rgba(255,92,112,var(--a)); color: #fff0f2; } .dc.up small, .dc.dn small { color: rgba(255,255,255,.75); }
 table.tb { width: 100%; border-collapse: collapse; font-size: 11px; } table.tb th { text-align: left; color: var(--dim); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); } table.tb td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; } table.tb tr.hl td { background: rgba(76,215,240,.08); font-weight: 700; } table.tb td small { color: var(--dim); }
+.kdot { position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: var(--bear, #ff5c70); border: 2px solid #131c2c; box-sizing: content-box; }
+[data-sub][hidden], .kdot[hidden] { display: none !important; }
+.subbar { position: sticky; top: -4px; z-index: 5; display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 8px; margin: 0 -2px; background: linear-gradient(180deg, var(--bg, #0b1220) 75%, transparent); scrollbar-width: none; flex: none; }
+.subbar::-webkit-scrollbar { display: none; }
+.subbar button { flex: none; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+.subbar button.on { color: var(--cyan); background: rgba(76,215,240,.14); border-color: var(--cyan); }
 </style>
 </head>
 <body>
@@ -226,29 +232,29 @@ table.tb { width: 100%; border-collapse: collapse; font-size: 11px; } table.tb t
       </div>
     </section>
 
-    <section class="view scroll" id="v-bias">
-      <div id="bias">Đang chờ dữ liệu…</div>
-      <div class="warn">Công cụ hỗ trợ phân tích kỹ thuật. Các mức và nhận định do thuật toán tự đánh dấu theo định nghĩa phổ biến của SMC/ICT, có thể khác cách bạn vẽ tay. Đây không phải lời khuyên đầu tư. Quản lý vốn và tự chịu trách nhiệm với lệnh của mình.</div>
-    </section>
-
     <section class="view scroll" id="v-news"><div class="card" id="nsum"></div><div class="card" id="nlist"></div></section>
-
-    <section class="view scroll" id="v-plan"><div class="card" id="plan"></div><div class="card" id="jrn"></div><div class="card" id="vpc"></div><div class="card" id="ofc"></div></section>
-    <section class="view scroll" id="v-bt"><div class="card" id="btc"></div><div class="card" id="calc"></div><div class="card" id="indc"></div></section>
-    <section class="view scroll" id="v-time">
-      <div class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div>
-      <div class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div>
-      <div class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div>
-      <div class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div>
+    <section class="view scroll" id="v-keo">
+      <div class="subbar" id="sb-keo"></div>
+      <div data-sub="plan" class="card" id="plan"></div>
+      <div data-sub="bias"><div id="bias">Đang chờ dữ liệu…</div>
+        <div class="warn">Công cụ hỗ trợ phân tích kỹ thuật. Các mức và nhận định do thuật toán tự đánh dấu theo định nghĩa phổ biến của SMC/ICT, có thể khác cách bạn vẽ tay. Đây không phải lời khuyên đầu tư. Quản lý vốn và tự chịu trách nhiệm với lệnh của mình.</div></div>
+      <div data-sub="vp" class="card" id="vpc"></div><div data-sub="vp" class="card" id="ofc"></div>
+      <div data-sub="jrn" class="card" id="jrn"></div>
+      <div data-sub="time" class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div>
+      <div data-sub="time" class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div>
+      <div data-sub="time" class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div>
+      <div data-sub="time" class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div>
+    </section>
+    <section class="view scroll" id="v-bt">
+      <div class="subbar" id="sb-bt"></div>
+      <div data-sub="cfg" class="card" id="btc"></div><div data-sub="cal" class="card" id="calc"></div><div data-sub="ind" class="card" id="indc"></div>
     </section>
   </main>
 
   <nav class="tabs" id="tabs">
     <button class="tab on" data-v="chart"><svg viewBox="0 0 24 24"><path d="M6 4v3M6 17v3M6 7h0M4 7h4v10H4zM18 3v4M18 15v6M16 7h4v8h-4zM12 9v2M12 19v2M10 11h4v8h-4z"/></svg>Biểu đồ</button>
-    <button class="tab" data-v="bias"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Nhận định</button>
-    <button class="tab" data-v="plan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Kèo</button>
+    <button class="tab" data-v="keo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Kèo<i class="kdot" id="kdot" hidden></i></button>
     <button class="tab" data-v="news"><svg viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7.5 9h6M7.5 12.5h6M7.5 16h3"/></svg>Tin tức</button>
-    <button class="tab" data-v="time"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5h4M17 3v4h4"/></svg>Thời gian</button>
     <button class="tab" data-v="bt"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/></svg>Backtest</button>
   </nav>
 </div>
@@ -946,15 +952,17 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-15.1";
+  var VER = "2026-10-15.2";
   var ST = lsGet("ictState", {});
   if (ST.tf && TFMS[ST.tf]) S.tf = ST.tf;
   if (ST.sym) $("sym").value = ST.sym;
   if (ST.lim) $("lim").value = ST.lim;
   if (ST.sw) $("swl").value = ST.sw;
   if (ST.rr) $("rrmin").value = ST.rr;
-  if (ST.tab && ["chart", "bias", "plan", "news", "time", "bt"].indexOf(ST.tab) >= 0) tab = ST.tab;
-  function saveState() { lsSet("ictState", { sym: $("sym").value || S.sym, tf: S.tf, lim: $("lim").value, sw: $("swl").value, rr: $("rrmin").value, tab: tab, lay: LAY, pk: pkQuote }); }
+  var GR = { keo: [["plan", "Kèo"], ["bias", "Nhận định"], ["vp", "VP/Flow"], ["jrn", "Nhật ký"], ["time", "Thời gian"]], bt: [["cfg", "Cấu hình"], ["cal", "Lịch"], ["ind", "Chỉ báo"]] }, SUB = ST.sub || { keo: "plan", bt: "cfg" };
+  if (ST.tab === "bias" || ST.tab === "plan" || ST.tab === "time") { SUB.keo = ST.tab; ST.tab = "keo"; }
+  if (["chart", "keo", "news", "bt"].indexOf(ST.tab) >= 0) tab = ST.tab;
+  function saveState() { lsSet("ictState", { sym: $("sym").value || S.sym, tf: S.tf, lim: $("lim").value, sw: $("swl").value, rr: $("rrmin").value, tab: tab, sub: SUB, lay: LAY, pk: pkQuote }); }
   if (window.innerWidth < 640) { LAY.vp = 0; LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
   if (ST.lay) Object.keys(ST.lay).forEach(function (k) { if (k in LAY) LAY[k] = ST.lay[k]; });
   var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", inv: "Đảo ngược (Breaker, IFVG)", tested: "Hiện cả vùng đã test", plan: "Đường Entry / SL / TP", vp: "Volume Profile (POC, VAH, VAL)", weak: "Hiện cả vùng yếu (★)", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
@@ -1116,14 +1124,23 @@ function analyze(c, tf, L) {
   $("sym").addEventListener("keydown", function (e) { if (e.key === "Enter") { closeSheet(); load(); } });
   $("reset").addEventListener("click", function () { hover = -1; hy = -1; resetView(); draw(); });
   $("autoBtn").addEventListener("click", function () { V.auto = true; syncAuto(); draw(); });
-  $("biasChip").addEventListener("click", function () { setTab("bias"); });
+  $("biasChip").addEventListener("click", function () { setTab("keo", "bias"); });
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.addEventListener("click", function () { setTab(b.dataset.v); }); });
-  function setTab(v) {
-    tab = v; saveState();
+  function setTab(v, sub) {
+    tab = v; if (sub && GR[v]) SUB[v] = sub; saveState();
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) { b.className = "tab" + (b.dataset.v === v ? " on" : ""); });
-    ["chart", "bias", "plan", "news", "time", "bt"].forEach(function (k) { var el = $("v-" + k); el.className = "view" + (k !== "chart" ? " scroll" : "") + (k === v ? " on" : ""); });
+    ["chart", "keo", "news", "bt"].forEach(function (k) { var el = $("v-" + k); el.className = "view" + (k !== "chart" ? " scroll" : "") + (k === v ? " on" : ""); });
+    if (GR[v]) applySub(v);
     if (v === "chart") requestAnimationFrame(draw);
-    if (v === "news") fetchNews(false); if (v === "bt") renderBT();
+    if (v === "news") fetchNews(false);
+    if (v === "bt") renderBT();
+  }
+  function applySub(g) {
+    var cur = SUB[g], bar = $("sb-" + g);
+    bar.innerHTML = GR[g].map(function (x) { return "<button data-s=\"" + x[0] + "\" class=\"" + (x[0] === cur ? "on" : "") + "\">" + x[1] + "</button>"; }).join("");
+    Array.prototype.forEach.call(bar.querySelectorAll("button"), function (b) { b.addEventListener("click", function () { SUB[g] = b.dataset.s; saveState(); applySub(g); $("v-" + g).scrollTop = 0; }); });
+    Array.prototype.forEach.call($("v-" + g).querySelectorAll("[data-sub]"), function (el) { el.hidden = el.dataset.sub !== cur; });
+    if (g === "keo" && cur === "plan") $("kdot").hidden = true;
   }
 
   async function load() {
@@ -1562,6 +1579,7 @@ function analyze(c, tf, L) {
       lsSet("ictPlan:" + plKey(), PLK);
       var msg = PLK.end ? PLEND[PLK.end] : PLK.act && was && was.charAt(0) === "w" ? "Kèo " + (PLK.dir === 1 ? "MUA" : "BÁN") + " đã khớp Entry" : "Kèo " + (PLK.dir === 1 ? "MUA" : "BÁN") + ": TP đạt " + PLK.tpHit + "/3";
       toast(msg); buzz();
+      if (!(tab === "keo" && SUB.keo === "plan")) $("kdot").hidden = false;
       renderPlan(); draw();
     }
   }
