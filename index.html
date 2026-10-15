@@ -204,6 +204,7 @@ table.tb { width: 100%; border-collapse: collapse; font-size: 11px; } table.tb t
 .subbar::-webkit-scrollbar { display: none; }
 .subbar button { flex: none; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); }
 .subbar button.on { color: var(--cyan); background: rgba(76,215,240,.14); border-color: var(--cyan); }
+.fchips { display: flex; gap: 6px; flex-wrap: wrap; } .fchips button { padding: 9px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); } .fchips button.on { color: var(--cyan); border-color: var(--cyan); background: rgba(76,215,240,.14); } .dm { font-weight: 400; color: var(--dim); font-size: 11px; } tr.fcmb { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -796,7 +797,11 @@ function buildPlan(c, A, tf) {
     return { dir: d, kind: k, top: zone.top, bottom: zone.bottom, entry: entry, sl: [sl1, sl2, sl3], tp: tps, R: R, pts: best.pts - (tps[0].fb ? 1 : 0), ctr: best.ctr, fb: !!tps[0].fb, conf: Math.max(0, Math.min(100, Math.round((best.pts - (tps[0].fb ? 1 : 0)) / 14 * 100))), why: best.why, inZone: inZone, dist: Math.abs(p - entry), distAtr: Math.abs(p - entry) / atr };
   }
   var L = mk(1), S = mk(-1), pick = null;
-  var ok = function (x) { return x && x.pts >= PLAN_CFG.min; };
+  if (PLAN_CFG.f.length && n > 60) {
+    var st0 = indState(indArrays(c), n - 1, of && of.has ? of.score : 0);
+    [L, S].forEach(function (x) { if (x) x.blk = PLAN_CFG.f.filter(function (k) { return st0[k] !== x.dir; }); });
+  }
+  var ok = function (x) { return x && x.pts >= PLAN_CFG.min && !(x.blk && x.blk.length); };
   if (ok(L) && (!ok(S) || L.pts >= S.pts)) pick = L; else if (ok(S)) pick = S;
   return { long: L, short: S, pick: pick, alt: pick === L ? S : L };
 }
@@ -804,7 +809,7 @@ function buildPlan(c, A, tf) {
 
 /* ===== Chỉ báo bổ sung + cấu hình kèo + backtest ===== */
 var BT_MODES = [[2, 3, 4.5], [2, 3.5, 5.5], [2.5, 4.5, 7]];
-var PLAN_CFG = { min: 5, hard: 0, tp: [2, 3.5, 5.5], sl: 1, rr: 2 };
+var PLAN_CFG = { min: 5, hard: 0, tp: [2, 3.5, 5.5], sl: 1, rr: 2, f: [] };
 function emaArr(c, len) { var k = 2 / (len + 1), e = [], v = c[0].c, i; for (i = 0; i < c.length; i++) { v = i === 0 ? c[0].c : c[i].c * k + v * (1 - k); e.push(v); } return e; }
 function rsiLast(c, len) {
   var n = c.length; if (n < len + 2) return 50;
@@ -888,9 +893,9 @@ function indTrades(c, sigs, si, rr) {
   return out;
 }
 function btPoint(c, tf, L, i, IA) {
-  var sub = c.slice(0, i), A = analyze(sub, tf, L), out = [], oldTp = PLAN_CFG.tp, oldHard = PLAN_CFG.hard, oldSl = PLAN_CFG.sl;
+  var sub = c.slice(0, i), A = analyze(sub, tf, L), out = [], oldTp = PLAN_CFG.tp, oldHard = PLAN_CFG.hard, oldSl = PLAN_CFG.sl, oldF = PLAN_CFG.f;
   var ofs = A.of && A.of.has ? A.of.score : 0, st = IA ? indState(IA, i - 1, ofs) : null;
-  PLAN_CFG.hard = 0;
+  PLAN_CFG.hard = 0; PLAN_CFG.f = [];
   BT_MODES.forEach(function (m, mi) {
     [1, 2].forEach(function (si) {
       PLAN_CFG.tp = m; PLAN_CFG.sl = si;
@@ -900,14 +905,15 @@ function btPoint(c, tf, L, i, IA) {
       out.push({ i: i, mode: mi * 2 + (si - 1), pts: best.pts, ctr: !!best.ctr, dir: best.dir, st: st, r: simPlan(best, c, i, si) });
     });
   });
-  PLAN_CFG.tp = oldTp; PLAN_CFG.hard = oldHard; PLAN_CFG.sl = oldSl;
+  PLAN_CFG.tp = oldTp; PLAN_CFG.hard = oldHard; PLAN_CFG.sl = oldSl; PLAN_CFG.f = oldF;
   return { tr: out, of: ofs, has: !!(A.of && A.of.has) };
 }
 function listStats(l) { var n = l.length, w = 0, sm = 0; l.forEach(function (t) { if (t.tp > 0) w++; sm += t.R; }); return { n: n, win: n ? w / n : 0, exp: n ? sm / n : 0, sum: sm }; }
-function btAggregate(trades, min, hard, mode) {
+function btAggregate(trades, min, hard, mode, f) {
   var arr = trades.filter(function (t) { return t.mode === mode; }).sort(function (a, b) { return a.i - b.i; }), busy = 0, tot = 0, fill = 0, w = 0, l = 0, sumR = 0, nR = 0, list = [];
   arr.forEach(function (t) {
     if (t.i < busy || t.pts < min || (hard && t.ctr)) return;
+    if (f && f.length && f.some(function (k) { return !t.st || t.st[k] !== t.dir; })) return;
     busy = t.r.end + 1; tot++;
     if (!t.r.fill) return;
     fill++;
@@ -952,7 +958,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-15.2";
+  var VER = "2026-10-15.3";
   var ST = lsGet("ictState", {});
   if (ST.tf && TFMS[ST.tf]) S.tf = ST.tf;
   if (ST.sym) $("sym").value = ST.sym;
@@ -1748,21 +1754,24 @@ function analyze(c, tf, L) {
 
   /* ---------- Backtest & tối ưu cấu hình kèo ---------- */
   var BT = { run: false, pct: 0, trades: null, ind: null, sym: "", tf: "", rows: null, calSrc: "bt", calM: null };
-  function cfgName(c) { return "Ngưỡng ≥" + c.min + " · " + (c.hard ? "lọc EMA" : "không lọc") + " · TP " + ["vừa", "xa", "rất xa"][c.mode] + " · SL" + (c.sl + 1); }
-  function curCfg() { return { min: PLAN_CFG.min, hard: PLAN_CFG.hard, mode: PLAN_CFG.mode === undefined ? 1 : PLAN_CFG.mode, sl: PLAN_CFG.sl }; }
-  function loadCfg() { var c = lsGet("ictCfg", null); if (c) { PLAN_CFG.min = c.min; PLAN_CFG.hard = c.hard; PLAN_CFG.tp = BT_MODES[c.mode]; PLAN_CFG.sl = c.sl; PLAN_CFG.mode = c.mode; } else PLAN_CFG.mode = 1; }
+  var FN = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow" };
+  function cfgName(c) { return "Ngưỡng ≥" + c.min + " · " + (c.hard ? "chỉ thuận xu hướng EMA" : "cả ngược xu hướng") + " · TP " + ["vừa", "xa", "rất xa"][c.mode] + " · SL" + (c.sl + 1) + (c.f && c.f.length ? " · +" + c.f.map(function (k) { return FN[k]; }).join("+") : ""); }
+  function curCfg() { return { min: PLAN_CFG.min, hard: PLAN_CFG.hard, mode: PLAN_CFG.mode === undefined ? 1 : PLAN_CFG.mode, sl: PLAN_CFG.sl, f: PLAN_CFG.f }; }
+  function loadCfg() { var c = lsGet("ictCfg", null); if (c) { PLAN_CFG.min = c.min; PLAN_CFG.hard = c.hard; PLAN_CFG.tp = BT_MODES[c.mode]; PLAN_CFG.sl = c.sl; PLAN_CFG.mode = c.mode; PLAN_CFG.f = c.f || []; } else PLAN_CFG.mode = 1; }
   loadCfg();
   function applyCfg(c) {
-    PLAN_CFG.min = c.min; PLAN_CFG.hard = c.hard; PLAN_CFG.tp = BT_MODES[c.mode]; PLAN_CFG.sl = c.sl; PLAN_CFG.mode = c.mode; lsSet("ictCfg", c);
+    PLAN_CFG.min = c.min; PLAN_CFG.hard = c.hard; PLAN_CFG.tp = BT_MODES[c.mode]; PLAN_CFG.sl = c.sl; PLAN_CFG.mode = c.mode; PLAN_CFG.f = c.f || []; lsSet("ictCfg", c);
     if (PLK && !PLK.act) { PLK = null; lsSet("ictPlan:" + plKey(), null); }
+    if (BT.trades) BT.rows = btGrid();
     if (C.length) { runAnalysis(); renderAll(); draw(); } else renderBT();
+    renderBT();
     toast("Đã áp dụng: " + cfgName(c));
   }
   function btKey() { return "ictBT:" + S.sym + ":" + S.tf; }
   function btGrid() {
     var rows = [], mn, hd, md, sl;
     for (mn = 3; mn <= 8; mn++) for (hd = 0; hd <= 1; hd++) for (md = 0; md < 3; md++) for (sl = 0; sl < 2; sl++) {
-      var a = btAggregate(BT.trades, mn, hd, md * 2 + sl); rows.push({ cfg: { min: mn, hard: hd, mode: md, sl: sl }, a: a });
+      var a = btAggregate(BT.trades, mn, hd, md * 2 + sl, PLAN_CFG.f); rows.push({ cfg: { min: mn, hard: hd, mode: md, sl: sl }, a: a });
     }
     return rows;
   }
@@ -1799,7 +1808,7 @@ function analyze(c, tf, L) {
   function calTrades() {
     if (BT.calSrc === "live") return lsGet("ictHist", []).filter(function (x) { return x.act && typeof x.R === "number"; }).map(function (x) { return { tEnd: x.endT || x.act, R: x.R, tp: x.R > 0 ? 1 : 0, dir: x.dir, sym: x.sym }; });
     if (!BT.trades) return [];
-    var cf = curCfg(); return btAggregate(BT.trades, cf.min, cf.hard, cf.mode * 2 + cf.sl).list;
+    var cf = curCfg(); return btAggregate(BT.trades, cf.min, cf.hard, cf.mode * 2 + cf.sl, cf.f).list;
   }
   function renderCal() {
     var el = $("calc"); if (!el) return;
@@ -1832,7 +1841,7 @@ function analyze(c, tf, L) {
     var el = $("indc"); if (!el) return;
     var h = "<h2>So sánh từng chỉ báo <span>cùng quy tắc SL/TP</span></h2>";
     if (!BT.ind || !BT.trades) { el.innerHTML = h + "<div class=\"note\">Chạy backtest để so sánh RSI, EMA, MACD, Order flow với kèo ICT.</div>"; return; }
-    var cf = curCfg(), ict = btAggregate(BT.trades, cf.min, cf.hard, cf.mode * 2 + cf.sl), il = ict.list;
+    var cf = curCfg(), ict = btAggregate(BT.trades, cf.min, cf.hard, cf.mode * 2 + cf.sl, cf.f), il = ict.list;
     var names = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow" }, desc = { rsi: "RSI(14) cắt lên 30 mua, cắt xuống 70 bán", ema: "EMA20 cắt EMA50", macd: "MACD(12,26,9) cắt đường tín hiệu", of: "Điểm order flow ≥ +2 mua, ≤ −2 bán" };
     function pill(v, pct) { return "<span class=\"pill " + (pct ? (v >= 0.5 ? "bull" : v < 0.4 ? "bear" : "neu") : (v > 0 ? "bull" : v < 0 ? "bear" : "neu")) + "\">" + (pct ? (v * 100).toFixed(0) + "%" : (v >= 0 ? "+" : "") + v.toFixed(2)) + "</span>"; }
     h += "<h3 class=\"sub\">1. Mỗi chỉ báo giao dịch riêng</h3><div class=\"note\">Vào lệnh ở nến sau tín hiệu, SL theo ATR, TP1 tối thiểu " + (PLAN_CFG.rr || 2) + "R, cùng cách chốt 1/3 và dời SL như kèo ICT.</div>";
@@ -1851,7 +1860,7 @@ function analyze(c, tf, L) {
       function cell(x) { return x.n ? (x.win * 100).toFixed(0) + "% · " + (x.exp >= 0 ? "+" : "") + x.exp.toFixed(2) + "R<small> (" + x.n + ")</small>" : "–"; }
       h += "<tr><td>" + names[k] + "</td><td>" + (il.length ? (ag.length / il.length * 100).toFixed(0) + "%" : "–") + "</td><td>" + cell(sa) + "</td><td>" + cell(sd) + "</td></tr>";
     });
-    h += "</table><div class=\"note\">Ô \"Khi khớp\" tốt hơn \"Khi không\" nhiều thì chỉ báo đó đáng dùng làm bộ lọc. Số trong ngoặc là số lệnh, ít hơn 10 thì chưa đáng tin.</div>";
+    h += "</table><div class=\"note\">Ô \"Khi khớp\" tốt hơn \"Khi không\" nhiều thì chỉ báo đó đáng dùng làm bộ lọc: qua mục Cấu hình, bấm chip chỉ báo đó để áp dụng vào kèo thật. Số trong ngoặc là số lệnh, ít hơn 10 thì chưa đáng tin.</div>";
     el.innerHTML = h;
   }
   function renderBT() {
@@ -1860,6 +1869,7 @@ function analyze(c, tf, L) {
     var h = "<h2>Backtest &amp; tối ưu kèo <span>" + C.length + " nến đang tải" + (BT.when ? " · chạy " + ago(BT.when) : "") + "</span></h2>";
     var cur = curCfg();
     h += "<div class=\"curcfg\"><small>CẤU HÌNH ĐANG DÙNG</small><b>" + cfgName(cur) + "</b><small>R:R tối thiểu 1:" + (PLAN_CFG.rr || 2) + "</small></div>";
+    h += "<h3 class=\"sub\">Bộ lọc chỉ báo <span class=\"dm\">chỉ nhận kèo khi chỉ báo cùng hướng</span></h3><div class=\"fchips\">" + ["rsi", "ema", "macd", "of"].map(function (k) { var on = PLAN_CFG.f.indexOf(k) >= 0; return "<button data-f=\"" + k + "\" class=\"" + (on ? "on" : "") + "\">" + (on ? "✓ " : "") + FN[k] + "</button>"; }).join("") + "</div><div class=\"note\">RSI: dưới 40 mới mua, trên 60 mới bán. EMA: EMA20 trên EMA50 mới mua. MACD: trên đường tín hiệu mới mua. Order flow: điểm dương mới mua. Bán thì ngược lại. Chọn nhiều chip là phải khớp tất cả. Bộ lọc áp dụng cho kèo trong app, backtest và lịch.</div>";
     if (BT.run) { h += "<div class=\"conf\"><i style=\"width:" + BT.pct + "%\"></i></div><div class=\"note\">Đang chạy lại lịch sử… " + BT.pct + "%</div>"; el.innerHTML = h; return; }
     if (BT.rows && BT.sym === S.sym && BT.tf === S.tf) {
       var okr = BT.rows.filter(function (r) { return r.a.n >= 8; });
@@ -1870,6 +1880,12 @@ function analyze(c, tf, L) {
       }
       var curRow = BT.rows.filter(function (r) { return same(r.cfg); })[0];
       if (curRow) h += row(curRow, "");
+      var combos = [], mk2;
+      for (mk2 = 0; mk2 < 16; mk2++) { var ff = ["rsi", "ema", "macd", "of"].filter(function (k, q) { return mk2 & (1 << q); }), aa = btAggregate(BT.trades, cur.min, cur.hard, cur.mode * 2 + cur.sl, ff); combos.push({ f: ff, a: aa }); }
+      var cok = combos.filter(function (x) { return x.a.n >= 5; }).sort(function (x, y) { return y.a.exp - x.a.exp; }).slice(0, 8);
+      h += "<h3 class=\"sub\">Thử từng bộ lọc <span class=\"dm\">với cấu hình hiện tại</span></h3><table class=\"tb\"><tr><th>Bộ lọc</th><th>Lệnh</th><th>Win</th><th>E (R)</th></tr>";
+      cok.forEach(function (x) { var on = x.f.join() === PLAN_CFG.f.slice().sort(function (a, b) { return ["rsi", "ema", "macd", "of"].indexOf(a) - ["rsi", "ema", "macd", "of"].indexOf(b); }).join(); h += "<tr class=\"fcmb" + (on ? " hl" : "") + "\" data-f=\"" + x.f.join(",") + "\"><td>" + (on ? "✓ " : "") + (x.f.length ? x.f.map(function (k) { return FN[k]; }).join(" + ") : "Không lọc") + "</td><td>" + x.a.n + "</td><td>" + (x.a.win * 100).toFixed(0) + "%</td><td>" + (x.a.exp >= 0 ? "+" : "") + x.a.exp.toFixed(2) + "</td></tr>"; });
+      h += "</table><div class=\"note\">Bấm một dòng để dùng bộ lọc đó. Chỉ hiện bộ lọc còn từ 5 lệnh trở lên. Lọc càng nhiều thì lệnh càng ít, dễ nhìn đẹp do may mắn.</div>";
       if (!okr.length) h += "<div class=\"sc\">Chưa đủ lệnh để kết luận (cần ít nhất 8 lệnh đã khớp và có kết quả). Tăng 'Số nến' lên 1000 hoặc đổi khung giờ lớn hơn.</div>";
       else {
         var byE = okr.slice().sort(function (x, y) { return y.a.exp - x.a.exp; }), byW = okr.filter(function (r) { return r.a.exp > 0; }).sort(function (x, y) { return y.a.win - x.a.win || y.a.n - x.a.n; });
@@ -1886,7 +1902,10 @@ function analyze(c, tf, L) {
     h += "<div class=\"note\">Giới hạn: quá khứ không đảm bảo tương lai; mẫu ít thì kết quả dao động mạnh; chưa tính phí, trượt giá và việc lệnh chờ có thể không được khớp dù giá chạm.</div>";
     el.innerHTML = h;
     var g = $("btgo"); if (g) g.addEventListener("click", startBT);
-    Array.prototype.forEach.call(el.querySelectorAll(".btrow"), function (b) { b.addEventListener("click", function () { var v = b.dataset.c.split(",").map(Number); applyCfg({ min: v[0], hard: v[1], mode: v[2], sl: v[3] }); }); });
+    function setF(f) { var c = curCfg(); c.f = f; applyCfg(c); if (BT.trades) BT.rows = btGrid(); renderBT(); }
+    Array.prototype.forEach.call(el.querySelectorAll(".fchips button"), function (b) { b.addEventListener("click", function () { var f = PLAN_CFG.f.slice(), k = b.dataset.f, ix = f.indexOf(k); if (ix >= 0) f.splice(ix, 1); else f.push(k); setF(f); }); });
+    Array.prototype.forEach.call(el.querySelectorAll(".fcmb"), function (r) { r.addEventListener("click", function () { setF(r.dataset.f ? r.dataset.f.split(",") : []); }); });
+    Array.prototype.forEach.call(el.querySelectorAll(".btrow"), function (b) { b.addEventListener("click", function () { var v = b.dataset.c.split(",").map(Number); applyCfg({ min: v[0], hard: v[1], mode: v[2], sl: v[3], f: PLAN_CFG.f.slice() }); }); });
     renderCal(); renderInd();
   }
 
@@ -1919,6 +1938,8 @@ function analyze(c, tf, L) {
     h += "<h2>Kế hoạch giao dịch <span>ICT + Volume Profile + Order Flow</span></h2>";
     if (LK) { h += block(LK, true); h += newsLine(LK.dir); var alt = (P.alt && (P.alt.dir !== LK.dir)) ? P.alt : (P.pick && P.pick.dir !== LK.dir ? P.pick : null); if (alt && alt.pts >= 3) h += "<details class=\"alt\"><summary>Xem kèo ngược hướng</summary>" + block(alt, false) + "</details>"; }
     else {
+      var bl = [P.long, P.short].filter(function (x) { return x && x.pts >= PLAN_CFG.min && x.blk && x.blk.length; })[0];
+      if (bl) h += "<div class=\"sc\">Có kèo " + (bl.dir === 1 ? "MUA" : "BÁN") + " đủ điểm nhưng bị bộ lọc chặn vì " + bl.blk.map(function (k) { return FN[k]; }).join(", ") + " chưa cùng hướng. Chỉnh bộ lọc ở Backtest → Cấu hình.</div>";
       h += "<div class=\"sc\">Chưa có kèo đủ điều kiện. Cần vùng OB/FVG uy tín (★★ trở lên), chưa bị test, nằm đúng phía so với giá và hội tụ đủ yếu tố. Đứng ngoài cũng là một quyết định.</div>";
       [P.long, P.short].forEach(function (x) { if (x && x.pts >= 3) h += "<details class=\"alt\"><summary>Xem kèo " + (x.dir === 1 ? "mua" : "bán") + " tham khảo (" + x.conf + "/100)</summary>" + block(x, false) + "</details>"; });
     }
