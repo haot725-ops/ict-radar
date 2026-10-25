@@ -1186,7 +1186,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-25.6";
+  var VER = "2026-10-25.8";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2106,6 +2106,7 @@ function analyze(c, tf, L) {
   /* ----- nhật ký theo dõi kèo chiến lược thật (forward test) ----- */
   var FW = { j: lsGet("ictFwd", []), auto: lsGet("ictFwdAuto", 0), run: false, last: 0 };
   (function () { if (!lsGet("ictFwdMig", 0)) { FW.j = FW.j.filter(function (q) { return q.man; }); lsSet("ictFwdMig", 1); lsSet("ictFwd", FW.j); } })();
+  (function () { if (!lsGet("ictFwdMig3", 0)) { FW.auto = 0; lsSet("ictFwdAuto", 0); FW.j = FW.j.filter(function (q) { return q.man; }); lsSet("ictFwd", FW.j); lsSet("ictFwdMig3", 1); } })();
   (function () { if (!lsGet("ictFwdMig2", 0)) { fwDedupe(); lsSet("ictFwdMig2", 1); lsSet("ictFwd", FW.j); } })();
   function fwSave() { FW.j = FW.j.slice(-400); lsSet("ictFwd", FW.j); }
   function fwId(o) { return o.sym + "|" + o.k + "|" + o.tf + "|" + o.t; }
@@ -2863,7 +2864,7 @@ function analyze(c, tf, L) {
         var G = sigGroups(fr), main = G.pass.concat(G.pend);
         if (SC.pk && SC.pk.run) h += "<div class=\"note\">Đang kiểm tra lịch sử từng mã… " + SC.pk.done + "/" + SC.pk.total + "</div>";
         else if (G.pass.length) h += "<div class=\"note\">Mỗi mã chỉ hiện chiến lược tốt nhất đang có kèo. " + G.pass.length + " mã qua kiểm tra (Đạt).</div>";
-        if (G.pass.length) h += "<button class=\"go ghost\" id=\"fwall\" style=\"min-height:40px\">+ Theo dõi tất cả " + G.pass.length + " mã Đạt</button>";
+        if (G.pass.length) h += "<button class=\"go ghost\" id=\"fwall\" style=\"min-height:40px\">+ Theo dõi tất cả</button>";
         h += main.map(sigCard).join("");
         if (!main.length && !(SC.pk && SC.pk.run)) h += "<div class=\"empty2\">Chưa mã nào có chiến lược qua kiểm tra. Xem mục bên dưới nếu muốn tự xét.</div>";
         if (G.low.length) h += "<details class=\"alt lowd\"" + (SC.lowOpen ? " open" : "") + "><summary>Chưa đáng tin / chưa kiểm tra (" + G.low.length + " mã)</summary>" + G.low.map(sigCard).join("") + "</details>";
