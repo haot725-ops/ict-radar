@@ -1186,7 +1186,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-25.10";
+  var VER = "2026-10-25.12";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1393,7 +1393,7 @@ function analyze(c, tf, L) {
     if (GR[v]) applySub(v);
     if (v === "chart") { syncSigChip(); requestAnimationFrame(draw); }
     if (v === "mkt") onSub("mkt");
-    if (v === "sig") { sigLoad(); renderSig(); setTimeout(function () { sigKRefresh(false); }, 300); }
+    if (v === "sig") { sigLoad(); renderSig(); sigAutoChk(); setTimeout(function () { sigKRefresh(false); }, 300); }
     if (v === "bt") { renderBT(); renderStrat(); }
   }
   function applySub(g) {
@@ -2129,7 +2129,7 @@ function analyze(c, tf, L) {
   }
   function fwAdd(o, man) {
     var id = fwId(o); if (!o.tf || fwHas(id) || fwBlocked(o)) return false;
-    var q = { man: man ? 1 : 0, id: id, sym: o.sym, k: o.k, tf: o.tf, tfm: o.tfm, dir: o.dir, t: o.t, atr: o.atr, sl: o.cf.sl, tps: o.tps, added: Date.now(), st: "run", R: 0, tp: 0, done: 0 };
+    var q = { man: man ? 1 : 0, id: id, sym: o.sym, k: o.k, tf: o.tf, tfm: o.tfm, dir: o.dir, t: o.t, atr: o.atr, sl: o.cf.sl, tps: o.tps, added: Date.now(), st: "run", R: 0, tp: 0, done: 0, src: o.src || "vol" };
     if (o.chk && o.chk.v) q.pk = { v: o.chk.v.t[0], e: +o.chk.v.s.exp.toFixed(2), n: o.chk.n, s: o.sel ? 1 : 0 };
     FW.j.push(q);
     return true;
@@ -2267,7 +2267,10 @@ function analyze(c, tf, L) {
       var gp = {}, gk = ["Đạt", "Quá ít lệnh", "Chưa đáng tin"];
       FW.j.forEach(function (q) { if (!q.done || q.st === "lost" || !q.pk) return; var g = gp[q.pk.v] || (gp[q.pk.v] = { n: 0, R: 0, w: 0 }); g.n++; g.R += q.R; if (q.R > 0) g.w++; });
       var gh = gk.filter(function (x) { return gp[x]; }).map(function (x) { var g = gp[x]; return "<span><b>" + x + "</b>: " + g.n + " lệnh · thắng " + Math.round(g.w / g.n * 100) + "% · " + (g.R >= 0 ? "+" : "") + g.R.toFixed(1) + "R (" + (g.R / g.n >= 0 ? "+" : "") + (g.R / g.n).toFixed(2) + "/lệnh)</span>"; });
-      if (gh.length) h += "<div class=\"stl\" style=\"flex-direction:column;align-items:flex-start;gap:4px\"><span class=\"muted\">App chấm trước vs kết quả thật:</span>" + gh.join("") + "</div>";
+      var gs = {};
+      FW.j.forEach(function (q) { if (!q.done || q.st === "lost") return; var sk = q.src === "mv" ? "Top tăng/giảm" : "Top vol", g = gs[sk] || (gs[sk] = { n: 0, R: 0, w: 0 }); g.n++; g.R += q.R; if (q.R > 0) g.w++; });
+      Object.keys(gs).forEach(function (sk) { var g = gs[sk]; gh.push("<span><b>" + sk + "</b>: " + g.n + " lệnh · thắng " + Math.round(g.w / g.n * 100) + "% · " + (g.R >= 0 ? "+" : "") + g.R.toFixed(1) + "R"+ "</span>"); });
+      if (gh.length) h += "<div class=\"stl\" style=\"flex-direction:column;align-items:flex-start;gap:4px\"><span class=\"muted\">Kết quả thật theo nhóm (nhãn app chấm / nguồn quét):</span>" + gh.join("") + "</div>";
       h += info("App ghi kèo ngay khi nó xuất hiện ở tab Tín hiệu, rồi tải nến mới để xem chạm SL hay TP. Kết quả chưa biết trước lúc ghi nên đáng tin hơn backtest. App chỉ cập nhật khi ông mở app.");
     }
     if (src === "sym") {
@@ -2505,7 +2508,8 @@ function analyze(c, tf, L) {
 
   /* ---------- 3 chiến lược M15: backtest, quét tín hiệu, thị trường ---------- */
   var SR = { run: false, pct: 0, msg: "", cancel: false, res: null, tf: "", en: lsGet("ictStratOn", { A: 1, B: 1, C: 1 }) };
-  var SC = { run: false, pct: 0, when: 0, fresh: [], recent: [], nsym: 0, tf: "", err: "", kinds: {} }, SC_BY = {}, SC_MAP = {}, SC_ID = 0, SIGLV = lsGet("ictSigLv", null);
+  var SC = { run: false, pct: 0, when: 0, fresh: [], recent: [], nsym: 0, tf: "", err: "", kinds: {} }, SC_BY = {}, SCS = lsGet("ictScanSrc", "vol"), SC_MAP = {}, SC_ID = 0, SIGLV = lsGet("ictSigLv", null);
+  function skey(tf) { return tf + (SCS === "mv" ? "~mv" : ""); }
   function scSave(tfk) {
     var c = SC_BY[tfk]; if (!c) return;
     var strip = function (a) { return a.map(function (o) { var x = {}; for (var k in o) if (k !== "chk" && k !== "alt" && k !== "sel") x[k] = o[k]; return x; }); };
@@ -2517,7 +2521,7 @@ function analyze(c, tf, L) {
     d.fresh.concat(d.recent).forEach(function (o) { o.id = ++SC_ID; if (step) o.age = Math.max(0, Math.round((last - o.t) / step)); SC_MAP[o.id] = o; });
     SC_BY[tfk] = d; return d;
   }
-  function sigLoad() { if (SC.tf === S.tf) return; var c = SC_BY[S.tf] || scLoad(S.tf); SC.tf = S.tf; if (c) { SC.fresh = c.fresh; SC.recent = c.recent; SC.when = c.when; SC.nsym = c.nsym; SC.kinds = c.kinds || {}; } else { SC.fresh = []; SC.recent = []; SC.when = 0; SC.nsym = 0; SC.kinds = {}; } }
+  function sigLoad() { var ky = skey(S.tf); if (SC.tf === ky) return; var c = SC_BY[ky] || scLoad(ky); SC.tf = ky; if (c) { SC.fresh = c.fresh; SC.recent = c.recent; SC.when = c.when; SC.nsym = c.nsym; SC.kinds = c.kinds || {}; } else { SC.fresh = []; SC.recent = []; SC.when = 0; SC.nsym = 0; SC.kinds = {}; } }
   var SKEY = ["A", "B", "C"], SCOL = { A: "#6188ff", B: "#f5b73b", C: "#9b7bff" };
   function stKey() { return "ictStrat:" + S.tf; }
   function stRestore() {
@@ -2613,6 +2617,12 @@ function analyze(c, tf, L) {
   }
   /* ----- quét tín hiệu nhiều mã ----- */
   function scanList() {
+    if (SCS === "mv") {
+      var lm = ALL.filter(function (x) { return x.q === "USDT" && x.v >= 3e6 && !STABLE_RE.test(x.b); });
+      var up = lm.slice().sort(function (x, y) { return y.ch - x.ch; }).slice(0, 12), dn = lm.slice().sort(function (x, y) { return x.ch - y.ch; }).slice(0, 12), seen = {}, r = [];
+      up.concat(dn).forEach(function (x) { if (!seen[x.s]) { seen[x.s] = 1; r.push(x.s); } });
+      if (r.length >= 8) return r;
+    }
     var stable = STABLE_RE, l = ALL.filter(function (x) { return x.q === "USDT" && !stable.test(x.b); }).map(function (x) { return x.s; }).slice(0, 20);
     if (l.length < 10) l = FALLBACK.slice();
     if (!isFx() && l.indexOf(S.sym) < 0) l.unshift(S.sym);
@@ -2620,8 +2630,13 @@ function analyze(c, tf, L) {
   }
   function startScan() {
     if (SC.run) return;
-    var syms = scanList(), tf0 = tfms, tfk = S.tf, bars24 = Math.round(864e5 / tf0), done = 0;
-    SC.run = true; SC.pct = 0; SC.err = ""; SC.tf = tfk; renderSig();
+    if (SCS === "mv" && Date.now() - MV.t > 60000 && !startScan.pre) {
+      startScan.pre = 1; SC.run = true; SC.pct = 0; renderSig();
+      var go2 = function () { MV.t = Date.now(); startScan.pre = 0; SC.run = false; startScan(); };
+      loadSymbols().then(go2, go2); return;
+    }
+    var syms = scanList(), key = skey(S.tf), tf0 = tfms, tfk = S.tf, bars24 = Math.round(864e5 / tf0), done = 0;
+    SC.run = true; SC.pct = 0; SC.err = ""; SC.tf = key; renderSig();
     var fresh = [], recent = [], fail = 0, ok = 0;
     var kinds = SKEY.filter(function (k) { return SR.en[k]; });
     (async function () {
@@ -2639,7 +2654,7 @@ function analyze(c, tf, L) {
               var cf = stCfg(k), tps = BT_MODES[cf.mode], sgs = stratSignals(arr, P, k, n - bars24 - 3, true), pos = 0;
               sgs.forEach(function (sg) {
                 var age = n - 1 - sg.i, oc = stratOutcome(arr, P, sg, cf.sl, tps), lab = SR.res && SR.res.rows[k] ? SR.res.rows[k].label : null, bst = SR.res && SR.res.rows[k] ? SR.res.rows[k].best : null;
-                var o = { id: ++SC_ID, sym: sym, k: k, tf: tfk, tfm: tf0, dir: sg.dir, t: arr[sg.i].t, age: age, cf: cf, tps: tps, atr: P.atr[sg.i], px: arr[n - 1].c, sigClose: arr[sg.i].c, oc: oc, lab: lab, bst: bst };
+                var o = { id: ++SC_ID, sym: sym, k: k, tf: tfk, tfm: tf0, src: SCS, dir: sg.dir, t: arr[sg.i].t, age: age, cf: cf, tps: tps, atr: P.atr[sg.i], px: arr[n - 1].c, sigClose: arr[sg.i].c, oc: oc, lab: lab, bst: bst };
                 var live = age <= 2 && (oc.st === "new" || oc.st === "run");
                 if (live) { var cur = arr[n - 1].c, e = arr[sg.i].c, R = P.atr[sg.i] * cf.sl, moved = (cur - e) * sg.dir / R; if (moved < 0.6 && moved > -0.9) fresh.push(o); else recent.push(o); }
                 else recent.push(o);
@@ -2652,7 +2667,7 @@ function analyze(c, tf, L) {
       await Promise.all([worker(), worker(), worker(), worker()]);
       fresh.sort(function (a, b) { return a.age - b.age; }); recent.sort(function (a, b) { return b.t - a.t; });
       var seen = {}, f2 = []; fresh.forEach(function (o) { var kk = o.sym + "|" + o.k; if (seen[kk]) recent.push(o); else { seen[kk] = 1; f2.push(o); } }); fresh = f2;
-      var prev = SC_BY[tfk] || scLoad(tfk);
+      var prev = SC_BY[key] || scLoad(key);
       if (prev) {
         var have = {}, rmap = {}; fresh.forEach(function (o) { have[o.sym + "|" + o.k + "|" + o.t] = 1; }); recent.forEach(function (o) { rmap[o.sym + "|" + o.k + "|" + o.t] = o; });
         prev.fresh.forEach(function (p) {
@@ -2662,7 +2677,7 @@ function analyze(c, tf, L) {
         });
       }
       fresh.sort(function (a, b) { return a.age - b.age; });
-      var kd = {}; kinds.forEach(function (k) { kd[k] = 1; }); SC_BY[tfk] = { fresh: fresh, recent: recent, when: Date.now(), nsym: ok, kinds: kd }; fresh.concat(recent).forEach(function (o) { SC_MAP[o.id] = o; }); scSave(tfk);
+      var kd = {}; kinds.forEach(function (k) { kd[k] = 1; }); SC_BY[key] = { fresh: fresh, recent: recent, when: Date.now(), nsym: ok, kinds: kd }; fresh.concat(recent).forEach(function (o) { SC_MAP[o.id] = o; }); scSave(key);
       if (FW.auto && fresh.length) { var nAdd = 0; fresh.forEach(function (o) { if (fwAdd(o, 0)) nAdd++; }); if (nAdd) { fwSave(); toast("Đã ghi " + nAdd + " kèo vào nhật ký theo dõi"); } }
       SC.run = false; SC.err = ok ? "" : "Không tải được dữ liệu. Kiểm tra mạng hoặc VPN.";
       if (S.tf === tfk) { SC.tf = ""; sigLoad(); }
@@ -2744,7 +2759,12 @@ function analyze(c, tf, L) {
     return "<span class=\"pill " + v.t[1] + "\">" + v.t[0] + "</span><span class=\"note\"><b>" + dispSym(o.sym) + " · " + STRAT[o.k] + "</b> (" + c.days + " ngày): " + c.n + " lệnh · thắng " + Math.round(v.s.win * 100) + "% · E " + f(v.s) + "R" + (v.a.n && v.b.n ? " · nửa đầu " + f(v.a) + " / nửa sau " + f(v.b) : "") + "</span>";
   }
   function chkPaint(o) { var el = document.querySelector("[data-chk=\"" + o.id + "\"]"); if (el) el.innerHTML = chkHtml(o); var b = document.querySelector("[data-chkb=\"" + o.id + "\"]"); if (b) { b.disabled = o.chk === "run"; b.textContent = o.chk && o.chk !== "run" ? "Kiểm tra lại" : "Kiểm tra mã"; } }
-  var CKC = {};
+  var CKC = (function () { var d = lsGet("ictCkc", {}), r = {}, k; for (k in d) if (d[k] && Date.now() - d[k].when < 864e5 && d[k].v && d[k].v.v) r[k] = d[k]; return r; })();
+  function ckcSave() { var ks = Object.keys(CKC).sort(function (a, b) { return CKC[b].when - CKC[a].when; }).slice(0, 90), r = {}; ks.forEach(function (k) { r[k] = CKC[k]; }); try { lsSet("ictCkc", r); } catch (e) {} }
+  function sigAutoChk() {
+    if (SC.run || !SC.when || (SC.pk && SC.pk.run)) return;
+    var fr = scF(SC.fresh); if (fr.some(function (o) { return !o.chk; })) pickRun(fr);
+  }
   async function chkMany(list) {
     var o0 = list[0], key0 = o0.sym + "@" + o0.tf, need = [];
     list.forEach(function (o) {
@@ -2763,6 +2783,7 @@ function analyze(c, tf, L) {
         o.chk = { v: stVerdict(tr), n: tr.length, days: days };
         CKC[key0 + "|" + o.k + "|" + o.cf.sl + "|" + o.cf.mode] = { when: Date.now(), v: o.chk };
       });
+      ckcSave();
     } catch (e) { need.forEach(function (o) { o.chk = { err: e.message || "lỗi mạng" }; }); }
   }
   async function chkRun(o) {
@@ -2805,7 +2826,7 @@ function analyze(c, tf, L) {
   }
   function sigCard(o) {
     var d = o.dir, e = o.sigClose, R = o.atr * o.cf.sl, sl = e - d * R, tp = o.tps.map(function (m) { return e + d * m * R; }), pct = R / e * 100;
-    var h = "<div class=\"sgc" + (sigStat(o).x ? " old" : sigStat(o).w ? " warn" : "") + "\" style=\"--c:" + SCOL[o.k] + "\"><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
+    var h = "<div class=\"sgc" + (sigStat(o).x ? " old" : sigStat(o).w ? " warn" : "") + "\" style=\"--c:" + SCOL[o.k] + "\"><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
     h += "<div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
     h += "<div class=\"lv tp\">" + tp.map(function (p, i) { return "<div><small>TP" + (i + 1) + " · " + o.tps[i] + "R</small><b>" + fmtPx(p) + "</b></div>"; }).join("") + "</div>";
     h += "<div class=\"pxl\" data-px=\"" + o.id + "\">" + sigPxLine(o) + "</div><div class=\"pxl chkr\" data-chk=\"" + o.id + "\">" + chkHtml(o) + "</div>" + (o.alt ? "<div class=\"pxl\"><span class=\"note\">Mã này còn kèo: " + o.alt + "</span></div>" : "");
@@ -2819,6 +2840,7 @@ function analyze(c, tf, L) {
     var fr = scF(SC.fresh), rc = scF(SC.recent), missing = SKEY.some(function (k) { return SR.en[k] && SC.when && !SC.kinds[k]; });
     stRestore();
     var h = "<div class=\"herot\"><div><small>QUÉT TÍN HIỆU · " + S.tf + "</small><b>" + (SC.run ? "<span id=\"sctxt\">Đang quét… " + SC.pct + "%</span>" : SC.when ? fr.length + " kèo mới" : "Chưa quét khung này") + "</b></div><button class=\"go\" id=\"scgo\" style=\"min-height:44px;padding:0 18px\">" + (SC.run ? "…" : "QUÉT") + "</button></div>";
+    h += "<div class=\"seg3\" id=\"scsrc\"><button data-src=\"vol\" class=\"" + (SCS === "vol" ? "on" : "") + "\">Top vol</button><button data-src=\"mv\" class=\"" + (SCS === "mv" ? "on" : "") + "\">Top tăng/giảm</button></div>";
     if (SC.run) h += "<div class=\"conf\"><i id=\"scbar\" style=\"width:" + SC.pct + "%\"></i></div>";
     h += "<div class=\"stat4\"><div><small>Kèo mới</small><b>" + fr.length + "</b></div><div><small>24h qua</small><b>" + (fr.length + rc.length) + "</b></div><div><small>Số mã quét</small><b>" + SC.nsym + "</b></div><div><small>Cập nhật</small><b style=\"font-size:11px\">" + (SC.when ? fmtAge((Date.now() - SC.when) / 6e4) : "–") + "</b></div></div>";
     h += "<div class=\"fchips\">" + SKEY.map(function (k) { return "<button data-k=\"" + k + "\" class=\"" + (SR.en[k] ? "on" : "") + "\" style=\"--c:" + SCOL[k] + "\">" + (SR.en[k] ? "✓ " : "") + STRAT[k] + "</button>"; }).join("") + "</div>";
@@ -2828,6 +2850,7 @@ function analyze(c, tf, L) {
     if (SC.err) h += "<div class=\"sc\">" + SC.err + "</div>";
     el.innerHTML = h;
     var g = $("scgo"); if (g) g.addEventListener("click", startScan);
+    Array.prototype.forEach.call(el.querySelectorAll("#scsrc button"), function (b) { b.addEventListener("click", function () { if (SC.run || SCS === b.dataset.src) return; SCS = b.dataset.src; lsSet("ictScanSrc", SCS); SC.tf = ""; sigLoad(); renderSig(); sigAutoChk(); }); });
     Array.prototype.forEach.call(el.querySelectorAll(".fchips button"), function (b) { b.addEventListener("click", function () { SR.en[b.dataset.k] = SR.en[b.dataset.k] ? 0 : 1; lsSet("ictStratOn", SR.en); renderSig(); }); });
   }
   function bindOpen(el) {
