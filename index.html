@@ -1186,7 +1186,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-25.8";
+  var VER = "2026-10-25.9";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2170,7 +2170,7 @@ function analyze(c, tf, L) {
               if (full && q.t !== rs[0].t && q.t > lastT - 130 * q.tfm) { rest.push(q); return; }
               var j = -1, i; for (i = 0; i < arr.length; i++) if (arr[i].t === q.t) { j = i; break; }
               if (j < 0) { if (q.t <= lastT) { q.st = "lost"; q.done = 1; q.tEnd = Date.now(); } return; }
-              var o = fwSim(arr.slice(j), q); q.st = o.st; q.R = o.R; q.tp = o.tp; q.done = o.done; if (o.done) q.tEnd = o.tEnd;
+              var o = fwSim(arr.slice(j), q); q.st = o.st; q.R = o.R; q.tp = o.tp; q.done = o.done; if (arr[j + 1]) q.e = arr[j + 1].o; if (o.done) q.tEnd = o.tEnd;
             });
             if (rest.length === rs.length) break;
             rs = rest;
@@ -2301,7 +2301,7 @@ function analyze(c, tf, L) {
     }
     if (src === "fw") {
       var pend = FW.j.filter(function (q) { return !q.done; });
-      if (pend.length) h += "<h3 class=\"sub\">Đang chạy (" + pend.length + ")</h3><div class=\"rlist\">" + pend.slice().reverse().slice(0, 30).map(function (q) { var lb = fwLabel(q); return "<div class=\"rrow\"><span class=\"rn\"><b>" + dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small>" + q.k + " · " + STRAT[q.k] + " · " + q.tf + " · " + fmtLocal(q.t) + "</small></span><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span></div>"; }).join("") + "</div>";
+      if (pend.length) h += "<h3 class=\"sub\">Đang chạy (" + pend.length + ")</h3><div class=\"rlist\">" + pend.slice().reverse().slice(0, 30).map(function (q) { var lb = fwLabel(q); return "<button class=\"rrow\" data-fwo=\"" + q.id + "\"><span class=\"rn\"><b>" + dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small>" + q.k + " · " + STRAT[q.k] + " · " + q.tf + " · " + fmtLocal(q.t) + " · bấm để xem chart</small></span><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span></button>"; }).join("") + "</div>";
     }
     return h;
   }
@@ -2348,6 +2348,12 @@ function analyze(c, tf, L) {
     on("#jclr", function () { if (confirm("Xóa toàn bộ nhật ký kèo ICT đã theo dõi?")) { lsSet("ictHist", []); renderCal(); } });
     on("[data-ck]", function (b) { BT.calK = b.dataset.ck; BT.calDay = null; renderCal(); });
     on(".dc[data-d]", function (b) { BT.calDay = BT.calDay === b.dataset.d ? null : b.dataset.d; renderCal(); });
+    on("[data-fwo]", function (b) {
+      var q = FW.j.filter(function (x) { return x.id === b.dataset.fwo; })[0]; if (!q) return;
+      var o = q.e ? { sym: q.sym, k: q.k, dir: q.dir, t: q.t, atr: q.atr, cf: { sl: q.sl }, tps: q.tps, age: 99, sigClose: q.e, oc: { entry: q.e } } : null;
+      if (q.tf && TFMS[q.tf] && q.tf !== S.tf) { S.tf = q.tf; markTf(); saveState(); }
+      openSymbol(q.sym, o);
+    });
     on("#fwup", function () { fwUpdate(true); if (!FW.j.some(function (q) { return !q.done; })) toast("Không có kèo nào đang chạy"); });
     on("#fwauto", function () { FW.auto = FW.auto ? 0 : 1; lsSet("ictFwdAuto", FW.auto); renderCal(); });
     on("#fwclr", function () { if (confirm("Xóa toàn bộ nhật ký theo dõi kèo chiến lược?")) { FW.j = []; fwSave(); renderCal(); } });
