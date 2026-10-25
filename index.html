@@ -1186,7 +1186,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-25.9";
+  var VER = "2026-10-25.10";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2348,9 +2348,14 @@ function analyze(c, tf, L) {
     on("#jclr", function () { if (confirm("Xóa toàn bộ nhật ký kèo ICT đã theo dõi?")) { lsSet("ictHist", []); renderCal(); } });
     on("[data-ck]", function (b) { BT.calK = b.dataset.ck; BT.calDay = null; renderCal(); });
     on(".dc[data-d]", function (b) { BT.calDay = BT.calDay === b.dataset.d ? null : b.dataset.d; renderCal(); });
-    on("[data-fwo]", function (b) {
+    on("[data-fwo]", async function (b) {
       var q = FW.j.filter(function (x) { return x.id === b.dataset.fwo; })[0]; if (!q) return;
+      if (!q.e && !/^FX:/.test(q.sym)) {
+        try { var ka = mapK(await bget("/api/v3/klines?symbol=" + q.sym + "&interval=" + q.tf + "&startTime=" + q.t + "&limit=3")); var kj = ka.filter(function (c) { return c.t > q.t; })[0]; if (kj) { q.e = kj.o; fwSave(); } } catch (e) {}
+      }
+      if (!q.e) { var sm = null, kk; for (kk in SC_MAP) { var z = SC_MAP[kk]; if (z.sym === q.sym && z.k === q.k && z.t === q.t) sm = z; } if (sm) q.e = sm.sigClose; }
       var o = q.e ? { sym: q.sym, k: q.k, dir: q.dir, t: q.t, atr: q.atr, cf: { sl: q.sl }, tps: q.tps, age: 99, sigClose: q.e, oc: { entry: q.e } } : null;
+      if (!o) toast("Chưa lấy được giá vào lệnh, chart mở không có SL/TP");
       if (q.tf && TFMS[q.tf] && q.tf !== S.tf) { S.tf = q.tf; markTf(); saveState(); }
       openSymbol(q.sym, o);
     });
