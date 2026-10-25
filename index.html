@@ -335,6 +335,9 @@ input, select, textarea { border-radius: 10px; } input { font-family: var(--ui);
 .chs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; } .chs::-webkit-scrollbar { display: none; } .chs button { flex: none; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--dim); background: var(--card2); } .chs button.on { color: #fff; background: var(--blue); }
 details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-style: none; } details.inf summary::-webkit-details-marker { display: none; } details.inf[open] summary { margin-bottom: 6px; }
 #calc { gap: 12px; }
+.pxl { font-size: 13px; color: var(--dim); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .pxl b { color: var(--fg); } .sgc.old { opacity: .6; }
+.ac { position: relative; flex: 1; min-width: 0; } .ac input { width: 100%; } .acl { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 12; background: var(--card2); border: 1px solid var(--line); border-radius: 10px; max-height: 260px; overflow-y: auto; box-shadow: 0 10px 28px rgba(0,0,0,.45); }
+.acl button { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 11px 12px; text-align: left; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--line); } .acl button:last-child { border-bottom: 0; } .acl button small { font-size: 11px; color: var(--dim); font-weight: 500; } .acl .grp { padding: 8px 12px 4px; font-size: 10px; letter-spacing: .06em; color: var(--dim); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -414,6 +417,7 @@ details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-
   </div>
   <div class="two">
     <div class="f"><label for="lim">Số nến</label><select id="lim"><option>300</option><option selected>500</option><option>1000</option></select></div>
+    <div class="f"><label for="tzm">Giờ hiển thị trên biểu đồ</label><select id="tzm"><option value="local">Giờ máy (giống TradingView, MT4)</option><option value="ny">Giờ New York (theo killzone ICT)</option></select></div>
     <div class="f"><label for="fxm">Hiệu ứng giao diện</label><select id="fxm"><option value="0">Đầy đủ (chuyển cảnh mượt)</option><option value="1">Nhẹ (tắt mọi chuyển động)</option></select></div>
     <div class="f"><label for="rrmin">R:R tối thiểu (TP1)</label><select id="rrmin"><option value="1.5">1 : 1.5</option><option value="2" selected>1 : 2</option><option value="3">1 : 3</option></select></div>
     <div class="f"><label for="swl">Độ nhạy cấu trúc</label><select id="swl"><option value="3">Nhạy (3)</option><option value="5" selected>Vừa (5)</option><option value="8">Chắc (8)</option></select></div>
@@ -1182,8 +1186,9 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-24.7";
+  var VER = "2026-10-25.1";
   var ST = lsGet("ictState", {});
+  (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
   if (ST.tf && TFMS[ST.tf]) S.tf = ST.tf;
   if (ST.sym) $("sym").value = ST.sym;
@@ -1217,6 +1222,7 @@ function analyze(c, tf, L) {
   function mapK(a) { return a.map(function (k) { return { t: +k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5], tb: +k[9] }; }); }
   function tOf(i) { return i < C.length ? C[i].t : C[C.length - 1].t + (i - (C.length - 1)) * tfms; }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtTZ(t) { return TZL === "ny" ? fmtNY(t) + " NY" : fmtLocal(t); }
   function fmtNY(t) { var p = ny(t); return pad2(p.d) + "/" + pad2(p.mo) + " " + pad2(p.h) + ":" + pad2(p.mi); }
   function fmtLocal(t) { var d = new Date(t); return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()); }
 
@@ -1278,9 +1284,27 @@ function analyze(c, tf, L) {
   function dispSym(sym) { return sym.indexOf("FX:") === 0 ? sym.slice(3) : sym.replace(/USDT$/, ""); }
   function tdKey() { try { return localStorage.getItem("ictTdKey") || ""; } catch (e) { return ""; } }
   function fxDec(sym) { var pr = sym.slice(3); return pr.indexOf("XAU") === 0 ? 2 : pr.indexOf("XAG") === 0 ? 3 : /JPY|HUF|KRW/.test(pr) ? 3 : /MXN|ZAR|TRY|CNH|HKD|SEK|NOK|PLN|SGD/.test(pr) ? 4 : 5; }
+  var TZL = lsGet("ictTz", "local");
+  var AGG = { "4h": 240, "1d": 1440, "1w": 10080 };
+  /* gộp nến 1h thành 4h / ngày / tuần, mốc mở cửa 17:00 New York (Chủ nhật 17:00 cho tuần), như TradingView và MT4 */
+  function fxAggregate(rows, tf) {
+    var span = AGG[tf], out = [], cur = null;
+    rows.forEach(function (x) {
+      var p = ny(x.t), m = tf === "1w" ? (((p.wd * 1440 + p.min - 1020) % 10080) + 10080) % 10080 : (((p.min - 1020) % 1440) + 1440) % 1440;
+      var st = x.t - (m % span) * 6e4;
+      if (cur && cur.t === st) { cur.h = Math.max(cur.h, x.h); cur.l = Math.min(cur.l, x.l); cur.c = x.c; cur.v += x.v; }
+      else { cur = { t: st, o: x.o, h: x.h, l: x.l, c: x.c, v: x.v }; out.push(cur); }
+    });
+    return out;
+  }
   async function tdget(sym, tf, n) {
+    if (AGG[tf]) {
+      var per = AGG[tf] / 60, need = Math.min(5000, Math.ceil(n * per * 1.45) + 30), rows = await tdget(sym, "1h", need), ag = fxAggregate(rows, tf);
+      if (rows.length >= need) ag = ag.slice(1);
+      return ag.length > n ? ag.slice(-n) : ag;
+    }
     var key = tdKey(); if (!key) throw new Error("NOKEY");
-    var u = "https://api.twelvedata.com/time_series?symbol=" + encodeURIComponent(sym.slice(3)) + "&interval=" + TDI[tf] + "&outputsize=" + n + "&order=asc&timezone=UTC&apikey=" + encodeURIComponent(key);
+    var u = "https://api.twelvedata.com/time_series?symbol=" + encodeURIComponent(sym.slice(3)) + "&interval=" + TDI[tf] + "&outputsize=" + Math.min(5000, n) + "&order=asc&timezone=UTC&apikey=" + encodeURIComponent(key);
     var r = await fetch(u), j = await r.json();
     if (j.status === "error" || !j.values) { var e = new Error(j.message || "Lỗi Twelve Data"); e.code = j.code; throw e; }
     return j.values.map(function (v) {
@@ -1643,7 +1667,7 @@ function analyze(c, tf, L) {
     var every = Math.max(1, Math.round(80 / bw));
     for (i = Math.ceil(V.start); i <= V.start + V.bars; i += every) {
       var xx2 = X(i); if (xx2 < 20 || xx2 > pw - 20) continue;
-      var pn = ny(tOf(i));
+      var pn = TZL === "ny" ? ny(tOf(i)) : (function (dd) { return { d: dd.getDate(), mo: dd.getMonth() + 1, h: dd.getHours(), mi: dd.getMinutes() }; })(new Date(tOf(i)));
       x.fillText(tfms >= 864e5 ? pad2(pn.d) + "/" + pad2(pn.mo) : pad2(pn.h) + ":" + pad2(pn.mi), xx2, H - 5);
     }
     x.textAlign = "left";
@@ -1653,7 +1677,7 @@ function analyze(c, tf, L) {
   function showOhlc(i) {
     var k = C[i]; if (!k) return;
     var cls = k.c >= k.o ? "bull" : "bear";
-    $("ohlc").innerHTML = "<span><b>" + fmtNY(k.t) + " NY</b></span><span><b>O</b>" + fmtP(k.o) + "</span><span><b>H</b>" + fmtP(k.h) + "</span><span><b>L</b>" + fmtP(k.l) + "</span><span class=\"" + cls + "\"><b>C</b>" + fmtP(k.c) + "</span>";
+    $("ohlc").innerHTML = "<span><b>" + fmtTZ(k.t) + (TZL === "ny" ? "" : " giờ máy") + "</b></span><span><b>O</b>" + fmtP(k.o) + "</span><span><b>H</b>" + fmtP(k.h) + "</span><span><b>L</b>" + fmtP(k.l) + "</span><span class=\"" + cls + "\"><b>C</b>" + fmtP(k.c) + "</span>";
   }
   function setAvatar() { fillIcon($("av"), splitSym(S.sym).b, isFx()); }
   function fmtCd(ms) {
@@ -2080,13 +2104,14 @@ function analyze(c, tf, L) {
   }
   function ymd(t) { var d = new Date(t); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
   /* ----- nhật ký theo dõi kèo chiến lược thật (forward test) ----- */
-  var FW = { j: lsGet("ictFwd", []), auto: lsGet("ictFwdAuto", 1), run: false, last: 0 };
+  var FW = { j: lsGet("ictFwd", []), auto: lsGet("ictFwdAuto", 0), run: false, last: 0 };
+  (function () { if (!lsGet("ictFwdMig", 0)) { FW.j = FW.j.filter(function (q) { return q.man; }); lsSet("ictFwdMig", 1); lsSet("ictFwd", FW.j); } })();
   function fwSave() { FW.j = FW.j.slice(-400); lsSet("ictFwd", FW.j); }
   function fwId(o) { return o.sym + "|" + o.k + "|" + o.tf + "|" + o.t; }
   function fwHas(id) { return FW.j.some(function (q) { return q.id === id; }); }
-  function fwAdd(o) {
+  function fwAdd(o, man) {
     var id = fwId(o); if (!o.tf || fwHas(id)) return false;
-    FW.j.push({ id: id, sym: o.sym, k: o.k, tf: o.tf, tfm: o.tfm, dir: o.dir, t: o.t, atr: o.atr, sl: o.cf.sl, tps: o.tps, added: Date.now(), st: "run", R: 0, tp: 0, done: 0 });
+    FW.j.push({ man: man ? 1 : 0, id: id, sym: o.sym, k: o.k, tf: o.tf, tfm: o.tfm, dir: o.dir, t: o.t, atr: o.atr, sl: o.cf.sl, tps: o.tps, added: Date.now(), st: "run", R: 0, tp: 0, done: 0 });
     return true;
   }
   /* arr[0] = nến phát tín hiệu; vào lệnh ở giá mở cửa nến kế, giống backtest */
@@ -2141,22 +2166,43 @@ function analyze(c, tf, L) {
   setTimeout(function () { fwUpdate(false); }, 5000);
 
   /* ----- test riêng một mã ----- */
-  var TS = { run: false, msg: "", depth: 3000, in: "", cur: lsGet("ictTsCur", null), list: lsGet("ictTsList", []) };
+  var TS = { run: false, msg: "", depth: 3000, in: "", sel: null, cur: lsGet("ictTsCur", null), list: lsGet("ictTsList", []) };
+  function tsParse(k) { var i = k.lastIndexOf("@"); if (i < 0) i = k.lastIndexOf(":"); return [k.slice(0, i), k.slice(i + 1)]; }
   function tsRes(k) { return k ? lsGet("ictTs:" + k, null) : null; }
-  function startTest(base) {
+  /* gợi ý mã cho ô Test: coin Binance (theo thanh khoản) + Forex/vàng */
+  function tsSuggest(q) {
+    q = String(q || "").toUpperCase().replace(/[^A-Z0-9/]/g, "");
+    var res = [], qq = q.replace("/", "");
+    var fx = FXL.filter(function (p) { return !qq || p.replace("/", "").indexOf(qq) >= 0 || (FXI[p] || "").toUpperCase().indexOf(qq) >= 0; }).slice(0, 6).map(function (p) { return { s: "FX:" + p, t: p, n: FXI[p] || "Forex" }; });
+    var cr = ALL.filter(function (x) { return x.q === "USDT" && !STABLE_RE.test(x.b) && (!qq || x.b.indexOf(qq) === 0 || x.b.indexOf(qq) > 0 && qq.length > 2); }).slice(0, qq ? 8 : 6).map(function (x) { return { s: x.s, t: x.b + "/USDT", n: "Vol " + fmtVol(x.v) }; });
+    if (qq && /^(XAU|XAG|GOLD|VANG|BAC)/.test(qq)) return fx.concat(cr);
+    return { cr: cr, fx: fx };
+  }
+  function tsPick(sym) { TS.sel = sym; var pr = sym.indexOf("FX:") === 0 ? sym.slice(3) : sym.replace(/USDT$/, ""); TS.in = pr; var i = $("tsin"); if (i) i.value = pr; var l = $("acl"); if (l) l.hidden = true; }
+  function tsResolve(txt) {
+    var t = String(txt || "").toUpperCase().replace(/\s/g, "");
+    if (!t) return null;
+    if (TS.sel && (TS.in || "") === (TS.sel.indexOf("FX:") === 0 ? TS.sel.slice(3) : TS.sel.replace(/USDT$/, ""))) return TS.sel;
+    var fx = FXL.filter(function (p) { return p.replace("/", "") === t.replace("/", "") || p === t; })[0];
+    if (fx) return "FX:" + fx;
+    if (/^(XAU|GOLD)$/.test(t)) return "FX:XAU/USD";
+    return t.replace(/[^A-Z0-9]/g, "").replace(/USDT$/, "") + "USDT";
+  }
+  function startTest(txt) {
     if (TS.run) return;
-    var sym = String(base || "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/USDT$/, "");
-    if (!sym) { toast("Nhập mã, ví dụ SOL"); return; }
-    sym += "USDT";
-    if (ALL.length && !ALL.some(function (x) { return x.s === sym; })) { toast("Không thấy " + sym + " trên Binance Spot"); return; }
-    var tfKey = S.tf, tf0 = tfms, key = sym + ":" + tfKey;
+    var sym = tsResolve(txt);
+    if (!sym || sym === "USDT") { toast("Nhập hoặc chọn một mã, ví dụ SOL hay EUR/USD"); return; }
+    var fx = sym.indexOf("FX:") === 0;
+    if (fx && !tdKey()) { toast("Forex cần key Twelve Data, nhập ở Cài đặt"); askKey(); return; }
+    if (!fx && ALL.length && !ALL.some(function (x) { return x.s === sym; })) { toast("Không thấy " + sym + " trên Binance Spot"); return; }
+    var tfKey = S.tf, tf0 = tfms, key = sym + "@" + tfKey, depth = fx ? Math.min(TS.depth, 5000) : TS.depth;
     TS.run = true; TS.msg = "Đang tải lịch sử " + dispSym(sym) + " (" + tfKey + ")…"; renderCal();
     (async function () {
       try {
-        var arr = await histKlines(sym, TS.depth, tfKey);
+        var arr = fx ? await tdget(sym, tfKey, depth) : await histKlines(sym, depth, tfKey);
         if (arr.length < 400) throw new Error("chỉ có " + arr.length + " nến, cần ít nhất 400");
         TS.msg = "Đang chạy 3 chiến lược…"; renderCal(); await new Promise(function (res) { setTimeout(res, 20); });
-        var P = stratPrep(arr), mid = (210 + arr.length) / 2, out = { when: Date.now(), bars: arr.length, days: Math.round(arr.length * tf0 / 864e5), cf: {}, tr: {} };
+        var P = stratPrep(arr), mid = (210 + arr.length) / 2, out = { fx: fx ? 1 : 0, when: Date.now(), bars: arr.length, days: Math.round(arr.length * tf0 / 864e5), cf: {}, tr: {} };
         SKEY.forEach(function (k) {
           var cf = stCfg(k), sg = stratSignals(arr, P, k, 0); out.cf[k] = cf;
           out.tr[k] = stratTrades(arr, P, sg, cf.sl, BT_MODES[cf.mode], mid).map(function (t) { return { dir: t.dir, tEnd: t.tEnd, R: t.R, tp: t.tp, h: t.h }; });
@@ -2166,7 +2212,7 @@ function analyze(c, tf, L) {
         while (TS.list.length > 12) lsSet("ictTs:" + TS.list.shift(), null);
         lsSet("ictTsList", TS.list); TS.cur = key; lsSet("ictTsCur", key);
         BT.calSrc = "sym"; BT.calM = null; BT.calDay = null; TS.run = false; renderCal(); toast("Test xong " + dispSym(sym));
-      } catch (e) { TS.run = false; toast("Lỗi test mã: " + (e.message || e)); renderCal(); }
+      } catch (e) { TS.run = false; toast("Lỗi test mã: " + (e.message === "NOKEY" ? "chưa có key Twelve Data" : (e.message || e))); renderCal(); }
     })();
   }
   function fwLabel(q) { return q.st === "exp" ? ["Hết hạn " + (q.R >= 0 ? "+" : "") + q.R.toFixed(1) + "R", "neu"] : q.st === "lost" ? ["Không có dữ liệu", "neu"] : resTxt({ st: q.st, R: q.R, tp: q.tp }); }
@@ -2174,7 +2220,7 @@ function analyze(c, tf, L) {
   function calTrades(allK) {
     var k0 = allK ? "all" : (BT.calK || "all"), out = [];
     if (BT.calSrc === "fw") { FW.j.forEach(function (q) { if (q.done && q.st !== "lost" && (k0 === "all" || q.k === k0)) out.push({ tEnd: q.tEnd, R: q.R, tp: q.tp, dir: q.dir, sym: q.sym, k: q.k }); }); return out; }
-    if (BT.calSrc === "sym") { var rs = tsRes(TS.cur); if (rs) SKEY.forEach(function (k) { if (k0 === "all" || k === k0) (rs.tr[k] || []).forEach(function (t) { out.push({ tEnd: t.tEnd, R: t.R, tp: t.tp, dir: t.dir, sym: TS.cur.split(":")[0], k: k, h: t.h }); }); }); return out; }
+    if (BT.calSrc === "sym") { var rs = tsRes(TS.cur); if (rs) SKEY.forEach(function (k) { if (k0 === "all" || k === k0) (rs.tr[k] || []).forEach(function (t) { out.push({ tEnd: t.tEnd, R: t.R, tp: t.tp, dir: t.dir, sym: tsParse(TS.cur)[0], k: k, h: t.h }); }); }); return out; }
     if (BT.calSrc === "st") { if (SR.res) SKEY.forEach(function (k) { if (SR.en[k] && SR.res.rows[k].label !== "none") out = out.concat(SR.res.trades[k] || []); }); return out; }
     if (BT.calSrc === "live") return lsGet("ictHist", []).filter(function (x) { return x.act && typeof x.R === "number"; }).map(function (x) { return { tEnd: x.endT || x.act, R: x.R, tp: x.R > 0 ? 1 : 0, dir: x.dir, sym: x.sym, tf: x.tf, note: x.end === "tp3" ? "TP3" : x.end === "sl" ? "SL" : x.tp ? "TP" + x.tp + " rồi về Entry" : "" }; });
     if (!BT.trades) return [];
@@ -2201,13 +2247,13 @@ function analyze(c, tf, L) {
       h += info("App ghi kèo ngay khi nó xuất hiện ở tab Tín hiệu, rồi tải nến mới để xem chạm SL hay TP. Kết quả chưa biết trước lúc ghi nên đáng tin hơn backtest. App chỉ cập nhật khi ông mở app.");
     }
     if (src === "sym") {
-      if (TS.list.length) h += "<div class=\"chs\">" + TS.list.slice().reverse().map(function (k) { var q = k.split(":"); return "<button data-ts=\"" + k + "\" class=\"" + (k === TS.cur ? "on" : "") + "\">" + dispSym(q[0]) + " · " + q[1] + "</button>"; }).join("") + "</div>";
-      h += "<div class=\"tsrow\"><input id=\"tsin\" placeholder=\"Mã, ví dụ SOL\" value=\"" + (TS.in || "").replace(/[^A-Za-z0-9]/g, "") + "\" autocomplete=\"off\" autocapitalize=\"characters\"><button class=\"go\" id=\"tsgo\"" + (TS.run ? " disabled" : "") + ">" + (TS.run ? "…" : "TEST") + "</button></div>";
+      if (TS.list.length) h += "<div class=\"chs\">" + TS.list.slice().reverse().map(function (k) { var q = tsParse(k); return "<button data-ts=\"" + k + "\" class=\"" + (k === TS.cur ? "on" : "") + "\">" + dispSym(q[0]) + " · " + q[1] + "</button>"; }).join("") + "</div>";
+      h += "<div class=\"tsrow\"><div class=\"ac\"><input id=\"tsin\" placeholder=\"Chọn hoặc gõ mã (SOL, EUR/USD, XAU…)\" value=\"" + (TS.in || "").replace(/[^A-Za-z0-9/]/g, "") + "\" autocomplete=\"off\" autocapitalize=\"characters\"><div class=\"acl\" id=\"acl\" hidden></div></div><button class=\"go\" id=\"tsgo\"" + (TS.run ? " disabled" : "") + ">" + (TS.run ? "…" : "TEST") + "</button></div>";
       h += "<div class=\"acts\">" + [[1000, "1000"], [3000, "3000"], [6000, "6000"]].map(function (x) { return "<button class=\"mini" + (TS.depth === x[0] ? " on" : "") + "\" data-td=\"" + x[0] + "\">" + x[1] + " nến</button>"; }).join("") + (isFx() ? "" : "<button class=\"mini\" id=\"tscur\">Mã đang xem</button>") + (TS.cur ? "<button class=\"mini\" id=\"tsdel\">Xóa mã</button>" : "") + "</div>";
       if (TS.run) h += "<div class=\"conf\"><i style=\"width:60%\"></i></div><div class=\"note\">" + TS.msg + "</div>";
       var rs = tsRes(TS.cur);
-      if (rs) h += "<div class=\"stl\"><span><b>" + dispSym(TS.cur.split(":")[0]) + " · " + TS.cur.split(":")[1] + "</b> · " + rs.bars + " nến ≈ " + rs.days + " ngày · " + ago(rs.when) + "</span></div>";
-      h += info("Chạy A/B/C trên lịch sử của một mã bất kỳ, dùng SL/TP đang chọn cho từng chiến lược" + (rs ? " (" + SKEY.map(function (k) { return k + ": SL " + rs.cf[k].sl + " ATR, TP " + TPN[rs.cf[k].mode]; }).join("; ") + ")" : " (mặc định SL 1.5 ATR, TP xa)") + ". Một mã đơn lẻ dễ trùng hợp, nên test vài mã.");
+      if (rs) h += "<div class=\"stl\"><span><b>" + dispSym(tsParse(TS.cur)[0]) + " · " + tsParse(TS.cur)[1] + "</b> · " + rs.bars + " nến ≈ " + rs.days + " ngày · " + ago(rs.when) + "</span></div>";
+      h += info("Chạy A/B/C trên lịch sử của một mã bất kỳ, dùng SL/TP đang chọn cho từng chiến lược" + (rs ? " (" + SKEY.map(function (k) { return k + ": SL " + rs.cf[k].sl + " ATR, TP " + TPN[rs.cf[k].mode]; }).join("; ") + ")" : " (mặc định SL 1.5 ATR, TP xa)") + ". Một mã đơn lẻ dễ trùng hợp, nên test vài mã." + (rs && rs.fx ? " Forex không có khối lượng thật nên chiến lược B (Phá vỡ) gần như không ra kèo." : ""));
     }
     if (src === "fw" ? FW.j.length : src === "sym" ? tsRes(TS.cur) : 0) h += "<div class=\"seg3 sk\">" + [["all", "Tất cả"]].concat(SKEY.map(function (k) { return [k, k]; })).map(function (x) { return "<button data-ck=\"" + x[0] + "\" class=\"" + ((BT.calK || "all") === x[0] ? "on" : "") + "\"" + (SCOL[x[0]] ? " style=\"--c:" + SCOL[x[0]] + "\"" : "") + ">" + (SCOL[x[0]] ? "<i></i>" : "") + x[1] + "</button>"; }).join("") + "</div>";
     return h;
@@ -2283,10 +2329,25 @@ function analyze(c, tf, L) {
     on("#fwclr", function () { if (confirm("Xóa toàn bộ nhật ký theo dõi kèo chiến lược?")) { FW.j = []; fwSave(); renderCal(); } });
     on("[data-ts]", function (b) { TS.cur = b.dataset.ts; lsSet("ictTsCur", TS.cur); BT.calM = null; BT.calDay = null; renderCal(); });
     on("[data-td]", function (b) { TS.depth = +b.dataset.td; renderCal(); });
-    on("#tscur", function () { TS.in = dispSym(S.sym); var i = $("tsin"); if (i) i.value = TS.in; });
+    on("#tscur", function () { tsPick(S.sym); });
     on("#tsdel", function () { var k = TS.cur; TS.list = TS.list.filter(function (x) { return x !== k; }); lsSet("ictTs:" + k, null); lsSet("ictTsList", TS.list); TS.cur = TS.list[TS.list.length - 1] || null; lsSet("ictTsCur", TS.cur); BT.calM = null; renderCal(); });
     on("#tsgo", function () { var i = $("tsin"); TS.in = i ? i.value : TS.in; startTest(TS.in); });
-    var inp = $("tsin"); if (inp) { inp.addEventListener("input", function () { TS.in = inp.value; }); inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { TS.in = inp.value; startTest(TS.in); } }); }
+    var inp = $("tsin"), lst = $("acl");
+    function showList() {
+      if (!inp || !lst) return;
+      var q = inp.value, sg = tsSuggest(q), h2 = "";
+      function item(x) { return "<button data-pick=\"" + x.s + "\"><span>" + x.t + "</span><small>" + x.n + "</small></button>"; }
+      if (Array.isArray(sg)) h2 = sg.map(item).join("");
+      else { if (sg.fx.length) h2 += "<div class=\"grp\">FOREX · VÀNG</div>" + sg.fx.map(item).join(""); if (sg.cr.length) h2 += "<div class=\"grp\">COIN</div>" + sg.cr.map(item).join(""); }
+      if (!h2) { lst.hidden = true; return; }
+      lst.innerHTML = h2; lst.hidden = false;
+      Array.prototype.forEach.call(lst.querySelectorAll("[data-pick]"), function (b) { b.addEventListener("mousedown", function (e) { e.preventDefault(); }); b.addEventListener("click", function () { tsPick(b.dataset.pick); }); });
+    }
+    if (inp) {
+      inp.addEventListener("focus", showList); inp.addEventListener("input", function () { TS.in = inp.value; TS.sel = null; showList(); });
+      inp.addEventListener("blur", function () { setTimeout(function () { if (lst) lst.hidden = true; }, 180); });
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { TS.in = inp.value; if (lst) lst.hidden = true; startTest(TS.in); } });
+    }
   }
   function renderInd() {
     var el = $("indc"); if (!el) return;
@@ -2545,7 +2606,7 @@ function analyze(c, tf, L) {
       await Promise.all([worker(), worker(), worker(), worker()]);
       fresh.sort(function (a, b) { return a.age - b.age; }); recent.sort(function (a, b) { return b.t - a.t; });
       SC_BY[tfk] = { fresh: fresh, recent: recent, when: Date.now(), nsym: ok }; fresh.concat(recent).forEach(function (o) { SC_MAP[o.id] = o; });
-      if (FW.auto && fresh.length) { var nAdd = 0; fresh.forEach(function (o) { if (fwAdd(o)) nAdd++; }); if (nAdd) { fwSave(); toast("Đã ghi " + nAdd + " kèo vào nhật ký theo dõi"); } }
+      if (FW.auto && fresh.length) { var nAdd = 0; fresh.forEach(function (o) { if (fwAdd(o, 0)) nAdd++; }); if (nAdd) { fwSave(); toast("Đã ghi " + nAdd + " kèo vào nhật ký theo dõi"); } }
       SC.run = false; SC.err = ok ? "" : "Không tải được dữ liệu. Kiểm tra mạng hoặc VPN.";
       if (S.tf === tfk) { SC.tf = ""; sigLoad(); }
       renderSig();
@@ -2558,11 +2619,38 @@ function analyze(c, tf, L) {
     if (!o.lab) return "<span class=\"pill neu\">Chưa kiểm chứng</span>";
     var l = stLabelTxt(o.lab); return "<span class=\"pill " + l[1] + "\">" + l[0] + "</span>";
   }
+  function sigStat(o) {
+    var d = o.dir, R = o.atr * o.cf.sl, e = o.sigClose, px = o.px, mv = (px - e) * d / R;
+    if (mv <= -1) return { c: "bear", t: "Đã chạm SL", x: 1, mv: mv };
+    if (mv >= o.tps[0]) return { c: "neu", t: "Đã đạt TP1", x: 1, mv: mv };
+    if (mv > 0.3) return { c: "neu", t: "Đã chạy xa, không nên đuổi", x: 1, mv: mv };
+    if (mv < -0.3) return { c: "neu", t: "Giá ngược chiều, gần SL", x: 0, mv: mv };
+    return { c: "bull", t: "Còn vào được", x: 0, mv: mv };
+  }
+  function sigPxLine(o) {
+    var st = sigStat(o);
+    return "Giá hiện tại <b>" + fmtPx(o.px) + "</b> · cách Entry " + (st.mv >= 0 ? "+" : "") + st.mv.toFixed(2) + "R <span class=\"pill " + st.c + "\">" + st.t + "</span>";
+  }
+  var PXT = null;
+  async function sigPxRefresh() {
+    if (document.hidden || tab !== "sig" || !SC.fresh.length) return;
+    var syms = Array.from(new Set(SC.fresh.map(function (o) { return o.sym; }))).slice(0, 40);
+    try {
+      var a = await bget("/api/v3/ticker/price?symbols=" + encodeURIComponent(JSON.stringify(syms))), m = {};
+      a.forEach(function (x) { m[x.symbol] = +x.price; });
+      SC.fresh.forEach(function (o) {
+        if (m[o.sym]) o.px = m[o.sym];
+        var el = document.querySelector("[data-px=\"" + o.id + "\"]"); if (el) { el.innerHTML = sigPxLine(o); var cd = el.closest(".sgc"); if (cd) cd.classList.toggle("old", !!sigStat(o).x); }
+      });
+    } catch (e) {}
+  }
+  if (!PXT) PXT = setInterval(sigPxRefresh, 8000);
   function sigCard(o) {
     var d = o.dir, e = o.sigClose, R = o.atr * o.cf.sl, sl = e - d * R, tp = o.tps.map(function (m) { return e + d * m * R; }), pct = R / e * 100;
-    var h = "<div class=\"sgc\" style=\"--c:" + SCOL[o.k] + "\"><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
+    var h = "<div class=\"sgc" + (sigStat(o).x ? " old" : "") + "\" style=\"--c:" + SCOL[o.k] + "\"><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
     h += "<div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
     h += "<div class=\"lv tp\">" + tp.map(function (p, i) { return "<div><small>TP" + (i + 1) + " · " + o.tps[i] + "R</small><b>" + fmtPx(p) + "</b></div>"; }).join("") + "</div>";
+    h += "<div class=\"pxl\" data-px=\"" + o.id + "\">" + sigPxLine(o) + "</div>";
     h += "<div class=\"sgf\">" + qBadge(o) + (o.bst ? "<span class=\"note\">Backtest: thắng " + (o.bst.win * 100).toFixed(0) + "% · " + (o.bst.exp >= 0 ? "+" : "") + o.bst.exp.toFixed(2) + "R/lệnh (" + o.bst.n + " lệnh)</span>" : "<span class=\"note\">Chạy so sánh ở tab Backtest để có số liệu.</span>") + "<div class=\"sgb\"><button class=\"fwb" + (fwHas(fwId(o)) ? " on" : "") + "\" data-fw=\"" + o.id + "\">" + (fwHas(fwId(o)) ? "✓ Đang theo dõi" : "+ Theo dõi") + "</button><button class=\"opn\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\">Mở chart</button></div></div></div>";
     return h;
   }
@@ -2631,7 +2719,7 @@ function analyze(c, tf, L) {
       }).join("") + "</div>";
     }
     el.innerHTML = h; el.style.opacity = SC.run && (SC.fresh.length || SC.recent.length) ? ".55" : "1"; bindOpen(el);
-    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o)) { fwSave(); toast("Đã thêm vào nhật ký theo dõi"); fwUpdate(false); } else toast("Kèo này đã được theo dõi"); b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { fwSave(); toast("Đã thêm vào nhật ký theo dõi"); fwUpdate(false); } else toast("Kèo này đã được theo dõi"); b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
   }
   (function () { var c = $("sigchip"); if (c) c.addEventListener("click", function () { SIGLV = null; lsSet("ictSigLv", null); syncSigChip(); draw(); toast("Đã ẩn mức SL/TP của kèo"); }); })();
   /* ----- top tăng / giảm trong ngày ----- */
