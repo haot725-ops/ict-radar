@@ -311,6 +311,11 @@ html, body { font-size: 14px; font-feature-settings: "tnum" 1; font-weight: 400;
 .sgc::before { display: none; } .strow { border-left-width: 3px; }
 .rrow { background: transparent; border-radius: 0; border-bottom: 1px solid var(--line); padding: 12px 4px; }
 .pk .it .rt .pill { background: none; padding: 0; font-size: 13px; }
+#v-chart.hasbar .cwrap { bottom: var(--sbh, 74px); }
+.sigbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 8px 12px 10px; background: var(--card); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 7px; }
+.sigbar[hidden] { display: none; }
+.sigbar .sigchip { position: static; width: 100%; text-align: left; padding: 6px 10px; line-height: 1.35; }
+.sigev { display: flex; flex-wrap: wrap; gap: 6px; } .sigev span { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: var(--card2); color: #fff; } .sigev .bull { background: rgba(22,199,132,.22); color: var(--up); } .sigev .bear { background: rgba(234,57,67,.22); color: var(--down); } .sigev .neu { background: rgba(245,183,59,.2); color: #f5b73b; } .sigev .ent { background: rgba(56,97,251,.25); color: #8fa8ff; }
 .cwrap { background: none; } .fab { border-radius: 10px; } .fab.sm { border-radius: 10px; }
 .conf i { background: var(--blue); } ul.why li::before { box-shadow: none; }
 .sigchip { border-radius: 8px; } .sheet { border-radius: 16px 16px 0 0; border-top: 1px solid var(--line); }
@@ -367,9 +372,9 @@ details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-
         <canvas id="chart"></canvas>
         <button class="fab sm on" id="autoBtn" aria-label="Tự động co giãn giá">A</button>
         <div class="ohlc" id="ohlc"></div>
-        <button class="sigchip" id="sigchip" hidden></button>
         <button class="fab" id="reset" aria-label="Về nến mới nhất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l7 7-7 7"/><path d="M14 5l7 7-7 7"/></svg></button>
       </div>
+      <div class="sigbar" id="sigbar" hidden><button class="sigchip" id="sigchip" hidden></button><div class="sigev" id="sigev"></div></div>
     </section>
 
     <section class="view scroll" id="v-sig"><div class="card hero" id="sigh"></div><div id="sigl"></div></section>
@@ -1191,7 +1196,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-28.2";
+  var VER = "2026-10-28.3";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2978,9 +2983,9 @@ function analyze(c, tf, L) {
     return { sym: o.sym, k: o.k, dir: d, t: o.t, e: e, sl: e - d * R, tp: o.tps.map(function (m) { return e + d * m * R; }), tps: o.tps };
   }
   function syncSigChip() {
-    var c = $("sigchip"); if (!c) return;
-    if (SIGLV && SIGLV.sym === S.sym) { c.hidden = false; c.textContent = "✕ " + STRAT[SIGLV.k] + " · " + (SIGLV.dir === 1 ? "MUA" : "BÁN"); c.className = "sigchip " + (SIGLV.dir === 1 ? "up" : "dn"); c.dataset.t = ""; }
-    else c.hidden = true;
+    var c = $("sigchip"), sb = $("sigbar"), vc = $("v-chart"); if (!c || !sb) return;
+    if (SIGLV && SIGLV.sym === S.sym) { c.hidden = false; sb.hidden = false; c.className = "sigchip " + (SIGLV.dir === 1 ? "up" : "dn"); c.dataset.t = ""; }
+    else { c.hidden = true; sb.hidden = true; vc.classList.remove("hasbar"); setTimeout(draw, 0); }
   }
   function openSymbol(sym, o) {
     if (o) { SIGLV = sigLevels(o); lsSet("ictSigLv", SIGLV); }
@@ -3022,25 +3027,31 @@ function analyze(c, tf, L) {
     });
     if (se) {
       var xe = X(se.j + 1), ye = Y(L.e), tri = up ? 1 : -1;
-      function pill(cx, cy, tx2, col) { var w2 = x.measureText(tx2).width + 8, px = Math.max(2, Math.min(pw - w2 - 2, cx - w2 / 2)), py = Math.max(56, Math.min(ph - 16, cy)); rr(x, px, py, w2, 14, 4); x.fillStyle = col; x.fill(); x.fillStyle = "#fff"; x.fillText(tx2, px + 4, py + 10.5); }
       if (xe >= 0) {
       x.fillStyle = COL.cyan; x.beginPath(); x.moveTo(xe, ye + tri * 3); x.lineTo(xe - 5, ye + tri * 12); x.lineTo(xe + 5, ye + tri * 12); x.closePath(); x.fill();
-      pill(xe, up ? ye + 14 : ye - 28, "Vào " + hhmm(C[se.j + 1].t), "#3861fb");
       }
       se.ev.forEach(function (e) {
         var cx = X(e.i), cy = Y(e.lv); if (cx < 0 || cx > pw) return; var col = e.c === "bull" ? COL.up : e.c === "bear" ? COL.down : COL.amber;
-        x.fillStyle = col; x.strokeStyle = "#0f1115"; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, 4.5, 0, 6.2832); x.stroke(); x.fill();
-        pill(cx, e.c === "bear" ? cy + (up ? 8 : -22) : cy - (up ? 22 : -8), e.t + (e.t === "SL" || e.t === "BE" ? " ✕" : e.t === "Thoát" ? "" : " ✓") + " " + hhmm(C[e.i].t), col);
+        x.fillStyle = col; x.strokeStyle = "#0f1115"; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, 7, 0, 6.2832); x.stroke(); x.fill();
+        x.fillStyle = "#0f1115"; x.font = "800 8px Inter, sans-serif"; x.textAlign = "center"; x.fillText(e.t === "SL" ? "✕" : e.t === "BE" ? "B" : e.t === "Thoát" ? "T" : e.t.slice(2), cx, cy + 3); x.textAlign = "left"; x.font = "700 10px Inter, sans-serif";
       });
     }
     x.restore();
-    var cp = $("sigchip");
-    if (cp) {
-      var base = "✕ " + STRAT[L.k] + " · " + (L.dir === 1 ? "MUA" : "BÁN"), sm = "";
-      if (se) { var nm = (FWM.filter(function (m) { return m[0] === FW.m; })[0] || ["", ""])[1].replace(/ \(.*\)/, ""); sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy, tạm tính ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + nm; }
-      if (cp.dataset.t !== base + "|" + sm) { cp.dataset.t = base + "|" + sm; cp.innerHTML = base + (sm ? "<br><span style=\"font-weight:600;font-size:10px;opacity:.85\">" + sm + "</span>" : ""); }
-    }
-  }
+    var cp = $("sigchip"), sb = $("sigbar"), evb = $("sigev");
+    if (cp && sb) {
+      var base = "✕ " + STRAT[L.k] + " · " + (L.dir === 1 ? "MUA" : "BÁN"), sm = "", chips = "";
+      if (se) {
+        var nm = (FWM.filter(function (m) { return m[0] === FW.m; })[0] || ["", ""])[1].replace(/ \(.*\)/, "");
+        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy, tạm tính ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + nm;
+        chips = "<span class=\"ent\">▲ Vào " + hhmm(C[se.j + 1].t) + "</span>" + se.ev.map(function (e) { return "<span class=\"" + e.c + "\">" + (e.t === "SL" ? "✕ SL" : e.t === "BE" ? "B · về Entry" : e.t === "Thoát" ? "T · Thoát" : e.t.slice(2) + " · " + e.t) + " " + hhmm(C[e.i].t) + "</span>"; }).join("") + (se.end < 0 ? "<span>đang chạy</span>" : "");
+      }
+      var key = base + "|" + sm + "|" + chips;
+      if (cp.dataset.t !== key) {
+        cp.dataset.t = key; cp.innerHTML = base + (sm ? "<br><span style=\"font-weight:600;font-size:10.5px;opacity:.9\">" + sm + "</span>" : ""); if (evb) evb.innerHTML = chips;
+        var vc = $("v-chart"); vc.classList.add("hasbar");
+        requestAnimationFrame(function () { vc.style.setProperty("--sbh", sb.offsetHeight + "px"); draw(); });
+      }
+    }  }
   function renderSig() {
     renderSigHead();
     var el = $("sigl"); if (!el) return;
