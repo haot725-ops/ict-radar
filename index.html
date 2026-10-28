@@ -1196,7 +1196,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-28.6";
+  var VER = "2026-10-28.7";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2178,7 +2178,7 @@ function analyze(c, tf, L) {
   /* cách chốt đang chọn: các số liệu hiển thị tính lại theo đường giá đã lưu */
   FW.m = lsGet("ictFwM", "third"); if (!FWM.some(function (m) { return m[0] === FW.m; })) FW.m = "third";
   function fwEff(q) {
-    if (FW.m === "third" || !q.p || !q.p.length || q.st === "lost") return q;
+    if ((FW.m === "third" && q.done) || !q.p || !q.p.length || q.st === "lost") return q;
     var r = fwExit(q.p, q.tps, FW.m, q.done), c = {}, k;
     for (k in q) c[k] = q[k];
     c.ov = 1; c.R = r.R; c.done = r.c ? 1 : 0; c.tEnd = r.c ? q.t + (r.i + 2) * q.tfm : 0;
@@ -2250,14 +2250,14 @@ function analyze(c, tf, L) {
         try {
           while (rs.length) {
             var arr = mapK(await bget("/api/v3/klines?symbol=" + rs[0].sym + "&interval=" + rs[0].tf + "&startTime=" + rs[0].t + "&limit=1000"));
-            if (arr.length && arr[arr.length - 1].t + rs[0].tfm > Date.now()) arr.pop();
+            var live = null; if (arr.length && arr[arr.length - 1].t + rs[0].tfm > Date.now()) live = arr.pop();
             if (!arr.length) break;
             var lastT = arr[arr.length - 1].t, full = arr.length >= 999, rest = [];
             rs.forEach(function (q) {
               if (full && q.t !== rs[0].t && q.t > lastT - 130 * q.tfm) { rest.push(q); return; }
               var j = -1, i; for (i = 0; i < arr.length; i++) if (arr[i].t === q.t) { j = i; break; }
               if (j < 0) { if (q.t <= lastT) { q.st = "lost"; q.done = 1; q.tEnd = Date.now(); } return; }
-              var sa = arr.slice(j), bf = q.done && (!q.p || q.pv !== 2); q.p = fwPath(sa, q) || q.p; q.pv = 2; if (bf) { if (sa[1]) q.e = sa[1].o; return; }
+              var sa = arr.slice(j), bf = q.done && (!q.p || q.pv !== 2); q.p = fwPath(live && live.t > q.t ? sa.concat([live]) : sa, q) || q.p; q.pv = 2; if (bf) { if (sa[1]) q.e = sa[1].o; return; }
               var o = fwSim(sa, q); if (!o.done && Date.now() > q.t + 130 * q.tfm) { o.st = "lost"; o.done = 1; o.tEnd = Date.now(); } q.st = o.st; q.R = o.R; q.tp = o.tp; q.done = o.done; if (arr[j + 1]) q.e = arr[j + 1].o; if (o.done) q.tEnd = o.tEnd;
             });
             if (rest.length === rs.length) break;
