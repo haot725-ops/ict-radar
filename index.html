@@ -333,6 +333,7 @@ input, select, textarea { border-radius: 10px; } input { font-family: var(--ui);
 #calc .fchips button[style] { }
 /* chọn nguồn lịch gọn */
 .srcg { display: flex; flex-direction: column; gap: 6px; } .srcg > small { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--dim); }
+.sg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 4px; } .sf { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .sf small { font-size: 10.5px; color: var(--dim); line-height: 1.2; min-height: 25px; } .sf input { width: 100%; box-sizing: border-box; padding: 8px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2); color: var(--fg); font-size: 14px; font-family: var(--mono); } .sgn { font-size: 11px; color: var(--dim); margin: 0 0 6px; }
 .sin { width: 64px; margin: 0 4px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--card2); color: var(--fg); font-size: 13px; }
 .rwrap { display: flex; align-items: center; gap: 6px; } .rwrap .rrow { flex: 1; min-width: 0; } .rx { width: 34px; height: 34px; border-radius: 50%; color: var(--dim); background: var(--card2); flex: none; } .pr2 { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; max-width: 46%; text-align: right; } .pr2 .pill { white-space: normal; } .pr2 small { font-size: 11px; font-weight: 700; }
 .tb tr.pkm { cursor: pointer; } .tb tr.sel td { background: rgba(22,199,132,.10); font-weight: 700; }
@@ -1196,7 +1197,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-28.7";
+  var VER = "2026-10-29.3";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2196,29 +2197,72 @@ function analyze(c, tf, L) {
       openSymbol(q.sym, o);
     }
   function fwView() { return FW.j.map(fwEff); }
-  var SIM = lsGet("ictSim", { cap: 1000, risk: 1 });
+  var SIM = lsGet("ictSim", {}), SD = { cap: 1000, risk: 1, max: 4, lev: 20, fee: 0.07, fund: 0.01 };
+  (function () { var k; if (!SIM || typeof SIM !== "object") SIM = {}; for (k in SD) if (!(SIM[k] > 0)) SIM[k] = SD[k]; })();
   function fm$(v) { return (v >= 0 ? "+$" : "-$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 1); }
   function fwMoney(R) { var u = SIM.cap * SIM.risk / 100; return fm$(R * u) + " (" + (R * SIM.risk >= 0 ? "+" : "") + (R * SIM.risk).toFixed(2) + "%)"; }
-  function fwSimHtml() {
-    var all = fwView().filter(function (q) { return q.st !== "lost" && (!BT.calK || BT.calK === "all" || q.k === BT.calK); }), wp = all.filter(function (q) { return q.p && q.p.length; }), u = SIM.cap * SIM.risk / 100;
-    var h = "<div class=\"stl\"><span>Vốn giả lập $<input id=\"simcap\" type=\"number\" min=\"10\" value=\"" + SIM.cap + "\" class=\"sin\"> rủi ro %/lệnh<input id=\"simrisk\" type=\"number\" min=\"0.1\" step=\"0.1\" value=\"" + SIM.risk + "\" class=\"sin\"> = <b>$" + u.toFixed(2) + "/R</b></span></div>";
-    if (!all.length) return h;
-    var cl = all.filter(function (q) { return q.done; }), op = all.filter(function (q) { return !q.done; });
-    var sc = cl.reduce(function (a, q) { return a + q.R; }, 0), so = op.reduce(function (a, q) { return a + q.R; }, 0);
-    h += "<div class=\"stat4\"><div><small>Đã chốt</small><b class=\"" + (sc >= 0 ? "bull" : "bear") + "\" style=\"font-size:13px\">" + fwMoney(sc) + "</b></div><div><small>Đang chạy (tạm tính)</small><b class=\"" + (so >= 0 ? "bull" : "bear") + "\" style=\"font-size:13px\">" + fwMoney(so) + "</b></div><div><small>Tổng R</small><b style=\"font-size:13px\">" + (sc + so >= 0 ? "+" : "") + (sc + so).toFixed(1) + "R</b></div><div><small>Số lệnh</small><b>" + cl.length + "+" + op.length + "</b></div></div>";
-    if (!wp.length) return h + "<div class=\"note\">Chưa có đường giá của các lệnh. Bấm ↻ Cập nhật để app tải nến và so sánh các cách chốt lệnh.</div>";
-    var rows = FWM.map(function (m) {
-      var n = 0, w = 0, sum = 0, nopen = 0, sopen = 0, eq = 0, pk = 0, dd = 0;
-      wp.slice().sort(function (a, b) { return (a.tEnd || a.added) - (b.tEnd || b.added); }).forEach(function (q) {
-        var r = fwExit(q.p, q.tps, m[0], q.done);
-        if (r.c) { n++; if (r.R > 0) w++; sum += r.R; eq += r.R; pk = Math.max(pk, eq); dd = Math.max(dd, pk - eq); } else { nopen++; sopen += r.R; }
-      });
-      return { l: m[1], n: n, w: n ? Math.round(w / n * 100) : 0, R: sum, dd: dd, o: nopen, so: sopen, id: m[0] };
+  /* ví giả lập chạy theo thời gian: cỡ lệnh theo SL, ký quỹ từ tiền rảnh, đủ số lệnh hoặc hết vốn thì bỏ kèo, trừ phí + trượt giá */
+  function fwWallet(list, m) {
+    var S = SIM, bal = S.cap, pk = S.cap, dd = 0, open = [], rows = [], sCash = 0, sMax = 0, nClosed = 0, wins = 0, sumR = 0, nLiq = 0, costs = 0;
+    var cand = list.filter(function (q) { return q.p && q.p.length && q.e && q.atr && q.sl; }).map(function (q) {
+      var r = fwExit(q.p, q.tps, m, q.done), tx = r.c ? q.t + (r.i + 2) * q.tfm : Infinity, rd = q.atr * q.sl / q.e, lr = rd > 0 ? (1 / S.lev - 0.005) / rd : 1e9, k;
+      /* isolated: giá thanh lý cách entry khoảng 1/đòn bẩy trừ 0,5% duy trì ký quỹ; nếu gần hơn SL thì thanh lý trước, mất cả ký quỹ lệnh đó */
+      if (lr < 1) for (k = 0; k < q.p.length; k++) if (q.p[k][1] <= -lr) { if (!r.c || k < r.i || (k === r.i && r.R <= -0.999)) { r = { R: -(1 / S.lev) / rd, c: 1, i: k, liq: 1 }; tx = q.t + (k + 2) * q.tfm; } break; }
+      return { q: q, r: r, te: q.t + q.tfm, tx: tx };
+    }).sort(function (a, b) { return a.te - b.te || a.q.t - b.q.t; });
+    function closeTo(t) {
+      open.sort(function (a, b) { return a.tx - b.tx; });
+      while (open.length && open[0].tx <= t) {
+        var o = open.shift(); bal += o.pnl; nClosed++; if (o.pnl > 0) wins++; if (o.r.liq) nLiq++; sumR += o.r.R;
+        if (bal > pk) pk = bal; if (pk > 0) dd = Math.max(dd, (pk - bal) / pk);
+      }
+    }
+    cand.forEach(function (c) {
+      closeTo(c.te);
+      var q = c.q, row = { q: q, te: c.te, r: c.r }, locked = open.reduce(function (a, o) { return a + o.mg; }, 0), free = bal - locked;
+      var rd = q.atr * q.sl / q.e, risk = bal * S.risk / 100, nt = rd > 0 ? risk / rd : 0, sc = 1;
+      if (bal <= 0 || nt <= 0) { row.skip = "hết vốn"; sCash++; }
+      else if (open.length >= S.max) { row.skip = "đủ " + S.max + " lệnh mở"; sMax++; }
+      else {
+        if (nt / S.lev > free) sc = free * S.lev / nt;
+        if (!(sc >= 0.5)) { row.skip = "hết vốn"; sCash++; }
+        else {
+          sc = Math.min(1, sc);
+          var n2 = nt * sc, rk = risk * sc, fee = n2 * S.fee / 100, fund = n2 * S.fund / 100 * ((isFinite(c.tx) ? c.tx : Date.now()) - c.te) / 288e5, cost = (c.r.c ? 2 * fee : fee) + Math.max(0, fund), pnl = c.r.R * rk - cost;
+          costs += cost; row.cost = cost; row.nt = n2; row.mg = n2 / S.lev; row.rk = rk; row.sc = sc; row.pnl = pnl;
+          open.push({ tx: c.tx, pnl: pnl, mg: row.mg, r: c.r });
+        }
+      }
+      rows.push(row);
     });
-    var best = rows.reduce(function (a, b) { return b.R > a.R ? b : a; }, rows[0]);
-    h += "<h3 class=\"sub\">So sánh cách chốt lệnh <span>trên " + wp.length + " lệnh đã theo dõi</span></h3><div class=\"tw\"><table class=\"tb\"><tr><th>Cách chốt</th><th>Lệnh</th><th>Win</th><th>Tổng R</th><th>Lãi/lỗ</th><th>Sụt tối đa</th></tr>" +
-      rows.map(function (r) { return "<tr data-fwm=\"" + r.id + "\" class=\"pkm" + (r === best ? " hl" : "") + (r.id === FW.m ? " sel" : "") + "\"><td>" + (r.id === FW.m ? "✓ " : "") + r.l + (r.o ? "<br><small class=\"muted\">" + r.o + " lệnh chưa đóng: " + (r.so >= 0 ? "+" : "") + r.so.toFixed(1) + "R tạm tính</small>" : "") + "</td><td>" + r.n + "</td><td>" + r.w + "%</td><td class=\"" + (r.R >= 0 ? "bull" : "bear") + "\">" + (r.R >= 0 ? "+" : "") + r.R.toFixed(1) + "</td><td class=\"" + (r.R >= 0 ? "bull" : "bear") + "\">" + fm$(r.R * u) + "<br><small>" + (r.R * SIM.risk >= 0 ? "+" : "") + (r.R * SIM.risk).toFixed(1) + "%</small></td><td>" + r.dd.toFixed(1) + "R<br><small>-" + (r.dd * SIM.risk).toFixed(1) + "%</small></td></tr>"; }).join("") + "</table></div>";
-    h += "<div class=\"note\">Bấm vào một dòng để chọn cách chốt chính (✓): các số ở trên, lịch và thống kê sẽ tính theo cách đó. Dòng tô màu là cách có tổng R cao nhất trên mẫu hiện có. Mẫu còn nhỏ thì chênh lệch chủ yếu là ngẫu nhiên, chưa nên đổi cách chốt chỉ vì một vài lệnh. Mô phỏng chạy trên nến đã đóng, SL kiểm tra trước trong mỗi nến, chưa tính phí và trượt giá. Lãi/lỗ tính cố định theo vốn ban đầu, không cộng dồn lãi.</div>";
+    closeTo(1e18);
+    var unreal = open.reduce(function (a, o) { return a + o.pnl; }, 0), lk = open.reduce(function (a, o) { return a + o.mg; }, 0);
+    return { bal: bal, unreal: unreal, locked: lk, free: bal - lk, eq: bal + unreal, taken: rows.filter(function (r) { return !r.skip; }).length, sCash: sCash, sMax: sMax, dd: dd, sumR: sumR, nClosed: nClosed, wins: wins, nOpen: open.length, nLiq: nLiq, costs: costs, rows: rows };
+  }
+  function fwSimHtml() {
+    var all = fwView().filter(function (q) { return q.st !== "lost" && (!BT.calK || BT.calK === "all" || q.k === BT.calK); }), wp = all.filter(function (q) { return q.p && q.p.length; });
+    var pc = function (v) { return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; };
+    var fld = function (id, lb, v, st, mn) { return "<label class=\"sf\"><small>" + lb + "</small><input id=\"" + id + "\" type=\"number\" inputmode=\"decimal\" min=\"" + mn + "\" step=\"" + st + "\" value=\"" + v + "\"></label>"; };
+    var h = "<div class=\"sg\">" + fld("simcap", "Vốn ($)", SIM.cap, 10, 10) + fld("simrisk", "Rủi ro / lệnh (%)", SIM.risk, 0.1, 0.1) + fld("simmax", "Lệnh mở tối đa", SIM.max, 1, 1) + fld("simlev", "Đòn bẩy (x)", SIM.lev, 1, 1) + fld("simfee", "Phí+trượt / chiều (%)", SIM.fee, 0.01, 0) + fld("simfund", "Funding / 8h (%)", SIM.fund, 0.005, 0) + "</div><div class=\"sgn\">Isolated · giá thanh lý cách entry khoảng " + Math.max(0, 100 / SIM.lev - 0.5).toFixed(1) + "%</div>";
+    if (!all.length) return h;
+    if (!wp.length) return h + "<div class=\"note\">Chưa có đường giá của các lệnh. Bấm ↻ Cập nhật để app tải nến và chạy ví giả lập.</div>";
+    var W = fwWallet(wp, FW.m), cur = FWM.filter(function (m) { return m[0] === FW.m; })[0][1];
+    h += "<h3 class=\"sub\">Ví giả lập <span>theo cách chốt: " + cur.split(",")[0].replace(/\s*\(.*\)/, "") + "</span></h3>";
+    h += "<div class=\"stat4\"><div><small>Số dư (đã chốt)</small><b class=\"" + (W.bal >= SIM.cap ? "bull" : "bear") + "\">$" + W.bal.toFixed(W.bal < 100 ? 2 : 0) + "</b><small>" + pc((W.bal / SIM.cap - 1) * 100) + "</small></div><div><small>Đang chạy (tạm tính)</small><b class=\"" + (W.unreal >= 0 ? "bull" : "bear") + "\">" + fm$(W.unreal) + "</b><small>" + W.nOpen + " lệnh mở</small></div><div><small>Kẹt trong lệnh</small><b>$" + W.locked.toFixed(0) + "</b><small>ký quỹ</small></div><div><small>Tiền rảnh</small><b>$" + Math.max(0, W.free).toFixed(0) + "</b><small>vào được thêm</small></div></div>";
+    h += "<div class=\"stat4\"><div><small>Vào / bỏ kèo</small><b>" + W.taken + " / " + (W.sCash + W.sMax) + "</b></div><div><small>Thắng (sau phí)</small><b>" + (W.nClosed ? Math.round(W.wins / W.nClosed * 100) : 0) + "%</b><small>" + W.nClosed + " lệnh xong</small></div><div><small>Tổng R</small><b>" + (W.sumR >= 0 ? "+" : "") + W.sumR.toFixed(1) + "R</b></div><div><small>Sụt tối đa</small><b class=\"bear\">-" + (W.dd * 100).toFixed(1) + "%</b></div></div>";
+    h += "<div class=\"note\">Đã trừ $" + W.costs.toFixed(2) + " phí, trượt giá và funding" + (W.nLiq ? ". <b class=\"bear\">" + W.nLiq + " lệnh bị thanh lý</b> (SL xa hơn giá thanh lý nên mất cả ký quỹ lệnh đó)" : "") + ".</div>";
+    if (W.sCash + W.sMax) h += "<div class=\"note\">Bỏ " + W.sMax + " kèo vì đủ " + SIM.max + " lệnh mở, " + W.sCash + " kèo vì hết vốn rảnh. Kèo nào còn vốn rảnh ít hơn nửa cỡ lệnh thì bỏ, còn thiếu một phần thì vào nhỏ lại.</div>";
+    var lg = W.rows.slice().reverse().slice(0, 25);
+    h += "<h3 class=\"sub\">Từng kèo trong ví <span>mới nhất trước</span></h3><div class=\"tw\"><table class=\"tb\"><tr><th>Kèo</th><th>Cỡ lệnh</th><th>Kết quả</th></tr>" + lg.map(function (r) {
+      var q = r.q, nm = dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i><br><small>" + q.tf + " · " + fmtLocal(q.t) + "</small>";
+      if (r.skip) return "<tr style=\"opacity:.55\"><td>" + nm + "</td><td colspan=\"2\"><small>Bỏ: " + r.skip + "</small></td></tr>";
+      return "<tr><td>" + nm + "</td><td>$" + r.nt.toFixed(0) + (r.sc < 1 ? " <small>(giảm cỡ)</small>" : "") + "<br><small>rủi ro $" + r.rk.toFixed(2) + "</small></td><td class=\"" + (r.pnl >= 0 ? "bull" : "bear") + "\">" + fm$(r.pnl) + "<br><small>" + (r.r.R >= 0 ? "+" : "") + r.r.R.toFixed(2) + "R" + (r.r.liq ? " · THANH LÝ" : r.r.c ? "" : " · đang chạy") + "</small></td></tr>";
+    }).join("") + "</table></div>";
+    var rows = FWM.map(function (m) { var w = fwWallet(wp, m[0]); return { l: m[1], id: m[0], w: w }; });
+    var best = rows.reduce(function (a, b) { return b.w.eq > a.w.eq ? b : a; }, rows[0]);
+    h += "<h3 class=\"sub\">So sánh cách chốt lệnh <span>cùng một ví, trên " + wp.length + " kèo</span></h3><div class=\"tw\"><table class=\"tb\"><tr><th>Cách chốt</th><th>Vào/bỏ</th><th>Win</th><th>Vốn cuối</th><th>Sụt</th></tr>" +
+      rows.map(function (r) { var w = r.w; return "<tr data-fwm=\"" + r.id + "\" class=\"pkm" + (r === best ? " hl" : "") + (r.id === FW.m ? " sel" : "") + "\"><td>" + (r.id === FW.m ? "✓ " : "") + r.l + (w.nOpen ? "<br><small class=\"muted\">" + w.nOpen + " lệnh chưa đóng, tạm tính " + fm$(w.unreal) + "</small>" : "") + "</td><td>" + w.taken + "/" + (w.sCash + w.sMax) + "</td><td>" + (w.nClosed ? Math.round(w.wins / w.nClosed * 100) : 0) + "%</td><td class=\"" + (w.eq >= SIM.cap ? "bull" : "bear") + "\">$" + w.eq.toFixed(0) + "<br><small>" + pc((w.eq / SIM.cap - 1) * 100) + "</small></td><td>-" + (w.dd * 100).toFixed(1) + "%</td></tr>"; }).join("") + "</table></div>";
+    h += "<div class=\"note\">Ví chạy theo thời gian thật: mỗi kèo vào ở giá mở nến kế, cỡ lệnh = rủi ro % của số dư lúc đó chia cho khoảng cách SL, ký quỹ lấy từ tiền rảnh (futures isolated). Đủ số lệnh mở hoặc hết vốn thì bỏ kèo, đúng như ông ngồi thật. Đã trừ phí, trượt giá hai chiều và funding. Lãi cộng dồn vào vốn. Bấm một dòng để chọn cách chốt chính (✓). Dòng tô màu là cách ra vốn cuối cao nhất, nhưng mẫu nhỏ thì chênh lệch chủ yếu là ngẫu nhiên. Số $ ở từng kèo trong danh sách Đang chạy phía dưới vẫn tính đơn giản theo vốn ban đầu, không qua ví.</div>";
     return h;
   }
   /* arr[0] = nến phát tín hiệu; vào lệnh ở giá mở cửa nến kế, giống backtest */
@@ -2448,7 +2492,7 @@ function analyze(c, tf, L) {
     on("#jclr", function () { if (confirm("Xóa toàn bộ nhật ký kèo ICT đã theo dõi?")) { lsSet("ictHist", []); renderCal(); } });
     on("[data-ck]", function (b) { BT.calK = b.dataset.ck; BT.calDay = null; renderCal(); });
     on(".dc[data-d]", function (b) { BT.calDay = BT.calDay === b.dataset.d ? null : b.dataset.d; renderCal(); });
-    Array.prototype.forEach.call(el.querySelectorAll("#simcap,#simrisk"), function (i) { i.addEventListener("change", function () { var c = parseFloat($("simcap").value), r = parseFloat($("simrisk").value); SIM = { cap: c > 0 ? c : 1000, risk: r > 0 ? r : 1 }; lsSet("ictSim", SIM); renderCal(); }); });
+    Array.prototype.forEach.call(el.querySelectorAll("#simcap,#simrisk,#simmax,#simlev,#simfee,#simfund"), function (i) { i.addEventListener("change", function () { var g = function (id, d, mn) { var v = parseFloat($(id).value); return v >= mn ? v : d; }; SIM = { cap: g("simcap", 1000, 10), risk: g("simrisk", 1, 0.1), max: Math.round(g("simmax", 4, 1)), lev: g("simlev", 20, 1), fee: g("simfee", 0.07, 0), fund: g("simfund", 0.01, 0) }; if (!(SIM.fee > 0)) SIM.fee = 0.0001; if (!(SIM.fund > 0)) SIM.fund = 0.0001; lsSet("ictSim", SIM); renderCal(); }); });
     on("[data-fwm]", function (b) { FW.m = b.dataset.fwm; lsSet("ictFwM", FW.m); renderCal(); toast("Đã chọn cách chốt này"); });
     on("[data-fwx]", function (b) { var q = FW.j.filter(function (x) { return x.id === b.dataset.fwx; })[0]; if (q && confirm("Bỏ theo dõi " + dispSym(q.sym) + " khỏi nhật ký?")) { FW.j = FW.j.filter(function (x) { return x !== q; }); fwSave(); renderCal(); } });
     on("[data-fwo]", function (b) { fwOpen(b.dataset.fwo); });
