@@ -343,6 +343,7 @@ input, select, textarea { border-radius: 10px; } input { font-family: var(--ui);
 .seg3.sk button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 6px; } .seg3.sk button.on { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
 .stl { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); } .stl b { color: var(--fg); }
 .acts { display: flex; flex-wrap: wrap; gap: 6px; } .mini { padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--dim); background: var(--card2); } .mini.on { color: var(--acc); background: rgba(56,97,251,.16); }
+.tb td[data-fwo] { cursor: pointer; } .tb td.xc { width: 38px; padding-left: 0; padding-right: 0; text-align: center; } .tb td.xc .rx { width: 30px; height: 30px; }
 .chs.wrap { flex-wrap: wrap; overflow: visible; margin-bottom: 6px; }
 .chs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; } .chs::-webkit-scrollbar { display: none; } .chs button { flex: none; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--dim); background: var(--card2); } .chs button.on { color: #fff; background: var(--blue); }
 details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-style: none; } details.inf summary::-webkit-details-marker { display: none; } details.inf[open] summary { margin-bottom: 6px; }
@@ -1198,7 +1199,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-29.4";
+  var VER = "2026-10-29.5";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2259,10 +2260,10 @@ function analyze(c, tf, L) {
     h += "<div class=\"note\">Đã trừ $" + W.costs.toFixed(2) + " phí, trượt giá và funding" + (W.nLiq ? ". <b class=\"bear\">" + W.nLiq + " lệnh bị thanh lý</b> (SL xa hơn giá thanh lý nên mất cả ký quỹ lệnh đó)" : "") + ".</div>";
     if (W.sCash + W.sMax) h += "<div class=\"note\">Bỏ " + W.sMax + " kèo vì đủ " + SIM.max + " lệnh mở, " + W.sCash + " kèo vì hết vốn rảnh. Kèo nào còn vốn rảnh ít hơn nửa cỡ lệnh thì bỏ, còn thiếu một phần thì vào nhỏ lại.</div>";
     var lg = W.rows.slice().reverse().slice(0, 25);
-    h += "<h3 class=\"sub\">Từng kèo trong ví <span>mới nhất trước</span></h3><div class=\"tw\"><table class=\"tb\"><tr><th>Kèo</th><th>Cỡ lệnh</th><th>Kết quả</th></tr>" + lg.map(function (r) {
+    h += "<h3 class=\"sub\">Từng kèo trong ví <span>bấm vào kèo để xem chart</span></h3><div class=\"tw\"><table class=\"tb\"><tr><th>Kèo</th><th>Cỡ lệnh</th><th>Kết quả</th><th></th></tr>" + lg.map(function (r) {
       var q = r.q, nm = dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i><br><small>" + q.tf + " · " + fmtLocal(q.t) + "</small>";
-      if (r.skip) return "<tr style=\"opacity:.55\"><td>" + nm + "</td><td colspan=\"2\"><small>Bỏ: " + r.skip + "</small></td></tr>";
-      return "<tr><td>" + nm + "</td><td>$" + r.nt.toFixed(0) + (r.sc < 1 ? " <small>(giảm cỡ)</small>" : "") + "<br><small>rủi ro $" + r.rk.toFixed(2) + "</small></td><td class=\"" + (r.pnl >= 0 ? "bull" : "bear") + "\">" + fm$(r.pnl) + "<br><small>" + (r.r.R >= 0 ? "+" : "") + r.r.R.toFixed(2) + "R" + (r.r.liq ? " · THANH LÝ" : r.r.c ? "" : " · đang chạy") + "</small></td></tr>";
+      if (r.skip) return "<tr style=\"opacity:.55\"><td data-fwo=\"" + q.id + "\">" + nm + "</td><td colspan=\"2\" data-fwo=\"" + q.id + "\"><small>Bỏ: " + r.skip + "</small></td><td class=\"xc\"><button class=\"rx\" data-fwx=\"" + q.id + "\" title=\"Bỏ theo dõi\">✕</button></td></tr>";
+      return "<tr><td data-fwo=\"" + q.id + "\">" + nm + "</td><td data-fwo=\"" + q.id + "\">$" + r.nt.toFixed(0) + (r.sc < 1 ? " <small>(giảm cỡ)</small>" : "") + "<br><small>rủi ro $" + r.rk.toFixed(2) + "</small></td><td data-fwo=\"" + q.id + "\" class=\"" + (r.pnl >= 0 ? "bull" : "bear") + "\">" + fm$(r.pnl) + "<br><small>" + (r.r.R >= 0 ? "+" : "") + r.r.R.toFixed(2) + "R" + (r.r.liq ? " · THANH LÝ" : r.r.c ? "" : " · đang chạy") + "</small></td><td class=\"xc\"><button class=\"rx\" data-fwx=\"" + q.id + "\" title=\"Bỏ theo dõi\">✕</button></td></tr>";
     }).join("") + "</table></div>";
     var rows = FWM.map(function (m) { var w = fwWallet(wp, m[0]); return { l: m[1], id: m[0], w: w }; });
     var best = rows.reduce(function (a, b) { return b.w.eq > a.w.eq ? b : a; }, rows[0]);
@@ -2450,8 +2451,6 @@ function analyze(c, tf, L) {
     if (notes) h += "<div class=\"note\">" + notes + "\"Đạt\" cần từ 20 lệnh, lãi kỳ vọng dương và dương ở cả hai nửa dữ liệu. Một mã đơn lẻ dễ trùng hợp, nên xem thêm vài mã khác.</div>";
     }
     if (src === "fw") {
-      var pend = fwView().filter(function (q) { return !q.done; });
-      if (pend.length) h += "<h3 class=\"sub\">Đang chạy (" + pend.length + ")</h3><div class=\"rlist\">" + pend.slice().reverse().slice(0, 30).map(function (q) { var lb = fwLabel(q); return "<div class=\"rwrap\"><button class=\"rrow\" data-fwo=\"" + q.id + "\"><span class=\"rn\"><b>" + dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small>" + q.k + " · " + STRAT[q.k] + " · " + q.tf + " · " + fmtLocal(q.t) + " · bấm để xem chart</small></span><span class=\"pr2\"><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span>" + (q.R ? "<small class=\"" + (q.R >= 0 ? "bull" : "bear") + "\">" + fwMoney(q.R) + "</small>" : "") + (lb[2] ? "<small class=\"muted\">" + lb[2] + "</small>" : "") + "</span></button><button class=\"rx\" data-fwx=\"" + q.id + "\" title=\"Bỏ theo dõi\">✕</button></div>"; }).join("") + "</div>";
     }
     return h;
   }
