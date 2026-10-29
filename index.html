@@ -343,6 +343,7 @@ input, select, textarea { border-radius: 10px; } input { font-family: var(--ui);
 .seg3.sk button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 6px; } .seg3.sk button.on { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
 .stl { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); } .stl b { color: var(--fg); }
 .acts { display: flex; flex-wrap: wrap; gap: 6px; } .mini { padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--dim); background: var(--card2); } .mini.on { color: var(--acc); background: rgba(56,97,251,.16); }
+.chs.wrap { flex-wrap: wrap; overflow: visible; margin-bottom: 6px; }
 .chs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; } .chs::-webkit-scrollbar { display: none; } .chs button { flex: none; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--dim); background: var(--card2); } .chs button.on { color: #fff; background: var(--blue); }
 details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-style: none; } details.inf summary::-webkit-details-marker { display: none; } details.inf[open] summary { margin-bottom: 6px; }
 #calc { gap: 12px; }
@@ -1197,7 +1198,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-29.3";
+  var VER = "2026-10-29.4";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2199,6 +2200,9 @@ function analyze(c, tf, L) {
   function fwView() { return FW.j.map(fwEff); }
   var SIM = lsGet("ictSim", {}), SD = { cap: 1000, risk: 1, max: 4, lev: 20, fee: 0.07, fund: 0.01 };
   (function () { var k; if (!SIM || typeof SIM !== "object") SIM = {}; for (k in SD) if (!(SIM[k] > 0)) SIM[k] = SD[k]; })();
+  var WL = lsGet("ictWal", []); if (!Array.isArray(WL)) WL = [];
+  function wlSave() { lsSet("ictWal", WL); }
+  function wlAdd(sym) { if (WL.indexOf(sym) < 0) { WL.push(sym); wlSave(); } }
   function fm$(v) { return (v >= 0 ? "+$" : "-$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 1); }
   function fwMoney(R) { var u = SIM.cap * SIM.risk / 100; return fm$(R * u) + " (" + (R * SIM.risk >= 0 ? "+" : "") + (R * SIM.risk).toFixed(2) + "%)"; }
   /* ví giả lập chạy theo thời gian: cỡ lệnh theo SL, ký quỹ từ tiền rảnh, đủ số lệnh hoặc hết vốn thì bỏ kèo, trừ phí + trượt giá */
@@ -2240,12 +2244,14 @@ function analyze(c, tf, L) {
     return { bal: bal, unreal: unreal, locked: lk, free: bal - lk, eq: bal + unreal, taken: rows.filter(function (r) { return !r.skip; }).length, sCash: sCash, sMax: sMax, dd: dd, sumR: sumR, nClosed: nClosed, wins: wins, nOpen: open.length, nLiq: nLiq, costs: costs, rows: rows };
   }
   function fwSimHtml() {
-    var all = fwView().filter(function (q) { return q.st !== "lost" && (!BT.calK || BT.calK === "all" || q.k === BT.calK); }), wp = all.filter(function (q) { return q.p && q.p.length; });
+    var all = fwView().filter(function (q) { return q.st !== "lost" && (!BT.calK || BT.calK === "all" || q.k === BT.calK); }), wp = all.filter(function (q) { return q.p && q.p.length && WL.indexOf(q.sym) >= 0; });
     var pc = function (v) { return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; };
     var fld = function (id, lb, v, st, mn) { return "<label class=\"sf\"><small>" + lb + "</small><input id=\"" + id + "\" type=\"number\" inputmode=\"decimal\" min=\"" + mn + "\" step=\"" + st + "\" value=\"" + v + "\"></label>"; };
     var h = "<div class=\"sg\">" + fld("simcap", "Vốn ($)", SIM.cap, 10, 10) + fld("simrisk", "Rủi ro / lệnh (%)", SIM.risk, 0.1, 0.1) + fld("simmax", "Lệnh mở tối đa", SIM.max, 1, 1) + fld("simlev", "Đòn bẩy (x)", SIM.lev, 1, 1) + fld("simfee", "Phí+trượt / chiều (%)", SIM.fee, 0.01, 0) + fld("simfund", "Funding / 8h (%)", SIM.fund, 0.005, 0) + "</div><div class=\"sgn\">Isolated · giá thanh lý cách entry khoảng " + Math.max(0, 100 / SIM.lev - 0.5).toFixed(1) + "%</div>";
     if (!all.length) return h;
-    if (!wp.length) return h + "<div class=\"note\">Chưa có đường giá của các lệnh. Bấm ↻ Cập nhật để app tải nến và chạy ví giả lập.</div>";
+    var syms = []; all.slice().reverse().forEach(function (q) { if (syms.indexOf(q.sym) < 0) syms.push(q.sym); });
+    h += "<div class=\"stl\"><span><b>Coin trong ví</b> <small class=\"muted\">bấm để chọn, chỉ coin được chọn mới tính vào ví</small></span></div><div class=\"chs wrap\">" + syms.map(function (sy) { return "<button data-wl=\"" + sy + "\" class=\"" + (WL.indexOf(sy) >= 0 ? "on" : "") + "\">" + dispSym(sy) + "</button>"; }).join("") + "</div><div class=\"acts\"><button class=\"mini\" id=\"wlall\">Chọn hết</button><button class=\"mini\" id=\"wlnone\">Bỏ hết</button></div>";
+    if (!wp.length) return h + "<div class=\"note\">" + (WL.length ? "Chưa có đường giá của các coin đã chọn. Bấm ↻ Cập nhật để app tải nến và chạy ví." : "Chưa chọn coin nào cho ví. Bấm tên coin ở trên để đưa vào ví. Coin ông bấm \"+ Theo dõi\" riêng lẻ ở tab Tín hiệu sẽ tự vào ví, còn \"Theo dõi tất cả\" thì không.") + "</div>";
     var W = fwWallet(wp, FW.m), cur = FWM.filter(function (m) { return m[0] === FW.m; })[0][1];
     h += "<h3 class=\"sub\">Ví giả lập <span>theo cách chốt: " + cur.split(",")[0].replace(/\s*\(.*\)/, "") + "</span></h3>";
     h += "<div class=\"stat4\"><div><small>Số dư (đã chốt)</small><b class=\"" + (W.bal >= SIM.cap ? "bull" : "bear") + "\">$" + W.bal.toFixed(W.bal < 100 ? 2 : 0) + "</b><small>" + pc((W.bal / SIM.cap - 1) * 100) + "</small></div><div><small>Đang chạy (tạm tính)</small><b class=\"" + (W.unreal >= 0 ? "bull" : "bear") + "\">" + fm$(W.unreal) + "</b><small>" + W.nOpen + " lệnh mở</small></div><div><small>Kẹt trong lệnh</small><b>$" + W.locked.toFixed(0) + "</b><small>ký quỹ</small></div><div><small>Tiền rảnh</small><b>$" + Math.max(0, W.free).toFixed(0) + "</b><small>vào được thêm</small></div></div>";
@@ -2493,6 +2499,9 @@ function analyze(c, tf, L) {
     on("[data-ck]", function (b) { BT.calK = b.dataset.ck; BT.calDay = null; renderCal(); });
     on(".dc[data-d]", function (b) { BT.calDay = BT.calDay === b.dataset.d ? null : b.dataset.d; renderCal(); });
     Array.prototype.forEach.call(el.querySelectorAll("#simcap,#simrisk,#simmax,#simlev,#simfee,#simfund"), function (i) { i.addEventListener("change", function () { var g = function (id, d, mn) { var v = parseFloat($(id).value); return v >= mn ? v : d; }; SIM = { cap: g("simcap", 1000, 10), risk: g("simrisk", 1, 0.1), max: Math.round(g("simmax", 4, 1)), lev: g("simlev", 20, 1), fee: g("simfee", 0.07, 0), fund: g("simfund", 0.01, 0) }; if (!(SIM.fee > 0)) SIM.fee = 0.0001; if (!(SIM.fund > 0)) SIM.fund = 0.0001; lsSet("ictSim", SIM); renderCal(); }); });
+    on("[data-wl]", function (b) { var i = WL.indexOf(b.dataset.wl); if (i >= 0) WL.splice(i, 1); else WL.push(b.dataset.wl); wlSave(); renderCal(); });
+    on("#wlall", function () { WL = []; fwView().forEach(function (q) { if (q.st !== "lost" && WL.indexOf(q.sym) < 0) WL.push(q.sym); }); wlSave(); renderCal(); });
+    on("#wlnone", function () { WL = []; wlSave(); renderCal(); });
     on("[data-fwm]", function (b) { FW.m = b.dataset.fwm; lsSet("ictFwM", FW.m); renderCal(); toast("Đã chọn cách chốt này"); });
     on("[data-fwx]", function (b) { var q = FW.j.filter(function (x) { return x.id === b.dataset.fwx; })[0]; if (q && confirm("Bỏ theo dõi " + dispSym(q.sym) + " khỏi nhật ký?")) { FW.j = FW.j.filter(function (x) { return x !== q; }); fwSave(); renderCal(); } });
     on("[data-fwo]", function (b) { fwOpen(b.dataset.fwo); });
@@ -3134,7 +3143,7 @@ function analyze(c, tf, L) {
     var ld = el.querySelector("details.lowd"); if (ld) ld.addEventListener("toggle", function () { SC.lowOpen = ld.open; });
     var fa = $("fwall"); if (fa) fa.addEventListener("click", function () { var n = 0; ((SC.G && SC.G.pass) || []).forEach(function (o) { if (fwAdd(o, 1)) n++; }); if (n) { fwSave(); fwUpdate(false); } toast(n ? "Đã theo dõi " + n + " mã" : "Các mã này đã được theo dõi"); renderSig(); });
     Array.prototype.forEach.call(el.querySelectorAll("[data-chkb]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.chkb]; if (o) { if (o.chk && o.chk !== "run") o.chk = null; chkRun(o); } }); });
-    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { fwSave(); toast("Đã thêm vào nhật ký theo dõi"); fwUpdate(false); } else if (fwHas(fwId(o))) { var qq = FW.j.filter(function (x) { return x.id === fwId(o); })[0]; if (qq && !qq.done && confirm("Bỏ theo dõi kèo này khỏi nhật ký?")) { FW.j = FW.j.filter(function (x) { return x !== qq; }); fwSave(); toast("Đã bỏ theo dõi"); b.className = "fwb"; b.textContent = "+ Theo dõi"; } return; } else { toast("Mã này đang có kèo cùng chiến lược chưa kết thúc, không ghi thêm"); return; } b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { wlAdd(o.sym); fwSave(); toast("Đã thêm vào nhật ký theo dõi, coin này vào ví"); fwUpdate(false); } else if (fwHas(fwId(o))) { var qq = FW.j.filter(function (x) { return x.id === fwId(o); })[0]; if (qq && !qq.done && confirm("Bỏ theo dõi kèo này khỏi nhật ký?")) { FW.j = FW.j.filter(function (x) { return x !== qq; }); fwSave(); toast("Đã bỏ theo dõi"); b.className = "fwb"; b.textContent = "+ Theo dõi"; } return; } else { toast("Mã này đang có kèo cùng chiến lược chưa kết thúc, không ghi thêm"); return; } b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
   }
   (function () { var c = $("sigchip"); if (c) c.addEventListener("click", function () { SIGLV = null; lsSet("ictSigLv", null); syncSigChip(); draw(); toast("Đã ẩn mức SL/TP của kèo"); }); })();
   /* ----- top tăng / giảm trong ngày ----- */
