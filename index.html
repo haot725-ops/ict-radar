@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="var(--bg)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,11 +12,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ICT Radar">
 <title>ICT Radar</title>
+<script>try{var __t=JSON.parse(localStorage.getItem("ictTheme"));if(__t&&__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Giao diện app hiện đại: nền xanh đen, thẻ bo tròn, thanh tab nổi, chữ số dùng font mono */
 :root {
-  --bg: #0f1115; --card: #1a1d24; --card2: #1a1d24; --line: rgba(255,255,255,.07); --fg: #f2f4f8; --dim: #9aa3b5;
+  --bg: #0f1115; --card: #1a1d24; --card2: #1a1d24; --line: rgba(255,255,255,.07); --fg: #f2f4f8; --dim: #9aa3b5; --accrgb: 97,136,255; --vrgb: 155,123,255; --onacc: #fff;
   --up: #16c784; --down: #ea3943; --amber: #f5b73b; --cyan: #6188ff; --violet: #9b7bff;
   --ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --display: "Inter", system-ui, sans-serif;
@@ -32,7 +33,7 @@ button { border: 0; background: none; cursor: pointer; }
 #app { height: 100%; height: 100dvh; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; position: relative; }
 
 /* thanh trên */
-.top { flex: none; padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 8px; background: linear-gradient(180deg, #0f1115 0%, var(--bg) 100%); display: flex; flex-direction: column; gap: 10px; }
+.top { flex: none; padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 8px; background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%); display: flex; flex-direction: column; gap: 10px; }
 .row1, .row2 { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .symblk { display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0; }
 .av { position: relative; overflow: hidden; width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 11px; color: #05080c; letter-spacing: .02em; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
@@ -49,7 +50,7 @@ button { border: 0; background: none; cursor: pointer; }
 .tfs { flex: 1 1 0; min-width: 0; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 3px; }
 .tfs::-webkit-scrollbar { display: none; }
 .tf { flex: none; padding: 7px 11px; border-radius: 11px; color: var(--dim); font-size: 12px; font-weight: 700; transition: background .15s, color .15s; }
-.tf.on { background: linear-gradient(135deg, rgba(97,136,255,.25), rgba(155,123,255,.22)); color: #fff; }
+.tf.on { background: linear-gradient(135deg, rgba(var(--accrgb),.25), rgba(var(--vrgb),.22)); color: #fff; }
 .bchip { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .02em; padding: 8px 11px; border-radius: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .bchip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
 .bchip.bull { color: var(--up); background: rgba(22,199,132,.12); } .bchip.bear { color: var(--down); background: rgba(234,57,67,.12); } .bchip.neu { color: var(--amber); background: rgba(245,183,59,.12); }
@@ -64,19 +65,19 @@ main { flex: 1 1 0; min-height: 0; position: relative; }
 .view.scroll { overflow-y: auto; padding: 4px 14px 18px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .view.scroll.on { display: flex; flex-direction: column; gap: 12px; }
 @keyframes vfade { from { opacity: 0; transform: translateY(6px); } }
-.cwrap { position: absolute; inset: 0; background: radial-gradient(120% 70% at 50% 0%, rgba(97,136,255,.05), transparent 60%); }
+.cwrap { position: absolute; inset: 0; background: radial-gradient(120% 70% at 50% 0%, rgba(var(--accrgb),.05), transparent 60%); }
 #chart { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
 .ohlc { position: absolute; top: 4px; left: 12px; right: 70px; z-index: 2; pointer-events: none; display: flex; flex-wrap: wrap; gap: 2px 12px; font-family: var(--mono); font-size: 10px; font-variant-numeric: tabular-nums; text-shadow: 0 0 5px var(--bg), 0 0 5px var(--bg); }
 .ohlc b { color: var(--dim); font-weight: 500; margin-right: 3px; }
 .fab { position: absolute; right: 74px; bottom: 28px; z-index: 3; width: 40px; height: 40px; border-radius: 14px; background: rgba(26,29,36,.92); border: 1px solid var(--line); display: grid; place-items: center; color: var(--cyan); backdrop-filter: blur(8px); }
 .fab.sm { right: 12px; bottom: 28px; width: 36px; height: 36px; border-radius: 12px; font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--dim); }
-.fab.sm.on { color: var(--cyan); border-color: rgba(97,136,255,.5); }
+.fab.sm.on { color: var(--cyan); border-color: rgba(var(--accrgb),.5); }
 
 /* thanh tab nổi */
 .tabs { flex: none; margin: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 10px); padding: 6px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(26,29,36,.92); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; border-radius: 18px; color: var(--dim); font-size: 10px; position: relative; letter-spacing: -.01em; font-weight: 700; transition: background .18s, color .18s; }
 .tab svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.tab.on { background: rgba(97,136,255,.13); color: var(--cyan); }
+.tab.on { background: rgba(var(--accrgb),.13); color: var(--cyan); }
 
 /* thẻ */
 .card { background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; box-shadow: 0 10px 28px rgba(0,0,0,.28); }
@@ -105,7 +106,7 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 .kv span:nth-child(odd) { color: var(--dim); font-weight: 600; }
 .kv span:nth-child(even) { text-align: right; font-weight: 700; }
 .hist { display: flex; align-items: flex-end; gap: 3px; height: 74px; }
-.hist i { flex: 1 1 0; min-width: 0; background: rgba(97,136,255,.45); border-radius: 3px 3px 0 0; }
+.hist i { flex: 1 1 0; min-width: 0; background: rgba(var(--accrgb),.45); border-radius: 3px 3px 0 0; }
 .hist i.now { background: var(--amber); }
 .hist.lo i { background: rgba(234,57,67,.5); } .hist.lo i.now { background: var(--amber); }
 .axis { display: flex; justify-content: space-between; font-size: 9px; color: var(--dim); font-family: var(--mono); }
@@ -128,34 +129,34 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 
 /* bảng cài đặt trượt lên */
 .sheetbg { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 20; backdrop-filter: blur(2px); }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-width: 1100px; margin: 0 auto; background: linear-gradient(180deg, #1a1d24, #0f1115); border-top: 1px solid rgba(97,136,255,.35); border-radius: 26px 26px 0 0; max-height: 88dvh; max-height: 88vh; overflow-y: auto; padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 16px; animation: up .24s ease-out; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-width: 1100px; margin: 0 auto; background: linear-gradient(180deg, var(--card), var(--bg)); border-top: 1px solid rgba(var(--accrgb),.35); border-radius: 26px 26px 0 0; max-height: 88dvh; max-height: 88vh; overflow-y: auto; padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 16px; animation: up .24s ease-out; }
 @keyframes up { from { transform: translateY(40px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
 .grab { width: 42px; height: 4px; background: rgba(255,255,255,.18); border-radius: 2px; align-self: center; }
 .sheet h3 { margin: 0 0 8px; font-size: 12px; font-weight: 800; color: var(--dim); letter-spacing: .04em; }
 .f { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .f label { font-size: 11px; color: var(--dim); font-weight: 600; }
-input, select { background: #14171d; border: 1px solid var(--line); padding: 11px 13px; border-radius: 14px; min-height: 46px; width: 100%; font-weight: 600; }
-textarea { background: #14171d; border: 1px solid var(--line); padding: 11px 13px; border-radius: 14px; width: 100%; font: 12px/1.5 var(--mono); color: inherit; resize: vertical; }
+input, select { background: rgba(0,0,0,.3); border: 1px solid var(--line); padding: 11px 13px; border-radius: 14px; min-height: 46px; width: 100%; font-weight: 600; }
+textarea { background: rgba(0,0,0,.3); border: 1px solid var(--line); padding: 11px 13px; border-radius: 14px; width: 100%; font: 12px/1.5 var(--mono); color: inherit; resize: vertical; }
 input { text-transform: uppercase; font-size: 15px; font-family: var(--mono); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .quick { display: flex; flex-wrap: wrap; gap: 8px; }
-.quick button { padding: 8px 14px; min-height: 36px; border-radius: 18px; background: #14171d; border: 1px solid var(--line); font-weight: 700; font-size: 12px; }
+.quick button { padding: 8px 14px; min-height: 36px; border-radius: 18px; background: rgba(0,0,0,.3); border: 1px solid var(--line); font-weight: 700; font-size: 12px; }
 .go { background: linear-gradient(135deg, #1aa6c4, #6a5cff); font-weight: 800; letter-spacing: .04em; min-height: 50px; border-radius: 16px; font-size: 14px; color: #fff; box-shadow: 0 8px 22px rgba(76,100,255,.35); }
 .swrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 2px; border-top: 1px solid var(--line); width: 100%; text-align: left; font-weight: 600; }
 .swrow:first-of-type { border-top: 0; }
-.tg { width: 44px; height: 26px; border-radius: 13px; background: #2a2f3a; position: relative; flex: none; transition: background .18s; }
-.tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #8da0b5; transition: transform .18s, background .18s; }
-.swrow.on .tg { background: #187f95; } .swrow.on .tg::after { transform: translateX(18px); background: #fff; }
-.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #14171d; }
-.pk { position: fixed; inset: 0; z-index: 30; background: #0f1115; display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; animation: up .2s ease-out; padding-top: env(safe-area-inset-top, 0px); }
+.tg { width: 44px; height: 26px; border-radius: 13px; background: rgba(255,255,255,.12); position: relative; flex: none; transition: background .18s; }
+.tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--dim); transition: transform .18s, background .18s; }
+.swrow.on .tg { background: var(--blue); } .swrow.on .tg::after { transform: translateX(18px); background: #fff; }
+.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: rgba(0,0,0,.3); }
+.pk { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; animation: up .2s ease-out; padding-top: env(safe-area-inset-top, 0px); }
 .pk .hd { display: flex; gap: 10px; align-items: center; padding: 12px 14px 8px; }
-.pk .hd input { flex: 1; min-width: 0; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: #14171d; color: var(--fg); padding: 0 16px; font: 600 15px Inter, sans-serif; outline: none; }
-.pk .hd input:focus { border-color: rgba(97,136,255,.6); }
-.pk .hd button { height: 44px; padding: 0 14px; border-radius: 22px; background: #1a1d24; border: 1px solid var(--line); color: var(--fg); font-weight: 700; }
+.pk .hd input { flex: 1; min-width: 0; height: 44px; border-radius: 22px; border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--fg); padding: 0 16px; font: 600 15px Inter, sans-serif; outline: none; }
+.pk .hd input:focus { border-color: rgba(var(--accrgb),.6); }
+.pk .hd button { height: 44px; padding: 0 14px; border-radius: 22px; background: var(--card); border: 1px solid var(--line); color: var(--fg); font-weight: 700; }
 .pk .chips { display: flex; gap: 8px; padding: 4px 14px 10px; overflow-x: auto; scrollbar-width: none; }
-.pk .chips button { flex: none; padding: 7px 14px; border-radius: 16px; background: #14171d; border: 1px solid var(--line); color: var(--dim); font-weight: 700; font-size: 12px; }
-.pk .chips button.on { background: rgba(97,136,255,.14); border-color: rgba(97,136,255,.5); color: var(--cyan); }
+.pk .chips button { flex: none; padding: 7px 14px; border-radius: 16px; background: rgba(0,0,0,.3); border: 1px solid var(--line); color: var(--dim); font-weight: 700; font-size: 12px; }
+.pk .chips button.on { background: rgba(var(--accrgb),.14); border-color: rgba(var(--accrgb),.5); color: var(--cyan); }
 .pk .lst { flex: 1; overflow-y: auto; padding: 0 8px calc(env(safe-area-inset-bottom, 0px) + 14px); -webkit-overflow-scrolling: touch; }
 .pk .it { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 8px; border-radius: 14px; text-align: left; color: var(--fg); }
 .pk .it:active { background: rgba(255,255,255,.05); }
@@ -188,23 +189,23 @@ a.na { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-
 .jd i { font-style: normal; font-size: 10px; color: var(--dim); font-weight: 700; } .jd b { font-size: 11px; font-family: var(--mono); letter-spacing: -.03em; }
 .jd.today { border-color: var(--cyan); } .jd.sel { outline: 2px solid #fff; outline-offset: -2px; }
 .clr { align-self: flex-start; font-size: 11px; color: var(--dim); text-decoration: underline; padding: 4px 0; }
-.btrow.on { background: linear-gradient(135deg, rgba(97,136,255,.22), rgba(155,123,255,.2)); border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 6px 22px rgba(97,136,255,.25); }
+.btrow.on { background: linear-gradient(135deg, rgba(var(--accrgb),.22), rgba(var(--vrgb),.2)); border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 6px 22px rgba(var(--accrgb),.25); }
 .btrow .tag { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .04em; color: #fff; background: var(--cyan); padding: 2px 6px; border-radius: 6px; margin-left: 6px; }
-.curcfg { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(97,136,255,.18), rgba(155,123,255,.14)); border: 1.5px solid var(--cyan); box-shadow: 0 0 18px rgba(97,136,255,.2); } .curcfg small { font-size: 10px; color: var(--dim); font-weight: 700; letter-spacing: .06em; } .curcfg b { font-size: 14px; }
-.btrow.cur { border: 1.5px solid var(--cyan); background: rgba(97,136,255,.14); box-shadow: 0 0 16px rgba(97,136,255,.25); } .btrow.cur .bn b { color: var(--cyan); }
-.seg2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .seg2 button { padding: 9px 6px; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); } .seg2 button.on { color: var(--cyan); border-color: var(--cyan); background: rgba(97,136,255,.12); }
+.curcfg { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(var(--accrgb),.18), rgba(var(--vrgb),.14)); border: 1.5px solid var(--cyan); box-shadow: 0 0 18px rgba(var(--accrgb),.2); } .curcfg small { font-size: 10px; color: var(--dim); font-weight: 700; letter-spacing: .06em; } .curcfg b { font-size: 14px; }
+.btrow.cur { border: 1.5px solid var(--cyan); background: rgba(var(--accrgb),.14); box-shadow: 0 0 16px rgba(var(--accrgb),.25); } .btrow.cur .bn b { color: var(--cyan); }
+.seg2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .seg2 button { padding: 9px 6px; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); } .seg2 button.on { color: var(--cyan); border-color: var(--cyan); background: rgba(var(--accrgb),.12); }
 .calhd { display: flex; justify-content: space-between; align-items: center; } .calhd button { width: 38px; height: 34px; border-radius: 12px; font-size: 20px; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
 .calg { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; } .calg i { font-style: normal; } .calg .dw { text-align: center; font-size: 10px; color: var(--dim); font-weight: 700; }
 .dc { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 46px; border-radius: 10px; background: rgba(255,255,255,.03); font-weight: 700; padding: 3px 0; } .dc small { font-size: 9px; color: var(--dim); } .dc span { font-size: 10px; font-family: var(--mono); font-weight: 800; }
 .dc.up { background: rgba(22,199,132,var(--a)); color: #eafff5; } .dc.dn { background: rgba(234,57,67,var(--a)); color: #fff0f2; } .dc.up small, .dc.dn small { color: rgba(255,255,255,.75); }
-table.tb { width: 100%; border-collapse: collapse; font-size: 11px; } table.tb th { text-align: left; color: var(--dim); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); } table.tb td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; } table.tb tr.hl td { background: rgba(97,136,255,.08); font-weight: 700; } table.tb td small { color: var(--dim); }
-.kdot { position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: var(--bear, #ea3943); border: 2px solid #1a1d24; box-sizing: content-box; }
+table.tb { width: 100%; border-collapse: collapse; font-size: 11px; } table.tb th { text-align: left; color: var(--dim); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); } table.tb td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; } table.tb tr.hl td { background: rgba(var(--accrgb),.08); font-weight: 700; } table.tb td small { color: var(--dim); }
+.kdot { position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: var(--bear, #ea3943); border: 2px solid var(--card); box-sizing: content-box; }
 [data-sub][hidden], .kdot[hidden] { display: none !important; }
-.subbar { position: sticky; top: -4px; z-index: 5; display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 8px; margin: 0 -2px; background: linear-gradient(180deg, var(--bg, #14171d) 75%, transparent); scrollbar-width: none; flex: none; }
+.subbar { position: sticky; top: -4px; z-index: 5; display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 8px; margin: 0 -2px; background: linear-gradient(180deg, var(--bg, rgba(0,0,0,.3)) 75%, transparent); scrollbar-width: none; flex: none; }
 .subbar::-webkit-scrollbar { display: none; }
 .subbar button { flex: none; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); }
-.subbar button.on { color: var(--cyan); background: rgba(97,136,255,.14); border-color: var(--cyan); }
-.fchips { display: flex; gap: 6px; flex-wrap: wrap; } .fchips button { padding: 9px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); } .fchips button.on { color: var(--cyan); border-color: var(--cyan); background: rgba(97,136,255,.14); } .dm { font-weight: 400; color: var(--dim); font-size: 11px; } tr.fcmb { cursor: pointer; }
+.subbar button.on { color: var(--cyan); background: rgba(var(--accrgb),.14); border-color: var(--cyan); }
+.fchips { display: flex; gap: 6px; flex-wrap: wrap; } .fchips button { padding: 9px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); } .fchips button.on { color: var(--cyan); border-color: var(--cyan); background: rgba(var(--accrgb),.14); } .dm { font-weight: 400; color: var(--dim); font-size: 11px; } tr.fcmb { cursor: pointer; }
 .stat4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; } .stat4 div { background: rgba(0,0,0,.22); border-radius: 12px; padding: 8px 4px; text-align: center; } .stat4 small { display: block; font-size: 10px; color: var(--dim); } .stat4 b { font-family: var(--mono); font-size: 13px; }
 .cgrp { display: flex; flex-direction: column; gap: 6px; } .cgrp > small { font-size: 11px; color: var(--dim); font-weight: 700; }
 .go.ghost { background: rgba(255,255,255,.08); color: var(--fg); box-shadow: none; border: 1px solid var(--line); }
@@ -215,8 +216,8 @@ details.opt { background: rgba(255,255,255,.03); border: 1px solid var(--line); 
 .view.scroll { padding: 6px 14px 20px; }
 .card { border-radius: 22px; background: linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.012)), var(--card); border: 1px solid rgba(255,255,255,.075); box-shadow: 0 12px 32px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05); }
 .tabs { background: rgba(14,21,34,.86); border-radius: 26px; }
-.tab.on { background: linear-gradient(135deg, rgba(97,136,255,.2), rgba(155,123,255,.18)); }
-.hero { background: radial-gradient(120% 140% at 0% 0%, rgba(97,136,255,.16), transparent 55%), radial-gradient(120% 140% at 100% 0%, rgba(155,123,255,.16), transparent 55%), var(--card); }
+.tab.on { background: linear-gradient(135deg, rgba(var(--accrgb),.2), rgba(var(--vrgb),.18)); }
+.hero { background: radial-gradient(120% 140% at 0% 0%, rgba(var(--accrgb),.16), transparent 55%), radial-gradient(120% 140% at 100% 0%, rgba(var(--vrgb),.16), transparent 55%), var(--card); }
 .herot { display: flex; justify-content: space-between; align-items: center; gap: 12px; } .herot small { display: block; font-size: 10px; color: var(--dim); font-weight: 800; letter-spacing: .08em; } .herot b { font-family: var(--display); font-size: 24px; letter-spacing: -.01em; }
 .sect { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px 0; } .sect b { font-size: 15px; font-weight: 800; } .sect span { font-size: 11px; color: var(--dim); }
 .empty2 { padding: 18px 14px; text-align: center; color: var(--dim); font-size: 12px; line-height: 1.5; border: 1px dashed var(--line); border-radius: 18px; }
@@ -230,7 +231,7 @@ details.opt { background: rgba(255,255,255,.03); border: 1px solid var(--line); 
 .lv > div { background: rgba(0,0,0,.24); border-radius: 13px; padding: 9px 10px; display: flex; flex-direction: column; gap: 3px; min-width: 0; } .lv small { font-size: 10px; color: var(--dim); font-weight: 700; } .lv b { font-family: var(--mono); font-size: 13px; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; }
 .lv .sl b { color: var(--down); } .lv.tp b { color: var(--up); }
 .sgf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .sgf .note { flex: 1 1 140px; }
-.opn { padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 800; color: var(--cyan); background: rgba(97,136,255,.12); border: 1px solid rgba(97,136,255,.4); }
+.opn { padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 800; color: var(--cyan); background: rgba(var(--accrgb),.12); border: 1px solid rgba(var(--accrgb),.4); }
 .rlist { display: flex; flex-direction: column; gap: 6px; }
 .rrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; text-align: left; background: rgba(255,255,255,.035); border: 1px solid var(--line); min-width: 0; } .rrow:active { transform: scale(.985); }
 .rrow .av.sm { width: 32px; height: 32px; font-size: 9px; } .rk { width: 16px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 700; }
@@ -239,7 +240,7 @@ details.opt { background: rgba(255,255,255,.03); border: 1px solid var(--line); 
 .strows { display: flex; flex-direction: column; gap: 10px; }
 .strow { --c: var(--cyan); display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-left: 4px solid var(--c); opacity: .6; } .strow.on { opacity: 1; background: rgba(255,255,255,.05); }
 .sth { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .sth b { font-size: 14px; } .strow > small { color: var(--dim); font-size: 11px; line-height: 1.45; }
-.stg { align-self: flex-start; padding: 7px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); } .strow.on .stg { color: var(--cyan); border-color: rgba(97,136,255,.5); background: rgba(97,136,255,.1); }
+.stg { align-self: flex-start; padding: 7px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--dim); background: rgba(255,255,255,.06); border: 1px solid var(--line); } .strow.on .stg { color: var(--cyan); border-color: rgba(var(--accrgb),.5); background: rgba(var(--accrgb),.1); }
 .fchips button[style*="--c"].on { color: var(--c); border-color: var(--c); background: rgba(255,255,255,.07); }
 .subbar button { padding: 9px 16px; }
 
@@ -273,12 +274,12 @@ html, body { background: var(--bg); }
 .verdict { background: var(--card2); border: 0; box-shadow: none; border-radius: 16px; border-left: 4px solid var(--line); } .verdict.bull { border-left-color: var(--up); background: rgba(22,199,132,.08); } .verdict.bear { border-left-color: var(--down); background: rgba(234,57,67,.08); } .verdict.neu { border-left-color: var(--amber); background: rgba(245,183,59,.08); }
 .strow { border-left: 4px solid var(--c); }
 .subbar { background: linear-gradient(180deg, var(--bg) 70%, transparent); } .subbar button { background: var(--card); border: 0; color: var(--dim); } .subbar button.on { background: var(--acc); color: #fff; box-shadow: none; }
-.fchips button { background: var(--card2); border: 0; } .fchips button.on { background: rgba(97,136,255,.15); color: var(--acc); box-shadow: none; }
-.seg2 button { border: 0; background: var(--card2); } .seg2 button.on { background: rgba(97,136,255,.15); color: var(--acc); }
-.opn { background: rgba(97,136,255,.12); border: 0; color: var(--acc); border-radius: 12px; }
+.fchips button { background: var(--card2); border: 0; } .fchips button.on { background: rgba(var(--accrgb),.15); color: var(--acc); box-shadow: none; }
+.seg2 button { border: 0; background: var(--card2); } .seg2 button.on { background: rgba(var(--accrgb),.15); color: var(--acc); }
+.opn { background: rgba(var(--accrgb),.12); border: 0; color: var(--acc); border-radius: 12px; }
 .sect b { font-size: 16px; }
 .sheet { background: var(--card); backdrop-filter: none; border-radius: 24px 24px 0 0; } .sheetbg { backdrop-filter: none; }
-.pk { background: var(--bg); } #toast { background: #2a2f3a; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.pk { background: var(--bg); } #toast { background: rgba(255,255,255,.12); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
 .fab { background: var(--card2); border: 0; }
 /* chuyển cảnh nhẹ */
 @keyframes vin { from { opacity: 0; transform: translateY(8px); } }
@@ -337,7 +338,7 @@ input, select, textarea { border-radius: 10px; } input { font-family: var(--ui);
 .sin { width: 64px; margin: 0 4px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--card2); color: var(--fg); font-size: 13px; }
 .rwrap { display: flex; align-items: center; gap: 6px; } .rwrap .rrow { flex: 1; min-width: 0; } .rx { width: 34px; height: 34px; border-radius: 50%; color: var(--dim); background: var(--card2); flex: none; } .pr2 { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; max-width: 46%; text-align: right; } .pr2 .pill { white-space: normal; } .pr2 small { font-size: 11px; font-weight: 700; }
 .tb tr.pkm { cursor: pointer; } .tb tr.sel td { background: rgba(22,199,132,.10); font-weight: 700; }
-.tw { overflow-x: auto; } .tb { width: 100%; border-collapse: collapse; font-size: 11.5px; } .tb th { text-align: right; font-weight: 600; color: var(--dim); padding: 6px 4px; } .tb th:first-child, .tb td:first-child { text-align: left; } .tb td { text-align: right; padding: 8px 4px; border-top: 1px solid var(--line); vertical-align: top; } .tb tr.hl td { background: rgba(97,136,255,.08); }
+.tw { overflow-x: auto; } .tb { width: 100%; border-collapse: collapse; font-size: 11.5px; } .tb th { text-align: right; font-weight: 600; color: var(--dim); padding: 6px 4px; } .tb th:first-child, .tb td:first-child { text-align: left; } .tb td { text-align: right; padding: 8px 4px; border-top: 1px solid var(--line); vertical-align: top; } .tb tr.hl td { background: rgba(var(--accrgb),.08); }
 .seg3 { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--card2); padding: 3px; border-radius: 10px; }
 .seg3 button { padding: 9px 4px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--dim); white-space: nowrap; } .seg3 button.on { background: var(--blue); color: #fff; }
 .seg3.sk button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin-right: 6px; } .seg3.sk button.on { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
@@ -351,6 +352,12 @@ details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-
 .pxl { font-size: 13px; color: var(--dim); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .pxl b { color: var(--fg); } .sgc.old { opacity: .5; } .sgc.warn { opacity: .82; }
 .ac { position: relative; flex: 1; min-width: 0; } .ac input { width: 100%; } .acl { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 12; background: var(--card2); border: 1px solid var(--line); border-radius: 10px; max-height: 260px; overflow-y: auto; box-shadow: 0 10px 28px rgba(0,0,0,.45); }
 .acl button { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 11px 12px; text-align: left; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--line); } .acl button:last-child { border-bottom: 0; } .acl button small { font-size: 11px; color: var(--dim); font-weight: 500; } .acl .grp { padding: 8px 12px 4px; font-size: 10px; letter-spacing: .06em; color: var(--dim); font-weight: 700; }
+/* giao diện: chọn trong Cài đặt, lưu ở ictTheme */
+html[data-theme="gold"] { --bg: #0a0908; --card: #15130f; --card2: #1e1b15; --line: rgba(214,178,94,.16); --fg: #f4ecd8; --dim: #a89c82; --acc: #d4af37; --blue: #c19a2e; --cyan: #d4af37; --violet: #e9cf8a; --accrgb: 212,175,55; --vrgb: 233,207,138; --onacc: #1a1405; }
+html[data-theme="navy"] { --bg: #060a13; --card: #0e1524; --card2: #152036; --line: rgba(170,195,230,.13); --fg: #e9eff9; --dim: #8a9bb8; --acc: #a9bddb; --blue: #7f9ccc; --cyan: #a9bddb; --violet: #c8d4ea; --accrgb: 169,189,219; --vrgb: 200,212,234; --onacc: #08101e; }
+html[data-theme="cream"] { --bg: #14100c; --card: #201914; --card2: #2b221b; --line: rgba(236,214,182,.14); --fg: #f6ecdb; --dim: #b5a58d; --acc: #dcb98c; --blue: #c79c68; --cyan: #dcb98c; --violet: #ead6b0; --accrgb: 220,185,140; --vrgb: 234,214,176; --onacc: #20150b; }
+html[data-theme] .go, html[data-theme] .tf.on, html[data-theme] .subbar button.on, html[data-theme] .opn, html[data-theme] .seg3 button.on, html[data-theme] .chs button.on, html[data-theme] .btrow .tag { color: var(--onacc); }
+.thm { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; } .thm button { display: flex; align-items: center; gap: 9px; padding: 10px 11px; border-radius: 12px; background: var(--card2); border: 1px solid var(--line); font-size: 12px; font-weight: 700; text-align: left; } .thm button i { width: 24px; height: 24px; border-radius: 50%; flex: none; border: 1px solid var(--line); } .thm button.on { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
 </style>
 </head>
 <body>
@@ -435,6 +442,7 @@ details.inf summary { font-size: 12px; color: var(--dim); cursor: pointer; list-
     <div class="f"><label for="rrmin">R:R tối thiểu (TP1)</label><select id="rrmin"><option value="1.5">1 : 1.5</option><option value="2" selected>1 : 2</option><option value="3">1 : 3</option></select></div>
     <div class="f"><label for="swl">Độ nhạy cấu trúc</label><select id="swl"><option value="3">Nhạy (3)</option><option value="5" selected>Vừa (5)</option><option value="8">Chắc (8)</option></select></div>
   </div>
+  <div class="f"><label>Giao diện (màu sắc)</label><div class="thm" id="thm"></div></div>
   <div class="f"><label for="tdkey">Forex &amp; vàng: API key Twelve Data (miễn phí tại twelvedata.com, chỉ lưu trên máy này)</label><input id="tdkey" type="password" placeholder="Dán key vào đây" autocomplete="off" spellcheck="false"></div>
   <div class="f"><label for="feeds">Nguồn tin RSS thêm (mỗi dòng một link, ví dụ trang tin tiếng Việt ông hay đọc)</label><textarea id="feeds" rows="3" placeholder="https://.../feed" spellcheck="false"></textarea></div>
   <button class="go" id="go">PHÂN TÍCH</button>
@@ -1199,7 +1207,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-29.8";
+  var VER = "2026-10-30.5";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1220,6 +1228,16 @@ function analyze(c, tf, L) {
   var STABLE_RE = /^(USD.{0,2}|.*USD|EUR.?|AEUR|DAI|BUSD|TRY|PAXG|XAUT|PYUSD|FRAX|GUSD|LUSD|UST)$/, AXD = 2;
   function fmtD(p) { return p.toFixed(AXD); }
   var COL = { up: "#16c784", down: "#ea3943", amber: "#f5b73b", cyan: "#6188ff", violet: "#9b7bff", dim: "#9aa3b5", line: "rgba(255,255,255,.06)", fg: "#f2f4f8" };
+  var THM = [["base", "Gốc · xanh than", "#0f1115", "#6188ff", "#9b7bff", "#9aa3b5", "#f2f4f8", "rgba(255,255,255,.06)"], ["gold", "Đen vàng", "#0a0908", "#d4af37", "#e9cf8a", "#a89c82", "#f4ecd8", "rgba(214,178,94,.08)"], ["navy", "Xanh đêm bạc", "#060a13", "#a9bddb", "#c8d4ea", "#8a9bb8", "#e9eff9", "rgba(170,195,230,.08)"], ["cream", "Nâu kem", "#14100c", "#dcb98c", "#ead6b0", "#b5a58d", "#f6ecdb", "rgba(236,214,182,.08)"]], TH = lsGet("ictTheme", "base");
+  function applyTheme(id) {
+    var t = THM.filter(function (x) { return x[0] === id; })[0] || THM[0], de = document.documentElement, mt = document.querySelector("meta[name=theme-color]");
+    TH = t[0]; if (TH === "base") de.removeAttribute("data-theme"); else de.setAttribute("data-theme", TH);
+    COL.cyan = t[3]; COL.violet = t[4]; COL.dim = t[5]; COL.fg = t[6]; COL.line = t[7]; if (mt) mt.setAttribute("content", t[2]);
+    var el = document.getElementById("thm"); if (el) el.innerHTML = THM.map(function (x) { return "<button data-th=\"" + x[0] + "\" class=\"" + (x[0] === TH ? "on" : "") + "\"><i style=\"background:linear-gradient(135deg," + x[2] + " 50%," + x[3] + " 50%)\"></i>" + x[1] + "</button>"; }).join("");
+    if (typeof draw === "function") draw();
+  }
+  applyTheme(TH);
+  (function () { var el = document.getElementById("thm"); if (el) el.addEventListener("click", function (e) { var b = e.target.closest("[data-th]"); if (!b) return; lsSet("ictTheme", b.dataset.th); applyTheme(b.dataset.th); toast("Đã đổi giao diện"); }); })();
 
   function minSc() { return LAY.weak ? 1 : 2; }
   function stars(n) { return new Array(n + 1).join("★"); }
@@ -1712,7 +1730,7 @@ function analyze(c, tf, L) {
   /* ----- tương tác biểu đồ (giống TradingView) -----
      Kéo ngang: dời thời gian, có quán tính. Kéo dọc trên thanh giá: co giãn giá.
      Khi đã co giãn tay, kéo dọc trên biểu đồ để dời giá. Chạm 2 lần vào thanh giá hoặc nút A: tự động. */
-  var cv = $("chart"), ptrs = {}, lastDist = 0, drag = null, lastTap = 0;
+  var cv = $("chart"), ptrs = {}, lastDist = 0, drag = null, lastTap = 0, SLH = null, SLD = null;
   function syncAuto() { var b = $("autoBtn"); if (b) b.className = "fab sm" + (V.auto ? " on" : ""); }
   function clampView() { var n = C.length; V.bars = Math.max(20, Math.min(400, V.bars)); V.start = Math.max(-V.bars * 0.4, Math.min(n + 60 - V.bars * 0.6, V.start)); }
   function idxAt(px) { return G ? Math.round(px / G.bw + V.start - 0.5) : -1; }
@@ -1721,6 +1739,7 @@ function analyze(c, tf, L) {
   cv.addEventListener("pointerdown", function (e) {
     cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; V.vel = 0;
     var p = posOf(e);
+    if (SLH && Object.keys(ptrs).length === 1 && Math.abs(p.x - SLH.x) < 26 && Math.abs(p.y - SLH.hy) < 26) { drag = { sl: 1 }; SLD = SIGLV && SIGLV.ms > 0 ? SIGLV.ms : 0; draw(); return; }
     if (Object.keys(ptrs).length === 1) {
       drag = { axis: !!(G && p.x > G.pw), t: performance.now(), vx: 0, moved: false };
       if (drag.axis) { var now = performance.now(); if (now - lastTap < 320) { V.auto = true; syncAuto(); } lastTap = now; }
@@ -1730,6 +1749,7 @@ function analyze(c, tf, L) {
   });
   cv.addEventListener("pointermove", function (e) {
     var p = posOf(e), ids = Object.keys(ptrs);
+    if (drag && drag.sl && SLH && ptrs[e.pointerId]) { var mxs = Math.min(SLH.t3, Math.max(0, SLH.cur - 0.02)), vs = (SLH.y0 - p.y) / (SLH.y0 - SLH.y1) * SLH.t3; SLD = Math.max(0, Math.min(mxs, vs)); draw(); return; }
     if (!ptrs[e.pointerId]) { hover = idxAt(p.x); hy = p.y; draw(); return; }
     if (ids.length === 1 && G && drag) {
       var dx = e.clientX - ptrs[e.pointerId].x, dy = e.clientY - ptrs[e.pointerId].y;
@@ -1752,6 +1772,7 @@ function analyze(c, tf, L) {
     }
   });
   function up(e) {
+    if (drag && drag.sl) { delete ptrs[e.pointerId]; var vv = SLD; drag = null; SLD = null; fwSetMs(vv); draw(); return; }
     var one = Object.keys(ptrs).length === 1;
     delete ptrs[e.pointerId]; lastDist = 0;
     if (one && drag && !drag.axis && performance.now() - drag.t < 90 && Math.abs(drag.vx) > 0.002) { V.vel = Math.max(-0.08, Math.min(0.08, drag.vx)); draw(); }
@@ -2158,20 +2179,31 @@ function analyze(c, tf, L) {
   }
   var FWM = [["third", "Chốt 1/3 mỗi mốc (app đang dùng)"], ["tp1", "Chốt hết ở TP1"], ["tp2", "Chốt hết ở TP2, SL về Entry sau TP1"], ["swing", "TP1 dời SL về Entry, rồi dời SL theo đáy cao dần, thủng đáy thì chốt hết"], ["trail", "Chốt nửa ở TP1, nửa sau trailing 1R"]];
   /* mô phỏng một cách thoát lệnh trên đường giá (đơn vị R, SL kiểm tra trước trong mỗi nến) */
-  function fwExit(p, tps, m, cl) {
-    var t1 = tps[0], t2 = tps[1], t3 = tps[2], hit1 = false, mx = 0, w = 1, R = 0, tp = 0, k, h, l, st, sl2 = 0, hh = 0, pl = 1e9;
+  function fwExit(p, tps, m, cl, ms, mi) {
+    var t1 = tps[0], t2 = tps[1], t3 = tps[2], hit1 = false, mx = 0, w = 1, R = 0, tp = 0, k, h, l, st, sl2 = 0, hh = 0, pl = 1e9, armed = false;
+    if (ms > 0) {
+      /* chốt thủ công: tách riêng hẳn khỏi các cách chốt tự động, cả lệnh giữ nguyên tới khi SL gốc (-1R) hoặc mức SL dương ông kéo bị chạm; SL dương chỉ có hiệu lực sau khi giá đã chạm tới mức đó ở nến trước */
+      for (k = 0; k < p.length; k++) {
+        h = p[k][0]; l = p[k][1];
+        if (armed && l <= ms) return { R: ms, c: 1, i: k, x: ms, man: 1 };
+        if (!armed && l <= -1) return { R: -1, c: 1, i: k, x: -1 };
+        if (k >= (mi || 0) && h >= ms) armed = true;
+      }
+      var cm = p.length ? p[p.length - 1][2] : 0;
+      return { R: cm, c: cl ? 1 : 0, i: p.length - 1 };
+    }
     for (k = 0; k < p.length; k++) {
       h = p[k][0]; l = p[k][1];
-      if (m === "tp1") { if (l <= -1) return { R: -1, c: 1, i: k }; if (h >= t1) return { R: t1, c: 1, i: k }; }
-      else if (m === "third") { st = tp > 0 ? 0 : -1; if (l <= st) return { R: R + w * st, c: 1, i: k }; while (tp < 3 && h >= tps[tp]) { R += tps[tp] / 3; w -= 1 / 3; tp++; } if (tp >= 3) return { R: R, c: 1, i: k }; }
-      else if (m === "tp2") { st = hit1 ? 0 : -1; if (l <= st) return { R: st, c: 1, i: k }; if (h >= t1) hit1 = true; if (h >= t2) return { R: t2, c: 1, i: k }; }
+      if (m === "tp1") { if (l <= -1) return { R: -1, c: 1, i: k, x: -1 }; if (h >= t1) return { R: t1, c: 1, i: k, x: t1 }; }
+      else if (m === "third") { st = tp > 0 ? 0 : -1; if (l <= st) return { R: R + w * st, c: 1, i: k, x: st }; while (tp < 3 && h >= tps[tp]) { R += tps[tp] / 3; w -= 1 / 3; tp++; } if (tp >= 3) return { R: R, c: 1, i: k, x: t3 }; }
+      else if (m === "tp2") { st = hit1 ? 0 : -1; if (l <= st) return { R: st, c: 1, i: k, x: st }; if (h >= t1) hit1 = true; if (h >= t2) return { R: t2, c: 1, i: k, x: t2 }; }
       else if (m === "swing") {
-        if (!hit1) { if (l <= -1) return { R: -1, c: 1, i: k }; if (h >= t1) { hit1 = true; sl2 = 0; hh = h; pl = 1e9; } }
-        else { if (l <= sl2) return { R: sl2, c: 1, i: k }; pl = Math.min(pl, l); if (h > hh) { if (pl < 1e8 && pl > sl2) sl2 = pl; hh = h; pl = 1e9; } }
+        if (!hit1) { if (l <= -1) return { R: -1, c: 1, i: k, x: -1 }; if (h >= t1) { hit1 = true; sl2 = 0; hh = h; pl = 1e9; } }
+        else { if (l <= sl2) return { R: sl2, c: 1, i: k, x: sl2 }; pl = Math.min(pl, l); if (h > hh) { if (pl < 1e8 && pl > sl2) sl2 = pl; hh = h; pl = 1e9; } }
       }
       else {
-        if (!hit1) { if (l <= -1) return { R: -1, c: 1, i: k }; if (h >= t1) { hit1 = true; R = t1 * 0.5; w = 0.5; mx = h; } }
-        else { st = Math.max(0, mx - 1); if (l <= st) return { R: R + w * st, c: 1, i: k }; mx = Math.max(mx, h); }
+        if (!hit1) { if (l <= -1) return { R: -1, c: 1, i: k, x: -1 }; if (h >= t1) { hit1 = true; R = t1 * 0.5; w = 0.5; mx = h; } }
+        else { st = Math.max(0, mx - 1); if (l <= st) return { R: R + w * st, c: 1, i: k, x: st }; mx = Math.max(mx, h); }
       }
     }
     var c = p.length ? p[p.length - 1][2] : 0, e = p.length - 1;
@@ -2181,8 +2213,8 @@ function analyze(c, tf, L) {
   /* cách chốt đang chọn: các số liệu hiển thị tính lại theo đường giá đã lưu */
   FW.m = lsGet("ictFwM", "third"); if (!FWM.some(function (m) { return m[0] === FW.m; })) FW.m = "third";
   function fwEff(q) {
-    if ((FW.m === "third" && q.done) || !q.p || !q.p.length || q.st === "lost") return q;
-    var r = fwExit(q.p, q.tps, FW.m, q.done), c = {}, k;
+    if ((FW.m === "third" && q.done && !q.ms) || !q.p || !q.p.length || q.st === "lost") return q;
+    var r = fwExit(q.p, q.tps, FW.m, q.done, q.ms, fwMi(q)), c = {}, k;
     for (k in q) c[k] = q[k];
     c.ov = 1; c.R = r.R; c.done = r.c ? 1 : 0; c.tEnd = r.c ? q.t + (r.i + 2) * q.tfm : 0;
     return c;
@@ -2198,6 +2230,15 @@ function analyze(c, tf, L) {
       if (q.tf && TFMS[q.tf] && q.tf !== S.tf) { S.tf = q.tf; markTf(); saveState(); }
       openSymbol(q.sym, o);
     }
+  function fwMi(q) { return q.mt ? Math.max(0, Math.floor((q.mt - q.t) / q.tfm) - 1) : 0; }
+  function fwRecOf(L) { return L ? FW.j.filter(function (q) { return q.sym === L.sym && q.k === L.k && q.t === L.t && (!q.tf || q.tf === S.tf); })[0] : null; }
+  function fwSetMs(v) {
+    var q = fwRecOf(SIGLV); if (!q) return;
+    v = v >= 0.05 ? Math.round(v * 100) / 100 : 0; if ((q.ms || 0) === v) return;
+    if (v) { q.ms = v; q.mt = Date.now(); } else { delete q.ms; delete q.mt; }
+    if (q.done && q.st === "man") { q.done = 0; q.st = "run"; q.R = 0; q.tEnd = 0; }
+    fwSave(); toast(v ? "Đã đặt SL dương +" + v.toFixed(2) + "R, giá quay lại chạm mức này thì chốt hết" : "Đã bỏ SL dương"); fwUpdate(true);
+  }
   function fwView() { return FW.j.map(fwEff); }
   var SIM = lsGet("ictSim", {}), SD = { cap: 1000, risk: 1, max: 4, lev: 20, fee: 0.07, fund: 0.01 };
   (function () { var k; if (!SIM || typeof SIM !== "object") SIM = {}; for (k in SD) if (!(SIM[k] > 0)) SIM[k] = SD[k]; })();
@@ -2207,7 +2248,7 @@ function analyze(c, tf, L) {
   function fwWallet(list, m) {
     var S = SIM, bal = S.cap, pk = S.cap, dd = 0, open = [], rows = [], sCash = 0, sMax = 0, nClosed = 0, wins = 0, sumR = 0, nLiq = 0, costs = 0;
     var cand = list.filter(function (q) { return q.p && q.p.length && q.e && q.atr && q.sl; }).map(function (q) {
-      var r = fwExit(q.p, q.tps, m, q.done), tx = r.c ? q.t + (r.i + 2) * q.tfm : Infinity, rd = q.atr * q.sl / q.e, lr = rd > 0 ? (1 / S.lev - 0.005) / rd : 1e9, k;
+      var r = fwExit(q.p, q.tps, m, q.done, q.ms, fwMi(q)), tx = r.c ? q.t + (r.i + 2) * q.tfm : Infinity, rd = q.atr * q.sl / q.e, lr = rd > 0 ? (1 / S.lev - 0.005) / rd : 1e9, k;
       /* isolated: giá thanh lý cách entry khoảng 1/đòn bẩy trừ 0,5% duy trì ký quỹ; nếu gần hơn SL thì thanh lý trước, mất cả ký quỹ lệnh đó */
       if (lr < 1) for (k = 0; k < q.p.length; k++) if (q.p[k][1] <= -lr) { if (!r.c || k < r.i || (k === r.i && r.R <= -0.999)) { r = { R: -(1 / S.lev) / rd, c: 1, i: k, liq: 1 }; tx = q.t + (k + 2) * q.tfm; } break; }
       return { q: q, r: r, te: q.t + q.tfm, tx: tx };
@@ -2298,7 +2339,7 @@ function analyze(c, tf, L) {
               var j = -1, i; for (i = 0; i < arr.length; i++) if (arr[i].t === q.t) { j = i; break; }
               if (j < 0) { if (q.t <= lastT) { q.st = "lost"; q.done = 1; q.tEnd = Date.now(); } return; }
               var sa = arr.slice(j), bf = q.done && (!q.p || q.pv !== 2); q.p = fwPath(live && live.t > q.t ? sa.concat([live]) : sa, q) || q.p; q.pv = 2; if (bf) { if (sa[1]) q.e = sa[1].o; return; }
-              var o = fwSim(sa, q); if (!o.done && Date.now() > q.t + 130 * q.tfm) { o.st = "lost"; o.done = 1; o.tEnd = Date.now(); } q.st = o.st; q.R = o.R; q.tp = o.tp; q.done = o.done; if (arr[j + 1]) q.e = arr[j + 1].o; if (o.done) q.tEnd = o.tEnd;
+              var o = fwSim(sa, q); if (q.ms > 0 && !o.done) { var pc = fwPath(sa, q), rm = pc && fwExit(pc, q.tps, "third", false, q.ms, fwMi(q)); if (rm && rm.c) o = { st: "man", R: rm.R, tp: o.tp, done: 1, tEnd: q.t + (rm.i + 2) * q.tfm }; } if (!o.done && Date.now() > q.t + 130 * q.tfm) { o.st = "lost"; o.done = 1; o.tEnd = Date.now(); } q.st = o.st; q.R = o.R; q.tp = o.tp; q.done = o.done; if (arr[j + 1]) q.e = arr[j + 1].o; if (o.done) q.tEnd = o.tEnd;
             });
             if (rest.length === rs.length) break;
             rs = rest;
@@ -2371,7 +2412,7 @@ function analyze(c, tf, L) {
     return "đỉnh " + (mh >= 0 ? "+" : "") + mh.toFixed(2) + "R · " + (n ? "đã chạm TP" + n : "chưa chạm TP1");
   }
   function fwLabel(q) { var l = fwLabel0(q); l[2] = fwDetail(q); return l; }
-  function fwLabel0(q) { if (q.ov) { var tx = (q.R >= 0 ? "+" : "") + q.R.toFixed(2) + "R"; return q.done ? [tx, q.R > 0.005 ? "bull" : q.R < -0.005 ? "bear" : "neu"] : ["Đang chạy " + tx, "neu"]; } return q.st === "exp" ? ["Hết hạn " + (q.R >= 0 ? "+" : "") + q.R.toFixed(1) + "R", "neu"] : q.st === "lost" ? ["Không có dữ liệu", "neu"] : resTxt({ st: q.st, R: q.R, tp: q.tp }); }
+  function fwLabel0(q) { if (q.ov) { var tx = (q.R >= 0 ? "+" : "") + q.R.toFixed(2) + "R" + (q.ms > 0 ? " · thủ công" : ""); return q.done ? [tx, q.R > 0.005 ? "bull" : q.R < -0.005 ? "bear" : "neu"] : ["Đang chạy " + tx, "neu"]; } return q.st === "exp" ? ["Hết hạn " + (q.R >= 0 ? "+" : "") + q.R.toFixed(1) + "R", "neu"] : q.st === "lost" ? ["Không có dữ liệu", "neu"] : resTxt({ st: q.st, R: q.R, tp: q.tp }); }
 
   function calTrades(allK) {
     var k0 = allK ? "all" : (BT.calK || "all"), out = [];
@@ -3046,21 +3087,27 @@ function analyze(c, tf, L) {
     var R = Math.abs(L.e - L.sl), d = L.dir, p = [], k, x;
     if (!R) return null;
     for (k = j + 1; k < C.length; k++) { x = C[k]; p.push(d === 1 ? [(x.h - L.e) / R, (x.l - L.e) / R, (x.c - L.e) / R] : [(L.e - x.l) / R, (L.e - x.h) / R, (L.e - x.c) / R]); }
-    var ex = fwExit(p, L.tps, FW.m, false), end = ex.c ? j + 1 + ex.i : -1, last = end >= 0 ? end - (j + 1) : p.length - 1, ev = [], tp = 0, h, l, st;
+    var mi0 = 0; if (L.mt) for (k = 0; k < p.length; k++) if (C[j + 1 + k].t <= L.mt) mi0 = k;
+    var ex = fwExit(p, L.tps, FW.m, false, L.ms, mi0), end = ex.c ? j + 1 + ex.i : -1, last = end >= 0 ? end - (j + 1) : p.length - 1, ev = [], tp = 0, h, l, st, th = FW.m === "third" && !(L.ms > 0), mm = L.ms > 0;
     for (k = 0; k <= last; k++) {
       h = p[k][0]; l = p[k][1]; st = tp > 0 ? 0 : -1;
-      if (l <= st) { ev.push({ i: j + 1 + k, t: tp > 0 ? "BE" : "SL", lv: tp > 0 ? L.e : L.sl, c: tp > 0 ? "neu" : "bear" }); break; }
-      while (tp < 3 && h >= L.tps[tp]) { ev.push({ i: j + 1 + k, t: "TP" + (tp + 1), lv: L.tp[tp], c: "bull" }); tp++; }
+      if (th && l <= st) { ev.push({ i: j + 1 + k, t: tp > 0 ? "BE" : "SL", lv: tp > 0 ? L.e : L.sl, c: tp > 0 ? "neu" : "bear" }); break; }
+      while (!mm && tp < 3 && h >= L.tps[tp]) { ev.push({ i: j + 1 + k, t: "TP" + (tp + 1), lv: L.tp[tp], c: "bull" }); tp++; }
     }
-    if (end >= 0 && !ev.some(function (e) { return e.i === end; })) ev.push({ i: end, t: ex.R <= -0.99 ? "SL" : "Thoát", lv: L.e + d * ex.R * R, c: ex.R <= -0.99 ? "bear" : ex.R > 0 ? "bull" : "neu" });
-    return { j: j, end: end, ev: ev, R: ex.R };
+    var xr = ex.x === undefined ? ex.R : ex.x;
+    if (end >= 0) {
+      if (th) { if (!ev.some(function (e) { return e.i === end; })) ev.push({ i: end, t: ex.R <= -0.99 ? "SL" : "Thoát", lv: L.e + d * ex.R * R, c: ex.R <= -0.99 ? "bear" : ex.R > 0 ? "bull" : "neu" }); }
+      else if (mm || !L.tps.some(function (v) { return Math.abs(v - xr) < 1e-6; })) { var isl = xr <= -0.99, ibe = !isl && Math.abs(xr) < 0.005; ev.push({ i: end, t: isl ? "SL" : ibe ? "BE" : "Thoát", lv: L.e + d * xr * R, c: isl ? "bear" : ibe ? "neu" : xr > 0 ? "bull" : "neu" }); }
+    }
+    return { j: j, end: end, ev: ev, R: ex.R, x: xr, man: !!ex.man };
   }
   function drawSigLv(x, pw, ph, X, Y) {
     var L = SIGLV, j = -1, i; for (i = C.length - 1; i >= 0; i--) if (C[i].t <= L.t) { j = i; break; }
+    var rec = fwRecOf(L); L.ms = SLD !== null ? SLD : (rec && rec.ms) || 0; L.mt = SLD !== null ? Date.now() : (rec && rec.mt) || 0;
     var x0 = Math.max(0, j >= 0 ? X(j) : 0), up = L.dir === 1, se = sigEvents(L), bw = C.length > 1 ? X(1) - X(0) : 6;
     var x1 = se && se.end >= 0 ? Math.min(pw, X(se.end) + bw / 2) : pw;
     var yE = Y(L.e), ySL = Y(L.sl), yT3 = Y(L.tp[2]), cls = se && se.end >= 0, gTop = yT3, gOn = true;
-    if (cls) { var xPx = L.e + L.dir * se.R * Math.abs(L.e - L.sl); gTop = Y(xPx); gOn = se.R > 0.005; }
+    if (cls) { var xg = Math.abs(se.x) > 0.005 ? se.x : se.R, xPx = L.e + L.dir * xg * Math.abs(L.e - L.sl); gTop = Y(xPx); gOn = xg > 0.005; }
     x.save(); x.beginPath(); x.rect(0, 0, pw + 2, ph); x.clip();
     x.fillStyle = "rgba(234,57,67,.10)"; x.fillRect(x0, Math.min(yE, ySL), x1 - x0, Math.abs(ySL - yE));
     x.fillStyle = "rgba(22,199,132,.08)"; if (gOn) x.fillRect(x0, Math.min(yE, gTop), x1 - x0, Math.abs(gTop - yE));
@@ -3085,13 +3132,29 @@ function analyze(c, tf, L) {
         x.fillStyle = "#0f1115"; x.font = "800 8px Inter, sans-serif"; x.textAlign = "center"; x.fillText(e.t === "SL" ? "✕" : e.t === "BE" ? "B" : e.t === "Thoát" ? "T" : e.t.slice(2), cx, cy + 3); x.textAlign = "left"; x.font = "700 10px Inter, sans-serif";
       });
     }
+    SLH = null;
+    if (se && rec) {
+      var R0 = Math.abs(L.e - L.sl), tx = Math.max(16, x0 - 12), msy = L.ms > 0 ? Y(L.e + L.dir * L.ms * R0) : yE, curR = (C[C.length - 1].c - L.e) * L.dir / R0;
+      if (L.ms > 0) { x.strokeStyle = COL.amber; x.lineWidth = 1; x.globalAlpha = .9; x.setLineDash([4, 3]); x.beginPath(); x.moveTo(tx, Math.round(msy) + .5); x.lineTo(se.end >= 0 ? x1 : pw, Math.round(msy) + .5); x.stroke(); x.setLineDash([]); x.globalAlpha = 1; }
+      if (se.end < 0) {
+        x.lineCap = "round"; x.lineWidth = 4; x.strokeStyle = "rgba(245,183,59,.3)"; x.beginPath(); x.moveTo(tx, yE); x.lineTo(tx, yT3); x.stroke();
+        if (L.ms > 0) { x.strokeStyle = COL.amber; x.beginPath(); x.moveTo(tx, yE); x.lineTo(tx, msy); x.stroke(); }
+        x.lineCap = "butt"; x.lineWidth = 2; x.strokeStyle = "rgba(245,183,59,.7)";
+        [Y(L.tp[0]), Y(L.tp[1]), yT3].forEach(function (yy) { x.beginPath(); x.moveTo(tx - 6, yy); x.lineTo(tx + 6, yy); x.stroke(); });
+        rr(x, tx - 11, msy - 9, 22, 18, 6); x.fillStyle = COL.amber; x.fill(); x.strokeStyle = "#0f1115"; x.lineWidth = 1.5; x.stroke();
+        x.fillStyle = "#0f1115"; x.font = "800 11px Inter, sans-serif"; x.textAlign = "center"; x.fillText("⇅", tx, msy + 4); x.textAlign = "left";
+        var lbT = L.ms > 0 ? "SL +" + L.ms.toFixed(2) + "R · " + fmtD(L.e + L.dir * L.ms * R0) : "Kéo để đặt SL dương", lw = x.measureText(lbT).width + 12;
+        x.font = "700 10px Inter, sans-serif"; lw = x.measureText(lbT).width + 12; rr(x, tx + 15, msy - 9, lw, 18, 5); x.fillStyle = "rgba(15,17,21,.88)"; x.fill(); x.fillStyle = COL.amber; x.fillText(lbT, tx + 21, msy + 4);
+        SLH = { x: tx, hy: msy, y0: yE, y1: yT3, t3: L.tps[2], cur: curR };
+      }
+    }
     x.restore();
     var cp = $("sigchip"), sb = $("sigbar"), evb = $("sigev");
     if (cp && sb) {
       var base = "✕ " + STRAT[L.k] + " · " + (L.dir === 1 ? "MUA" : "BÁN"), sm = "", chips = "";
       if (se) {
         var nm = (FWM.filter(function (m) { return m[0] === FW.m; })[0] || ["", ""])[1].replace(/ \(.*\)/, "");
-        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy, tạm tính ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + nm;
+        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy, tạm tính ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + (L.ms > 0 ? "Chốt thủ công, SL dương +" + L.ms.toFixed(2) + "R (không dùng chốt tự động)" : nm);
         chips = "<span class=\"ent\">▲ Vào " + hhmm(C[se.j + 1].t) + "</span>" + se.ev.map(function (e) { return "<span class=\"" + e.c + "\">" + (e.t === "SL" ? "✕ SL" : e.t === "BE" ? "B · về Entry" : e.t === "Thoát" ? "T · Thoát" : e.t.slice(2) + " · " + e.t) + " " + hhmm(C[e.i].t) + "</span>"; }).join("") + (se.end < 0 ? "<span>đang chạy</span>" : "");
       }
       var key = base + "|" + sm + "|" + chips;
