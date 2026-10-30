@@ -1210,7 +1210,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-30.8";
+  var VER = "2026-10-30.9";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1520,7 +1520,7 @@ function analyze(c, tf, L) {
     var kc = function (j) { var q = C[j]; return j === n - 1 ? { o: q.o, h: Math.max(D.h, q.o, D.c), l: Math.min(D.l, q.o, D.c), c: D.c } : q; };
     var tmn = 1e18, tmx = -1e18;
     for (i = i0; i <= i1; i++) { var kq = kc(i); if (kq.l < tmn) tmn = kq.l; if (kq.h > tmx) tmx = kq.h; }
-    if (SIGLV && SIGLV.sym === S.sym) { var lp0 = C[n - 1].c, lo0 = Math.min(SIGLV.e, SIGLV.sl, SIGLV.tp[2]), hi0 = Math.max(SIGLV.e, SIGLV.sl, SIGLV.tp[2]); var lq0 = levLine(SIGLV.e, SIGLV.sl, SIGLV.dir); if (lq0.warn || Math.abs(lq0.liq - SIGLV.e) <= 2 * Math.abs(SIGLV.e - SIGLV.sl)) { lo0 = Math.min(lo0, lq0.liq); hi0 = Math.max(hi0, lq0.liq); } if (Math.abs(lo0 - lp0) / lp0 < 0.12 && Math.abs(hi0 - lp0) / lp0 < 0.12) { tmn = Math.min(tmn, lo0); tmx = Math.max(tmx, hi0); } }
+    if (SIGLV && SIGLV.sym === S.sym) { var lp0 = C[n - 1].c, lo0 = Math.min(SIGLV.e, SIGLV.sl, SIGLV.tp[0]), hi0 = Math.max(SIGLV.e, SIGLV.sl, SIGLV.tp[0]); var lq0 = levLine(SIGLV.e, SIGLV.sl, SIGLV.dir); if (lq0.warn || Math.abs(lq0.liq - SIGLV.e) <= 2 * Math.abs(SIGLV.e - SIGLV.sl)) { lo0 = Math.min(lo0, lq0.liq); hi0 = Math.max(hi0, lq0.liq); } if (Math.abs(lo0 - lp0) / lp0 < 0.12 && Math.abs(hi0 - lp0) / lp0 < 0.12) { tmn = Math.min(tmn, lo0); tmx = Math.max(tmx, hi0); } }
     if (tmn > tmx) { tmn = 0; tmx = 1; }
     var tp = (tmx - tmn) * 0.08 || 1; tmn -= tp; tmx += tp;
     if (V.auto) {
@@ -2250,7 +2250,7 @@ function analyze(c, tf, L) {
   /* giá thanh lý isolated ≈ Entry ± (1/đòn bẩy − 0,5% duy trì ký quỹ); cảnh báo nếu nằm trước SL */
   function levLine(e, sl, dir) {
     var rd = Math.abs(e - sl) / e, safe = levSafe(rd), lev = levFor(rd), liq = e * (1 - dir * Math.max(0, 1 / lev - 0.005)), warn = dir === 1 ? liq > sl : liq < sl, f = typeof fmtP === "function" ? fmtP(liq) : liq.toFixed(4);
-    return { liq: liq, lev: lev, safe: safe, warn: warn, txt: warn ? "⚠ Thanh lý x" + lev + " ở " + f + " nằm TRƯỚC SL. Hạ đòn bẩy xuống x" + safe + " trở xuống" : "Thanh lý x" + lev + " ở " + f + ", nằm sau SL · đòn bẩy an toàn tối đa x" + safe };
+    return { liq: liq, lev: lev, safe: safe, warn: warn, txt: warn ? "⚠ Thanh lý x" + lev + " nằm trước SL, hạ xuống x" + safe : "Thanh lý x" + lev + " nằm sau SL ✓", full: warn ? "⚠ Thanh lý x" + lev + " ở " + f + " nằm TRƯỚC SL. Hạ đòn bẩy xuống x" + safe + " trở xuống" : "Thanh lý x" + lev + " ở " + f + ", nằm sau SL · đòn bẩy an toàn tối đa x" + safe };
   }
   function fm$(v) { return (v >= 0 ? "+$" : "-$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 1); }
   function fwMoney(R) { var u = SIM.cap * SIM.risk / 100; return fm$(R * u) + " (" + (R * SIM.risk >= 0 ? "+" : "") + (R * SIM.risk).toFixed(2) + "%)"; }
@@ -2897,7 +2897,7 @@ function analyze(c, tf, L) {
   }
   function sigPxLine(o) {
     var st = sigStat(o);
-    return "Giá hiện tại <b>" + fmtPx(o.px) + "</b> · cách Entry " + (st.mv >= 0 ? "+" : "") + st.mv.toFixed(2) + "R <span class=\"pill " + st.c + "\">" + st.t + "</span>" + (function () { var lq = levLine(o.sigClose, o.sigClose - o.dir * o.atr * o.cf.sl, o.dir); return "<br><small class=\"" + (lq.warn ? "bear" : "muted") + "\">" + lq.txt + "</small>"; })();
+    return "Giá hiện tại <b>" + fmtPx(o.px) + "</b> · cách Entry " + (st.mv >= 0 ? "+" : "") + st.mv.toFixed(2) + "R <span class=\"pill " + st.c + "\">" + st.t + "</span>" + (function () { var lq = levLine(o.sigClose, o.sigClose - o.dir * o.atr * o.cf.sl, o.dir); return "<br><small class=\"" + (lq.warn ? "bear" : "muted") + "\">" + lq.full + "</small>"; })();
   }
   var PXT = null;
   async function sigPxRefresh() {
@@ -3127,12 +3127,12 @@ function analyze(c, tf, L) {
     x.fillStyle = "rgba(234,57,67,.10)"; x.fillRect(x0, Math.min(yE, ySL), x1 - x0, Math.abs(ySL - yE));
     x.fillStyle = "rgba(22,199,132,.08)"; if (gOn) x.fillRect(x0, Math.min(yE, gTop), x1 - x0, Math.abs(gTop - yE));
     var lq = levLine(L.e, L.sl, L.dir), yLq = Y(lq.liq);
-    x.fillStyle = lq.warn ? "rgba(234,57,67,.18)" : "rgba(255,122,69,.10)";
-    if (L.dir === 1) { if (yLq < ph) x.fillRect(x0, Math.max(0, yLq), pw - x0, ph - Math.max(0, yLq)); } else if (yLq > 0) x.fillRect(x0, 0, pw - x0, Math.min(ph, yLq));
+    if (lq.warn) { x.fillStyle = "rgba(234,57,67,.16)"; if (L.dir === 1) { if (yLq < ph) x.fillRect(x0, Math.max(0, yLq), pw - x0, ph - Math.max(0, yLq)); } else if (yLq > 0) x.fillRect(x0, 0, pw - x0, Math.min(ph, yLq)); }
     var lines = [["Entry", L.e, COL.cyan], ["SL", L.sl, COL.down], ["TP1", L.tp[0], COL.up], ["TP2", L.tp[1], COL.up], ["TP3", L.tp[2], COL.up]];
     x.font = "700 10px Inter, sans-serif"; x.lineWidth = 1;
+    var offs = [];
     lines.forEach(function (ln) {
-      var y = Math.round(Y(ln[1])) + .5; x.strokeStyle = ln[2]; x.globalAlpha = .95; x.setLineDash(ln[0] === "Entry" ? [] : [6, 4]);
+      var y = Math.round(Y(ln[1])) + .5; if (y < 56 || y > ph - 22) { offs.push({ n: ln[0], p: ln[1], up: y < 56, c: ln[2] }); return; } x.strokeStyle = ln[2]; x.globalAlpha = .95; x.setLineDash(ln[0] === "Entry" ? [] : [6, 4]);
       x.beginPath(); x.moveTo(x0, y); x.lineTo(x1, y); x.stroke();
       if (x1 < pw) { x.globalAlpha = .28; x.beginPath(); x.moveTo(x1, y); x.lineTo(pw, y); x.stroke(); }
       x.setLineDash([]); x.globalAlpha = 1;
@@ -3140,11 +3140,15 @@ function analyze(c, tf, L) {
       rr(x, pw - w - 4, yt, w, 15, 4); x.fillStyle = ln[2]; x.fill(); x.fillStyle = "#fff"; x.fillText(tx, pw - w + 1, yt + 11);
     });
     (function () {
-      var yy = Math.round(yLq) + .5, off = yy < 56 || yy > ph - 4, tx = (off ? "▲▼ " : "") + "THANH LÝ x" + lq.lev + " " + fmtD(lq.liq), w = 0;
+      var yy = Math.round(yLq) + .5, off = yy < 56 || yy > ph - 22, tx = "Thanh lý x" + lq.lev + " " + fmtD(lq.liq), w = 0, colL = lq.warn ? COL.down : "#ff7a45";
+      if (off) { offs.push({ n: "Thanh lý x" + lq.lev, p: lq.liq, up: yy < 56, c: colL }); return; }
       x.font = "700 10px Inter, sans-serif"; w = x.measureText(tx).width + 10;
       var yt = L.dir === 1 ? yy + 3 : yy - 18; yt = Math.max(56, Math.min(ph - 18, yt));
-      if (!off) { x.strokeStyle = lq.warn ? COL.down : "#ff7a45"; x.lineWidth = 1.2; x.setLineDash([2, 3]); x.beginPath(); x.moveTo(x0, yy); x.lineTo(pw, yy); x.stroke(); x.setLineDash([]); }
-      rr(x, pw - w - 4, yt, w, 15, 4); x.fillStyle = lq.warn ? COL.down : "#ff7a45"; x.fill(); x.fillStyle = "#fff"; x.fillText(tx, pw - w + 1, yt + 11);
+      x.strokeStyle = colL; x.lineWidth = 1.2; x.setLineDash([2, 3]); x.beginPath(); x.moveTo(x0, yy); x.lineTo(pw, yy); x.stroke(); x.setLineDash([]);
+      rr(x, pw - w - 4, yt, w, 15, 4); x.fillStyle = colL; x.fill(); x.fillStyle = "#fff"; x.fillText(tx, pw - w + 1, yt + 11);
+    })();
+    (function () {
+      var u2 = 0, d2 = 0; offs.slice().reverse().forEach(function (o) { var t2 = o.n + (o.up ? " ▲ " : " ▼ ") + fmtD(o.p), w2 = x.measureText(t2).width + 10, y2 = o.up ? 56 + u2++ * 17 : ph - 68 - d2++ * 17; rr(x, pw - w2 - 4, y2, w2, 15, 4); x.globalAlpha = .8; x.fillStyle = o.c; x.fill(); x.globalAlpha = 1; x.fillStyle = "#fff"; x.fillText(t2, pw - w2 + 1, y2 + 11); });
     })();
     if (se) {
       var xe = X(se.j + 1), ye = Y(L.e), tri = up ? 1 : -1;
@@ -3162,14 +3166,14 @@ function analyze(c, tf, L) {
       var R0 = Math.abs(L.e - L.sl), tx = Math.max(16, x0 - 12), msy = L.ms > 0 ? Y(L.e + L.dir * L.ms * R0) : yE, curR = (C[C.length - 1].c - L.e) * L.dir / R0;
       if (L.ms > 0) { x.strokeStyle = COL.amber; x.lineWidth = 1; x.globalAlpha = .9; x.setLineDash([4, 3]); x.beginPath(); x.moveTo(tx, Math.round(msy) + .5); x.lineTo(se.end >= 0 ? x1 : pw, Math.round(msy) + .5); x.stroke(); x.setLineDash([]); x.globalAlpha = 1; }
       if (se.end < 0) {
-        x.lineCap = "round"; x.lineWidth = 4; x.strokeStyle = "rgba(245,183,59,.3)"; x.beginPath(); x.moveTo(tx, yE); x.lineTo(tx, yT3); x.stroke();
+        x.lineCap = "round"; x.lineWidth = 3; x.strokeStyle = "rgba(245,183,59,.22)"; x.beginPath(); x.moveTo(tx, yE); x.lineTo(tx, yT3); x.stroke();
         if (L.ms > 0) { x.strokeStyle = COL.amber; x.beginPath(); x.moveTo(tx, yE); x.lineTo(tx, msy); x.stroke(); }
         x.lineCap = "butt"; x.lineWidth = 2; x.strokeStyle = "rgba(245,183,59,.7)";
         [Y(L.tp[0]), Y(L.tp[1]), yT3].forEach(function (yy) { x.beginPath(); x.moveTo(tx - 6, yy); x.lineTo(tx + 6, yy); x.stroke(); });
-        rr(x, tx - 11, msy - 9, 22, 18, 6); x.fillStyle = COL.amber; x.fill(); x.strokeStyle = "#0f1115"; x.lineWidth = 1.5; x.stroke();
+        rr(x, tx - 10, msy - 8, 20, 16, 6); x.fillStyle = COL.amber; x.fill(); x.strokeStyle = "#0f1115"; x.lineWidth = 1.5; x.stroke();
         x.fillStyle = "#0f1115"; x.font = "800 11px Inter, sans-serif"; x.textAlign = "center"; x.fillText("⇅", tx, msy + 4); x.textAlign = "left";
-        var lbT = L.ms > 0 ? "SL +" + L.ms.toFixed(2) + "R · " + fmtD(L.e + L.dir * L.ms * R0) : "Kéo để đặt SL dương", lw = x.measureText(lbT).width + 12;
-        x.font = "700 10px Inter, sans-serif"; lw = x.measureText(lbT).width + 12; rr(x, tx + 15, msy - 9, lw, 18, 5); x.fillStyle = "rgba(15,17,21,.88)"; x.fill(); x.fillStyle = COL.amber; x.fillText(lbT, tx + 21, msy + 4);
+        var lbT = L.ms > 0 ? "SL +" + L.ms.toFixed(2) + "R" : "SL dương", lw = x.measureText(lbT).width + 12;
+        x.font = "700 10px Inter, sans-serif"; lw = x.measureText(lbT).width + 12; rr(x, tx + 14, msy - 8, lw, 16, 5); x.fillStyle = "rgba(15,17,21,.75)"; x.fill(); x.fillStyle = COL.amber; x.fillText(lbT, tx + 20, msy + 4);
         SLH = { x: tx, hy: msy, y0: yE, y1: yT3, t3: L.tps[2], cur: curR };
       }
     }
@@ -3179,12 +3183,12 @@ function analyze(c, tf, L) {
       var base = "✕ " + STRAT[L.k] + " · " + (L.dir === 1 ? "MUA" : "BÁN"), sm = "", chips = "";
       if (se) {
         var nm = (FWM.filter(function (m) { return m[0] === FW.m; })[0] || ["", ""])[1].replace(/ \(.*\)/, "");
-        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy, tạm tính ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + (L.ms > 0 ? "Chốt thủ công, SL dương +" + L.ms.toFixed(2) + "R (không dùng chốt tự động)" : nm);
+        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + (L.ms > 0 ? "Thủ công, SL dương +" + L.ms.toFixed(2) + "R" : ({ third: "Chốt 1/3 mỗi TP", tp1: "Chốt hết ở TP1", tp2: "Chốt hết ở TP2", swing: "Dời SL theo đáy", trail: "Trailing 1R" })[FW.m] || nm);
         chips = "<span class=\"ent\">▲ Vào " + hhmm(C[se.j + 1].t) + "</span>" + se.ev.map(function (e) { return "<span class=\"" + e.c + "\">" + (e.t === "SL" ? "✕ SL" : e.t === "BE" ? "B · về Entry" : e.t === "Thoát" ? "T · Thoát" : e.t.slice(2) + " · " + e.t) + " " + hhmm(C[e.i].t) + "</span>"; }).join("") + (se.end < 0 ? "<span>đang chạy</span>" : "");
       }
       var lqb = levLine(L.e, L.sl, L.dir), key = base + "|" + sm + "|" + chips + "|" + lqb.txt;
       if (cp.dataset.t !== key) {
-        cp.dataset.t = key; cp.innerHTML = base + (sm ? "<br><span style=\"font-weight:600;font-size:10.5px;opacity:.9\">" + sm + "</span>" : "") + "<br><span style=\"font-weight:600;font-size:10.5px;" + (lqb.warn ? "color:var(--down)" : "opacity:.75") + "\">" + lqb.txt + "</span>"; if (evb) evb.innerHTML = chips;
+        cp.dataset.t = key; cp.innerHTML = base + (sm ? "<br><span style=\"font-weight:600;font-size:10.5px;opacity:.9\">" + sm + "</span>" : "") + (lqb.warn ? "<br><span style=\"font-weight:700;font-size:10.5px;color:var(--down)\">" + lqb.txt + "</span>" : ""); if (evb) evb.innerHTML = chips;
         var vc = $("v-chart"); vc.classList.add("hasbar");
         requestAnimationFrame(function () { vc.style.setProperty("--sbh", sb.offsetHeight + "px"); draw(); });
       }
