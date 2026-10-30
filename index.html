@@ -1211,7 +1211,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-30.12";
+  var VER = "2026-10-30.13";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2197,7 +2197,7 @@ function analyze(c, tf, L) {
         h = p[k][0]; l = p[k][1];
         if (armed && l <= ms) return { R: ms, c: 1, i: k, x: ms, man: 1 };
         if (!armed && l <= -1) return { R: -1, c: 1, i: k, x: -1 };
-        if (k >= (mi || 0) && h >= ms) armed = true;
+        if (k >= (mi || 0) && h >= ms) { armed = true; if (p[k][2] <= ms) return { R: ms, c: 1, i: k, x: ms, man: 1 }; }
       }
       var cm = p.length ? p[p.length - 1][2] : 0;
       return { R: cm, c: cl ? 1 : 0, i: p.length - 1 };
