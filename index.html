@@ -1211,7 +1211,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-30.13";
+  var VER = "2026-10-30.15";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2152,7 +2152,15 @@ function analyze(c, tf, L) {
   (function () { if (!lsGet("ictFwdMig", 0)) { FW.j = FW.j.filter(function (q) { return q.man; }); lsSet("ictFwdMig", 1); lsSet("ictFwd", FW.j); } })();
   (function () { if (!lsGet("ictFwdMig3", 0)) { FW.auto = 0; lsSet("ictFwdAuto", 0); FW.j = FW.j.filter(function (q) { return q.man; }); lsSet("ictFwd", FW.j); lsSet("ictFwdMig3", 1); } })();
   (function () { if (!lsGet("ictFwdMig2", 0)) { fwDedupe(); lsSet("ictFwdMig2", 1); lsSet("ictFwd", FW.j); } })();
-  function fwSave() { FW.j = FW.j.slice(-400); lsSet("ictFwd", FW.j); }
+  function lsPut(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  /* lưu nhật ký theo dõi; nếu bộ nhớ đầy thì dọn bộ đệm quét/test cũ rồi lưu lại, không để mất kèo âm thầm */
+  function fwSave() {
+    FW.j = FW.j.slice(-400); if (lsPut("ictFwd", FW.j)) return;
+    var ks = [], i, k; try { for (i = 0; i < localStorage.length; i++) { k = localStorage.key(i); if (/^(ictTs:|ictScan:)/.test(k)) ks.push(k); } ks.forEach(function (x) { localStorage.removeItem(x); }); } catch (e) {}
+    if (lsPut("ictFwd", FW.j)) return;
+    FW.j.forEach(function (q) { if (q.done && q.p) delete q.p; }); FW.bl = 0;
+    if (!lsPut("ictFwd", FW.j)) toast("Bộ nhớ máy đầy, chưa lưu được nhật ký theo dõi. Hãy xoá bớt dữ liệu trình duyệt.");
+  }
   function fwId(o) { return o.sym + "|" + o.k + "|" + o.tf + "|" + o.t; }
   function fwHas(id) { return FW.j.some(function (q) { return q.id === id; }); }
   /* giống backtest: mỗi mã + chiến lược chỉ giữ một lệnh tại một thời điểm */
@@ -2166,7 +2174,7 @@ function analyze(c, tf, L) {
         if (q.done) { lastEnd = q.tEnd || 0; lastPend = false; } else lastPend = true;
       });
     });
-    var n = FW.j.length; FW.j = FW.j.filter(function (q) { return !drop[q.id]; }); return n - FW.j.length;
+    var n = FW.j.length; FW.j = FW.j.filter(function (q) { return q.man || !drop[q.id]; }); return n - FW.j.length;
   }
   function fwBlocked(o) {
     return FW.j.some(function (q) { return q.sym === o.sym && q.k === o.k && q.tf === o.tf && q.id !== fwId(o) && (!q.done || q.tEnd > o.t) && q.t <= o.t; });
@@ -2509,8 +2517,8 @@ function analyze(c, tf, L) {
     if (notes) h += "<div class=\"note\">" + notes + "\"Đạt\" cần từ 20 lệnh, lãi kỳ vọng dương và dương ở cả hai nửa dữ liệu. Một mã đơn lẻ dễ trùng hợp, nên xem thêm vài mã khác.</div>";
     }
     if (src === "fw") {
-      var pend = fwView().filter(function (q) { return !q.done && q.st !== "lost"; });
-      if (pend.length) h += "<h3 class=\"sub\">Theo dõi của tôi <span>" + pend.length + " đang chạy · bấm vào kèo để xem chart</span></h3>" + fwTbl(pend.slice().reverse().slice(0, 40), fwWm());
+      var pend = fwView().filter(function (q) { return !q.done && q.st !== "lost"; }), lst = fwView().filter(function (q) { return q.st === "lost"; });
+      if (pend.length || lst.length) h += "<h3 class=\"sub\">Theo dõi của tôi <span>" + pend.length + " đang chạy" + (lst.length ? " · " + lst.length + " không có dữ liệu" : "") + " · bấm vào kèo để xem chart</span></h3>" + fwTbl(pend.slice().reverse().concat(lst).slice(0, 40), fwWm());
     }
     return h;
   }
@@ -2711,7 +2719,7 @@ function analyze(c, tf, L) {
 
   /* ---------- 3 chiến lược M15: backtest, quét tín hiệu, thị trường ---------- */
   var SR = { run: false, pct: 0, msg: "", cancel: false, res: null, tf: "", en: lsGet("ictStratOn", { A: 1, B: 1, C: 1 }) };
-  var SC = { run: false, pct: 0, when: 0, fresh: [], recent: [], nsym: 0, tf: "", err: "", kinds: {} }, SC_BY = {}, SCS = lsGet("ictScanSrc", "vol"), SC_MAP = {}, SC_ID = 0, SIGLV = lsGet("ictSigLv", null);
+  var SC = { run: false, pct: 0, when: 0, fresh: [], recent: [], nsym: 0, tf: "", err: "", kinds: {} }, SC_BY = {}, SCS = lsGet("ictScanSrc", "vol"), SCN = lsGet("ictScanN", 50), SC_MAP = {}, SC_ID = 0, SIGLV = lsGet("ictSigLv", null);
   function skey(tf) { return tf + (SCS === "mv" ? "~mv" : ""); }
   function scSave(tfk) {
     var c = SC_BY[tfk]; if (!c) return;
@@ -2822,11 +2830,11 @@ function analyze(c, tf, L) {
   function scanList() {
     if (SCS === "mv") {
       var lm = ALL.filter(function (x) { return x.q === "USDT" && x.v >= 3e6 && !STABLE_RE.test(x.b); });
-      var up = lm.slice().sort(function (x, y) { return y.ch - x.ch; }).slice(0, 12), dn = lm.slice().sort(function (x, y) { return x.ch - y.ch; }).slice(0, 12), seen = {}, r = [];
+      var hn = Math.round(SCN / 2), up = lm.slice().sort(function (x, y) { return y.ch - x.ch; }).slice(0, hn), dn = lm.slice().sort(function (x, y) { return x.ch - y.ch; }).slice(0, hn), seen = {}, r = [];
       up.concat(dn).forEach(function (x) { if (!seen[x.s]) { seen[x.s] = 1; r.push(x.s); } });
       if (r.length >= 8) return r;
     }
-    var stable = STABLE_RE, l = ALL.filter(function (x) { return x.q === "USDT" && !stable.test(x.b); }).map(function (x) { return x.s; }).slice(0, 20);
+    var stable = STABLE_RE, l = ALL.filter(function (x) { return x.q === "USDT" && !stable.test(x.b); }).map(function (x) { return x.s; }).slice(0, SCN);
     if (l.length < 10) l = FALLBACK.slice();
     if (!isFx() && l.indexOf(S.sym) < 0) l.unshift(S.sym);
     return l;
@@ -3082,7 +3090,7 @@ function analyze(c, tf, L) {
     var fr = scF(SC.fresh), rc = scF(SC.recent), missing = SKEY.some(function (k) { return SR.en[k] && SC.when && !SC.kinds[k]; });
     stRestore();
     var h = "<div class=\"herot\"><div><small>QUÉT TÍN HIỆU · " + S.tf + "</small><b>" + (SC.run ? "<span id=\"sctxt\">Đang quét… " + SC.pct + "%</span>" : SC.when ? fr.length + " kèo mới" : "Chưa quét khung này") + "</b></div><button class=\"go\" id=\"scgo\" style=\"min-height:44px;padding:0 18px\">" + (SC.run ? "…" : "QUÉT") + "</button></div>";
-    h += "<div class=\"seg3\" id=\"scsrc\"><button data-src=\"vol\" class=\"" + (SCS === "vol" ? "on" : "") + "\">Top vol</button><button data-src=\"mv\" class=\"" + (SCS === "mv" ? "on" : "") + "\">Top tăng/giảm</button></div>";
+    h += "<div class=\"seg3\" id=\"scsrc\"><button data-src=\"vol\" class=\"" + (SCS === "vol" ? "on" : "") + "\">Top vol</button><button data-src=\"mv\" class=\"" + (SCS === "mv" ? "on" : "") + "\">Top tăng/giảm</button></div><div class=\"seg3\" id=\"scn\" style=\"margin-top:6px\">" + [20, 50, 100].map(function (n) { return "<button data-n=\"" + n + "\" class=\"" + (SCN === n ? "on" : "") + "\">" + n + " mã</button>"; }).join("") + "</div>";
     if (SC.run) h += "<div class=\"conf\"><i id=\"scbar\" style=\"width:" + SC.pct + "%\"></i></div>";
     h += "<div class=\"stat4\"><div><small>Kèo mới</small><b>" + fr.length + "</b></div><div><small>24h qua</small><b>" + (fr.length + rc.length) + "</b></div><div><small>Số mã quét</small><b>" + SC.nsym + "</b></div><div><small>Cập nhật</small><b style=\"font-size:11px\">" + (SC.when ? fmtAge((Date.now() - SC.when) / 6e4) : "–") + "</b></div></div>";
     h += "<div class=\"fchips\">" + SKEY.map(function (k) { return "<button data-k=\"" + k + "\" class=\"" + (SR.en[k] ? "on" : "") + "\" style=\"--c:" + SCOL[k] + "\">" + (SR.en[k] ? "✓ " : "") + STRAT[k] + "</button>"; }).join("") + "</div>";
@@ -3092,6 +3100,7 @@ function analyze(c, tf, L) {
     if (SC.err) h += "<div class=\"sc\">" + SC.err + "</div>";
     el.innerHTML = h;
     var g = $("scgo"); if (g) g.addEventListener("click", startScan);
+    Array.prototype.forEach.call(el.querySelectorAll("#scn button"), function (b) { b.addEventListener("click", function () { if (SC.run || SCN === +b.dataset.n) return; SCN = +b.dataset.n; lsSet("ictScanN", SCN); renderSig(); toast("Lần quét tới sẽ quét " + SCN + " mã"); }); });
     Array.prototype.forEach.call(el.querySelectorAll("#scsrc button"), function (b) { b.addEventListener("click", function () { if (SC.run || SCS === b.dataset.src) return; SCS = b.dataset.src; lsSet("ictScanSrc", SCS); SC.tf = ""; sigLoad(); renderSig(); sigAutoChk(); }); });
     Array.prototype.forEach.call(el.querySelectorAll(".fchips button"), function (b) { b.addEventListener("click", function () { SR.en[b.dataset.k] = SR.en[b.dataset.k] ? 0 : 1; lsSet("ictStratOn", SR.en); renderSig(); }); });
   }
