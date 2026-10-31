@@ -234,6 +234,7 @@ details.opt { background: rgba(255,255,255,.03); border: 1px solid var(--line); 
 .lv .sl b { color: var(--down); } .lv.tp b { color: var(--up); }
 .sgf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .sgf .note { flex: 1 1 140px; }
 .opn { padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 800; color: var(--cyan); background: rgba(var(--accrgb),.12); border: 1px solid rgba(var(--accrgb),.4); }
+.eqw { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px; } .eqh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; } .eqh b { font-size: 13px; } .eqh span { font-size: 10px; color: var(--dim); } .eqc { width: 100%; height: 118px; display: block; } .eqc.bars { height: 50px; } .stat4.s3 b { font-size: 15px; }
 .rlist { display: flex; flex-direction: column; gap: 6px; }
 .rrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; text-align: left; background: rgba(255,255,255,.035); border: 1px solid var(--line); min-width: 0; } .rrow:active { transform: scale(.985); }
 .rrow .av.sm { width: 32px; height: 32px; font-size: 9px; } .rk { width: 16px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 700; }
@@ -1211,7 +1212,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-30.15";
+  var VER = "2026-10-31.1";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2288,7 +2289,7 @@ function analyze(c, tf, L) {
     }
     cand.forEach(function (c) {
       closeTo(c.dt);
-      var q = c.q, row = { q: q, te: c.te, r: c.r }, hist = c.tx <= c.dt, locked = open.reduce(function (a, o) { return a + o.mg; }, 0), free = bal - locked;
+      var q = c.q, row = { q: q, te: c.te, tx: c.tx, r: c.r }, hist = c.tx <= c.dt, locked = open.reduce(function (a, o) { return a + o.mg; }, 0), free = bal - locked;
       var rd = q.atr * q.sl / q.e, risk = bal * S.risk / 100, nt = rd > 0 ? risk / rd : 0, sc = 1;
       if (bal <= 0 || nt <= 0) { row.skip = "hết vốn"; sCash++; }
       else if (!hist && open.length >= S.max) { row.skip = "đủ " + S.max + " lệnh mở"; row.blk = open.map(function (o) { return dispSym(o.q.sym); }).join(", "); row.at = c.dt; sMax++; }
@@ -3227,6 +3228,52 @@ function analyze(c, tf, L) {
         requestAnimationFrame(function () { vc.style.setProperty("--sbh", sb.offsetHeight + "px"); draw(); });
       }
     }  }
+  /* khối "Ví của tôi": vốn, đường vốn có vùng sụt, thanh R từng lệnh, lệnh đang mở */
+  function fwEqSvg(W) {
+    var ad = W.rows.filter(function (r) { return !r.skip; }); if (!ad.length) return "";
+    var cl = ad.filter(function (r) { return isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), t0 = Math.min.apply(null, ad.map(function (r) { return r.te; })), t1 = Math.max(Date.now(), t0 + 6e4), b = SIM.cap, pts = [[t0, b, 0]];
+    cl.forEach(function (r) { b += r.pnl; pts.push([Math.max(r.tx, t0), b, r.pnl]); });
+    pts.push([t1, W.eq, 0]);
+    var lo = Math.min.apply(null, pts.map(function (p) { return p[1]; }).concat([SIM.cap])), hi = Math.max.apply(null, pts.map(function (p) { return p[1]; }).concat([SIM.cap])), pad = (hi - lo) * .12 || SIM.cap * .01;
+    lo -= pad; hi += pad;
+    var X = function (t) { return 6 + (t - t0) / (t1 - t0) * 308; }, Y = function (v) { return 8 + (hi - v) / (hi - lo) * 92; }, pk = -1e18, top = [], cv = [];
+    pts.forEach(function (p) { pk = Math.max(pk, p[1]); top.push(X(p[0]).toFixed(1) + "," + Y(pk).toFixed(1)); cv.push(X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)); });
+    var sv = "<svg class=\"eqc\" viewBox=\"0 0 320 118\" preserveAspectRatio=\"none\">";
+    sv += "<polygon points=\"" + top.concat(cv.slice().reverse()).join(" ") + "\" style=\"fill:rgba(234,57,67,.2)\"/>";
+    sv += "<line x1=\"0\" x2=\"320\" y1=\"" + Y(SIM.cap).toFixed(1) + "\" y2=\"" + Y(SIM.cap).toFixed(1) + "\" style=\"stroke:var(--dim);stroke-width:.6;stroke-dasharray:3 3\"/>";
+    sv += "<polyline points=\"" + cv.join(" ") + "\" style=\"fill:none;stroke:var(--cyan);stroke-width:1.6;stroke-linejoin:round\"/>";
+    pts.slice(1, -1).forEach(function (p) { sv += "<circle cx=\"" + X(p[0]).toFixed(1) + "\" cy=\"" + Y(p[1]).toFixed(1) + "\" r=\"2.2\" style=\"fill:" + (p[2] >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
+    sv += "<text x=\"6\" y=\"114\" style=\"fill:var(--dim);font-size:8px\">" + hhmm(t0) + " " + ymd(t0).slice(5).split("-").reverse().join("/") + "</text><text x=\"314\" y=\"114\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:8px\">bây giờ $" + W.eq.toFixed(0) + "</text></svg>";
+    return sv;
+  }
+  function fwBarsSvg(W) {
+    var cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }).slice(-40); if (cl.length < 2) return "";
+    var bw = 308 / 40, sv = "<svg class=\"eqc bars\" viewBox=\"0 0 320 50\" preserveAspectRatio=\"none\"><line x1=\"0\" x2=\"320\" y1=\"25\" y2=\"25\" style=\"stroke:var(--line);stroke-width:.6\"/>";
+    cl.forEach(function (r, i) { var v = Math.max(-2, Math.min(2, r.r.R)), h = Math.max(.8, Math.abs(v) / 2 * 22); sv += "<rect x=\"" + (6 + i * bw + .6).toFixed(1) + "\" y=\"" + (v >= 0 ? 25 - h : 25).toFixed(1) + "\" width=\"" + (bw - 1.2).toFixed(1) + "\" height=\"" + h.toFixed(1) + "\" rx=\"1\" style=\"fill:" + (v >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
+    return sv + "</svg>";
+  }
+  function fwPanel() {
+    var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; }), h = "";
+    if (!all.length) return "<div class=\"sect\"><b>Ví của tôi</b><span>chưa có kèo theo dõi</span></div><div class=\"empty2\">Bấm \"+ Theo dõi\" trên thẻ kèo để ví bắt đầu chạy. Mọi kèo ông theo dõi đều chạy trong ví này.</div>";
+    var W = fwWallet(all, FW.m), td = ymd(Date.now()), today = W.unreal, cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }), gp = 0, gl = 0, pn = function (v) { return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; };
+    cl.forEach(function (r) { if (ymd(r.tx) === td) today += r.pnl; if (r.pnl > 0) gp += r.pnl; else gl -= r.pnl; });
+    var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", ex = W.nClosed ? W.sumR / W.nClosed : 0;
+    h += "<div class=\"sect\"><b>Ví của tôi</b><span>" + W.taken + " lệnh đã vào · " + W.nClosed + " đã xong</span></div>";
+    h += "<div class=\"stat4\"><div><small>Vốn hiện tại</small><b class=\"" + (W.eq >= SIM.cap ? "bull" : "bear") + "\">$" + W.eq.toFixed(0) + "</b><small>" + pn((W.eq / SIM.cap - 1) * 100) + "</small></div><div><small>Hôm nay</small><b class=\"" + (today >= 0 ? "bull" : "bear") + "\">" + fm$(today) + "</b><small>gồm lệnh mở</small></div><div><small>Lệnh mở</small><b>" + W.nOpen + "/" + SIM.max + "</b><small>còn chỗ " + Math.max(0, SIM.max - W.nOpen) + "</small></div><div><small>Tiền rảnh</small><b>$" + Math.max(0, W.free).toFixed(0) + "</b><small>ký quỹ $" + W.locked.toFixed(0) + "</small></div></div>";
+    h += "<div class=\"eqw\"><div class=\"eqh\"><b>Đường vốn</b><span>vùng đỏ = đang sụt so với đỉnh</span></div>" + fwEqSvg(W) + "</div>";
+    var bs = fwBarsSvg(W);
+    if (bs) h += "<div class=\"eqw\"><div class=\"eqh\"><b>R từng lệnh đã xong</b><span>40 lệnh gần nhất, cao nhất ±2R</span></div>" + bs + "</div>";
+    if (W.nClosed) h += "<div class=\"stat4 s3\"><div><small>Thắng (sau phí)</small><b>" + Math.round(W.wins / W.nClosed * 100) + "%</b></div><div><small>Kỳ vọng</small><b class=\"" + (ex >= 0 ? "bull" : "bear") + "\">" + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</b><small>mỗi lệnh</small></div><div><small>Hệ số lãi/lỗ</small><b>" + pf + "</b></div><div><small>Sụt tối đa</small><b class=\"bear\">-" + (W.dd * 100).toFixed(1) + "%</b></div></div>";
+    var wm = {}; W.rows.forEach(function (r) { wm[r.q.id] = r; });
+    var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
+    if (op.length) {
+      h += "<div class=\"sect\"><b>Lệnh đang chạy</b><span>bấm để mở chart</span></div><div class=\"rlist\">" + op.map(function (q) {
+        var cr = q.p[q.p.length - 1][2], r = wm[q.id], toSl = cr + 1, toTp = q.tps[0] - cr, hot = toSl < 0.4 ? "bear" : toTp < 0.5 ? "bull" : "muted";
+        return "<button class=\"rrow\" data-fwo=\"" + q.id + "\" style=\"--c:" + SCOL[q.k] + "\"><span class=\"av sm\" data-ic=\"" + splitSym(q.sym).b + "\"></span><span class=\"rn\"><b>" + splitSym(q.sym).b + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small class=\"" + hot + "\">" + (q.ms > 0 ? "SL dương +" + q.ms.toFixed(2) + "R · " : "cách SL " + toSl.toFixed(1) + "R · ") + "cách TP1 " + Math.max(0, toTp).toFixed(1) + "R</small></span><span class=\"rt\"><span class=\"" + (cr >= 0 ? "bull" : "bear") + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "R</span>" + (r && !r.skip ? "<small class=\"" + (r.pnl >= 0 ? "bull" : "bear") + "\">" + fm$(r.pnl) + "</small>" : "<small class=\"muted\">ví bỏ</small>") + "</span></button>";
+      }).join("") + "</div>";
+    }
+    return h;
+  }
   function renderSig() {
     renderSigHead();
     var el = $("sigl"); if (!el) return;
@@ -3247,16 +3294,7 @@ function analyze(c, tf, L) {
         SC.G = G;
       }
       if (dead.length) h += "<details class=\"alt lowd\"><summary>Đã hết hiệu lực (" + dead.length + " kèo): chạm SL hoặc đạt TP1</summary>" + dead.map(sigCard).join("") + "</details>";
-      var have2 = {}; fr.concat(rc).forEach(function (o) { have2[o.sym + "|" + o.k + "|" + o.t] = 1; });
-      var ex = fwView().filter(function (q) { return q.tf === S.tf && Date.now() - q.t < 864e5 && !have2[q.sym + "|" + q.k + "|" + q.t] && SR.en[q.k]; });
-      var done = rc.filter(function (o) { return o.oc.st !== "run" && o.oc.st !== "new"; }), sum = done.reduce(function (s, o) { return s + o.oc.R; }, 0);
-      ex.forEach(function (q) { if (q.done && q.st !== "lost") { done.push(q); sum += q.R; } });
-      h += "<div class=\"sect\"><b>24 giờ qua</b><span>" + (fr.length + rc.length + ex.length) + " kèo" + (done.length ? " · đã xong " + done.length + " · " + (sum >= 0 ? "+" : "") + sum.toFixed(1) + "R" : "") + "</span></div>";
-      if (!rc.length && !ex.length) h += "<div class=\"empty2\">Không có kèo nào trong 24 giờ qua.</div>";
-      else h += "<div class=\"rlist\">" + ex.map(function (q) { var lb = fwLabel(q); return "<button class=\"rrow\" data-fwo=\"" + q.id + "\" style=\"--c:" + SCOL[q.k] + "\"><span class=\"av sm\" data-ic=\"" + splitSym(q.sym).b + "\"></span><span class=\"rn\"><b>" + splitSym(q.sym).b + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small>" + STRAT[q.k] + " · " + fmtLocal(q.t) + " · đang theo dõi</small></span><span class=\"pr2\"><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span>" + (lb[2] ? "<small class=\"muted\">" + lb[2] + "</small>" : "") + "</span></button>"; }).join("") + rc.slice(0, 60).map(function (o) {
-        var rt = resTxt(o.oc);
-        return "<button class=\"rrow mvr\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\" style=\"--c:" + SCOL[o.k] + "\"><span class=\"av sm\" data-ic=\"" + splitSym(o.sym).b + "\"></span><span class=\"rn\"><b>" + splitSym(o.sym).b + " <i class=\"" + (o.dir === 1 ? "bull" : "bear") + "\">" + (o.dir === 1 ? "MUA" : "BÁN") + "</i></b><small>" + STRAT[o.k] + " · " + fmtLocal(o.t) + "</small></span><span class=\"pill " + rt[1] + "\">" + rt[0] + "</span></button>";
-      }).join("") + "</div>";
+      h += fwPanel();
     }
     el.innerHTML = h; el.style.opacity = SC.run && (fr.length || rc.length) ? ".55" : "1"; bindOpen(el);
     Array.prototype.forEach.call(el.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); });
