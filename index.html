@@ -234,7 +234,7 @@ details.opt { background: rgba(255,255,255,.03); border: 1px solid var(--line); 
 .lv .sl b { color: var(--down); } .lv.tp b { color: var(--up); }
 .sgf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .sgf .note { flex: 1 1 140px; }
 .opn { padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 800; color: var(--cyan); background: rgba(var(--accrgb),.12); border: 1px solid rgba(var(--accrgb),.4); }
-.eqw { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px; } .eqh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; } .eqh b { font-size: 13px; } .eqh span { font-size: 10px; color: var(--dim); } .eqc { width: 100%; height: 118px; display: block; } .eqc.bars { height: 50px; } .stat4.s3 b { font-size: 15px; }
+.eqw { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px; } .eqh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; } .eqh b { font-size: 13px; } .eqh span { font-size: 10px; color: var(--dim); } .eqc { width: 100%; display: block; overflow: visible; } .eqh2 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; } .eqh2 small { display: block; font-size: 10px; color: var(--dim); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; } .eqh2 b { font-family: var(--display); font-size: 26px; letter-spacing: -.01em; } .eqh2 span { font-size: 13px; font-weight: 700; } .eqr { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.05); } .eqr button { padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--dim); } .eqr button.on { background: rgba(var(--accrgb),.18); color: var(--cyan); } .stat4.s3 b { font-size: 15px; }
 .rlist { display: flex; flex-direction: column; gap: 6px; }
 .rrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; text-align: left; background: rgba(255,255,255,.035); border: 1px solid var(--line); min-width: 0; } .rrow:active { transform: scale(.985); }
 .rrow .av.sm { width: 32px; height: 32px; font-size: 9px; } .rk { width: 16px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 700; }
@@ -1212,7 +1212,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-31.1";
+  var VER = "2026-10-31.2";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3229,28 +3229,56 @@ function analyze(c, tf, L) {
       }
     }  }
   /* khối "Ví của tôi": vốn, đường vốn có vùng sụt, thanh R từng lệnh, lệnh đang mở */
-  function fwEqSvg(W) {
-    var ad = W.rows.filter(function (r) { return !r.skip; }); if (!ad.length) return "";
-    var cl = ad.filter(function (r) { return isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), t0 = Math.min.apply(null, ad.map(function (r) { return r.te; })), t1 = Math.max(Date.now(), t0 + 6e4), b = SIM.cap, pts = [[t0, b, 0]];
-    cl.forEach(function (r) { b += r.pnl; pts.push([Math.max(r.tx, t0), b, r.pnl]); });
-    pts.push([t1, W.eq, 0]);
-    var lo = Math.min.apply(null, pts.map(function (p) { return p[1]; }).concat([SIM.cap])), hi = Math.max.apply(null, pts.map(function (p) { return p[1]; }).concat([SIM.cap])), pad = (hi - lo) * .12 || SIM.cap * .01;
-    lo -= pad; hi += pad;
-    var X = function (t) { return 6 + (t - t0) / (t1 - t0) * 308; }, Y = function (v) { return 8 + (hi - v) / (hi - lo) * 92; }, pk = -1e18, top = [], cv = [];
-    pts.forEach(function (p) { pk = Math.max(pk, p[1]); top.push(X(p[0]).toFixed(1) + "," + Y(pk).toFixed(1)); cv.push(X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)); });
-    var sv = "<svg class=\"eqc\" viewBox=\"0 0 320 118\" preserveAspectRatio=\"none\">";
-    sv += "<polygon points=\"" + top.concat(cv.slice().reverse()).join(" ") + "\" style=\"fill:rgba(234,57,67,.2)\"/>";
-    sv += "<line x1=\"0\" x2=\"320\" y1=\"" + Y(SIM.cap).toFixed(1) + "\" y2=\"" + Y(SIM.cap).toFixed(1) + "\" style=\"stroke:var(--dim);stroke-width:.6;stroke-dasharray:3 3\"/>";
-    sv += "<polyline points=\"" + cv.join(" ") + "\" style=\"fill:none;stroke:var(--cyan);stroke-width:1.6;stroke-linejoin:round\"/>";
-    pts.slice(1, -1).forEach(function (p) { sv += "<circle cx=\"" + X(p[0]).toFixed(1) + "\" cy=\"" + Y(p[1]).toFixed(1) + "\" r=\"2.2\" style=\"fill:" + (p[2] >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
-    sv += "<text x=\"6\" y=\"114\" style=\"fill:var(--dim);font-size:8px\">" + hhmm(t0) + " " + ymd(t0).slice(5).split("-").reverse().join("/") + "</text><text x=\"314\" y=\"114\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:8px\">bây giờ $" + W.eq.toFixed(0) + "</text></svg>";
-    return sv;
+  var FWR = lsGet("ictEqR", "all");
+  function eqMono(P) {
+    var n = P.length, d = [], m = [], i, t, a, b, h, k;
+    if (n < 2) return "";
+    for (i = 0; i < n - 1; i++) d.push((P[i + 1][1] - P[i][1]) / ((P[i + 1][0] - P[i][0]) || 1));
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (i = 0; i < n - 1; i++) { if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; } else { a = m[i] / d[i]; b = m[i + 1] / d[i]; h = a * a + b * b; if (h > 9) { t = 3 / Math.sqrt(h); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; } } }
+    k = "M" + P[0][0].toFixed(1) + " " + P[0][1].toFixed(1);
+    for (i = 0; i < n - 1; i++) { h = (P[i + 1][0] - P[i][0]) / 3; k += "C" + (P[i][0] + h).toFixed(1) + " " + (P[i][1] + m[i] * h).toFixed(1) + " " + (P[i + 1][0] - h).toFixed(1) + " " + (P[i + 1][1] - m[i + 1] * h).toFixed(1) + " " + P[i + 1][0].toFixed(1) + " " + P[i + 1][1].toFixed(1); }
+    return k;
   }
-  function fwBarsSvg(W) {
+  function eqSeries(W) {
+    var ad = W.rows.filter(function (r) { return !r.skip; }); if (!ad.length) return null;
+    var cl = ad.filter(function (r) { return isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), now = Date.now(), t0 = Math.min.apply(null, ad.map(function (r) { return r.te; })), b = SIM.cap, pts = [[t0, b]];
+    cl.forEach(function (r) { b += r.pnl; pts.push([Math.max(r.tx, t0), b]); });
+    pts.push([Math.max(now, t0 + 6e4), W.eq]);
+    var span = FWR === "24h" ? 864e5 : FWR === "7d" ? 6048e5 : 0;
+    if (span && now - span > t0) {
+      var tm = now - span, sv = SIM.cap, i; for (i = 0; i < pts.length - 1; i++) if (pts[i][0] <= tm) sv = pts[i][1];
+      pts = [[tm, sv]].concat(pts.filter(function (p) { return p[0] > tm; }));
+    }
+    return pts;
+  }
+  function fwEqCard(W, w) {
+    var pts = eqSeries(W); if (!pts || pts.length < 2) return "";
+    var H = 196, L = 8, Rr = 46, T = 14, MH = 112, t0 = pts[0][0], t1 = pts[pts.length - 1][0], v0 = pts[0][1], v1 = pts[pts.length - 1][1], vals = pts.map(function (p) { return p[1]; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pd = (hi - lo) * .15 || v0 * .01;
+    lo -= pd; hi += pd;
+    var X = function (t) { return L + (t - t0) / ((t1 - t0) || 1) * (w - L - Rr); }, Y = function (v) { return T + (hi - v) / (hi - lo) * MH; }, up = v1 >= v0, col = up ? "var(--up)" : "var(--down)", P = pts.map(function (p) { return [X(p[0]), Y(p[1])]; });
+    var f = function (v) { return "$" + (Math.abs(v) >= 1e4 ? (v / 1e3).toFixed(1) + "k" : v.toFixed(0)); }, sv = "<svg class=\"eqc\" viewBox=\"0 0 " + w + " " + H + "\" width=\"100%\" height=\"" + H + "\"><defs><linearGradient id=\"eqg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" style=\"stop-color:" + col + ";stop-opacity:.34\"/><stop offset=\"1\" style=\"stop-color:" + col + ";stop-opacity:0\"/></linearGradient></defs>";
+    [hi - pd, (hi + lo) / 2, lo + pd].forEach(function (v) { sv += "<line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + Y(v).toFixed(1) + "\" y2=\"" + Y(v).toFixed(1) + "\" style=\"stroke:var(--line);stroke-width:1\"/><text x=\"" + (w - 2) + "\" y=\"" + (Y(v) + 3).toFixed(1) + "\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:10px\">" + f(v) + "</text>"; });
+    if (SIM.cap > lo && SIM.cap < hi) sv += "<line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + Y(SIM.cap).toFixed(1) + "\" y2=\"" + Y(SIM.cap).toFixed(1) + "\" style=\"stroke:var(--dim);stroke-width:1;stroke-dasharray:4 4;opacity:.8\"/><text x=\"" + (L + 2) + "\" y=\"" + (Y(SIM.cap) - 4).toFixed(1) + "\" style=\"fill:var(--dim);font-size:9px\">vốn gốc</text>";
+    var d = eqMono(P), by = T + MH;
+    sv += "<path d=\"" + d + "L" + P[P.length - 1][0].toFixed(1) + " " + by + "L" + P[0][0].toFixed(1) + " " + by + "Z\" fill=\"url(#eqg)\"/><path d=\"" + d + "\" style=\"fill:none;stroke:" + col + ";stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round\"/>";
+    var ex = P[P.length - 1]; sv += "<circle cx=\"" + ex[0].toFixed(1) + "\" cy=\"" + ex[1].toFixed(1) + "\" r=\"8\" style=\"fill:" + col + ";opacity:.22\"/><circle cx=\"" + ex[0].toFixed(1) + "\" cy=\"" + ex[1].toFixed(1) + "\" r=\"3.8\" style=\"fill:" + col + ";stroke:var(--card);stroke-width:1.5\"/>";
+    var mi = vals.indexOf(Math.max.apply(null, vals)); if (mi > 0 && mi < pts.length - 1) sv += "<text x=\"" + Math.min(w - Rr - 14, P[mi][0]).toFixed(1) + "\" y=\"" + (P[mi][1] - 7).toFixed(1) + "\" text-anchor=\"middle\" style=\"fill:var(--dim);font-size:9px\">đỉnh " + f(vals[mi]) + "</text>";
+    /* dải sụt so với đỉnh */
+    var pk = -1e18, mdd = 0, sy = T + MH + 30, sh = 30, dp = pts.map(function (p) { pk = Math.max(pk, p[1]); var dd = pk > 0 ? (pk - p[1]) / pk : 0; mdd = Math.max(mdd, dd); return dd; }), dm = Math.max(mdd, .02), DP = pts.map(function (p, i) { return [X(p[0]), sy + dp[i] / dm * sh]; });
+    sv += "<text x=\"" + L + "\" y=\"" + (sy - 6) + "\" style=\"fill:var(--dim);font-size:10px\">Sụt so với đỉnh</text><text x=\"" + (w - 2) + "\" y=\"" + (sy - 6) + "\" text-anchor=\"end\" style=\"fill:var(--down);font-size:10px;font-weight:700\">tối đa -" + (mdd * 100).toFixed(1) + "%</text><line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + sy + "\" y2=\"" + sy + "\" style=\"stroke:var(--line)\"/>";
+    sv += "<path d=\"" + eqMono(DP) + "L" + DP[DP.length - 1][0].toFixed(1) + " " + sy + "L" + DP[0][0].toFixed(1) + " " + sy + "Z\" style=\"fill:var(--down);opacity:.3\"/><path d=\"" + eqMono(DP) + "\" style=\"fill:none;stroke:var(--down);stroke-width:1.4\"/>";
+    var dl = function (t) { var q = new Date(t); return q.getDate() + "/" + (q.getMonth() + 1) + (t1 - t0 < 1728e5 ? " " + pad2(q.getHours()) + "h" : ""); };
+    sv += "<text x=\"" + L + "\" y=\"" + (H - 4) + "\" style=\"fill:var(--dim);font-size:10px\">" + dl(t0) + "</text><text x=\"" + ((L + w - Rr) / 2).toFixed(1) + "\" y=\"" + (H - 4) + "\" text-anchor=\"middle\" style=\"fill:var(--dim);font-size:10px\">" + dl((t0 + t1) / 2) + "</text><text x=\"" + (w - Rr) + "\" y=\"" + (H - 4) + "\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:10px\">bây giờ</text></svg>";
+    var chg = (v1 / v0 - 1) * 100;
+    return "<div class=\"eqw\"><div class=\"eqh2\"><div><small>Đường vốn</small><b class=\"" + (up ? "bull" : "bear") + "\">$" + v1.toFixed(0) + "</b> <span class=\"" + (up ? "bull" : "bear") + "\">" + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%</span></div><div class=\"eqr\" id=\"eqr\">" + [["24h", "24h"], ["7d", "7 ngày"], ["all", "Tất cả"]].map(function (x) { return "<button data-r=\"" + x[0] + "\" class=\"" + (FWR === x[0] ? "on" : "") + "\">" + x[1] + "</button>"; }).join("") + "</div></div>" + sv + "</div>";
+  }
+  function fwBarsCard(W, w) {
     var cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }).slice(-40); if (cl.length < 2) return "";
-    var bw = 308 / 40, sv = "<svg class=\"eqc bars\" viewBox=\"0 0 320 50\" preserveAspectRatio=\"none\"><line x1=\"0\" x2=\"320\" y1=\"25\" y2=\"25\" style=\"stroke:var(--line);stroke-width:.6\"/>";
-    cl.forEach(function (r, i) { var v = Math.max(-2, Math.min(2, r.r.R)), h = Math.max(.8, Math.abs(v) / 2 * 22); sv += "<rect x=\"" + (6 + i * bw + .6).toFixed(1) + "\" y=\"" + (v >= 0 ? 25 - h : 25).toFixed(1) + "\" width=\"" + (bw - 1.2).toFixed(1) + "\" height=\"" + h.toFixed(1) + "\" rx=\"1\" style=\"fill:" + (v >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
-    return sv + "</svg>";
+    var H = 84, mid = 42, L = 8, Rr = 30, n = cl.length, bw = (w - L - Rr) / 40, sv = "<svg class=\"eqc\" viewBox=\"0 0 " + w + " " + H + "\" width=\"100%\" height=\"" + H + "\"><line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + mid + "\" y2=\"" + mid + "\" style=\"stroke:var(--dim);stroke-width:1;opacity:.6\"/><text x=\"" + (w - 2) + "\" y=\"" + (mid + 3) + "\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:10px\">0R</text><text x=\"" + (w - 2) + "\" y=\"" + 12 + "\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:10px\">+2R</text><text x=\"" + (w - 2) + "\" y=\"" + (H - 4) + "\" text-anchor=\"end\" style=\"fill:var(--dim);font-size:10px\">-2R</text>";
+    cl.forEach(function (r, i) { var v = Math.max(-2, Math.min(2, r.r.R)), h = Math.max(1.5, Math.abs(v) / 2 * 36); sv += "<rect x=\"" + (L + (40 - n + i) * bw + 1).toFixed(1) + "\" y=\"" + (v >= 0 ? mid - h : mid + 1).toFixed(1) + "\" width=\"" + Math.max(2, bw - 2).toFixed(1) + "\" height=\"" + h.toFixed(1) + "\" rx=\"2\" style=\"fill:" + (v >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
+    return "<div class=\"eqw\"><div class=\"eqh\"><b>Kết quả từng lệnh</b><span>" + n + " lệnh xong gần nhất</span></div>" + sv + "</svg></div>";
   }
   function fwPanel() {
     var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; }), h = "";
@@ -3260,9 +3288,8 @@ function analyze(c, tf, L) {
     var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", ex = W.nClosed ? W.sumR / W.nClosed : 0;
     h += "<div class=\"sect\"><b>Ví của tôi</b><span>" + W.taken + " lệnh đã vào · " + W.nClosed + " đã xong</span></div>";
     h += "<div class=\"stat4\"><div><small>Vốn hiện tại</small><b class=\"" + (W.eq >= SIM.cap ? "bull" : "bear") + "\">$" + W.eq.toFixed(0) + "</b><small>" + pn((W.eq / SIM.cap - 1) * 100) + "</small></div><div><small>Hôm nay</small><b class=\"" + (today >= 0 ? "bull" : "bear") + "\">" + fm$(today) + "</b><small>gồm lệnh mở</small></div><div><small>Lệnh mở</small><b>" + W.nOpen + "/" + SIM.max + "</b><small>còn chỗ " + Math.max(0, SIM.max - W.nOpen) + "</small></div><div><small>Tiền rảnh</small><b>$" + Math.max(0, W.free).toFixed(0) + "</b><small>ký quỹ $" + W.locked.toFixed(0) + "</small></div></div>";
-    h += "<div class=\"eqw\"><div class=\"eqh\"><b>Đường vốn</b><span>vùng đỏ = đang sụt so với đỉnh</span></div>" + fwEqSvg(W) + "</div>";
-    var bs = fwBarsSvg(W);
-    if (bs) h += "<div class=\"eqw\"><div class=\"eqh\"><b>R từng lệnh đã xong</b><span>40 lệnh gần nhất, cao nhất ±2R</span></div>" + bs + "</div>";
+    var cw = Math.max(280, Math.round(((($("sigl") || {}).clientWidth) || 360) - 26));
+    h += fwEqCard(W, cw) + fwBarsCard(W, cw);
     if (W.nClosed) h += "<div class=\"stat4 s3\"><div><small>Thắng (sau phí)</small><b>" + Math.round(W.wins / W.nClosed * 100) + "%</b></div><div><small>Kỳ vọng</small><b class=\"" + (ex >= 0 ? "bull" : "bear") + "\">" + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</b><small>mỗi lệnh</small></div><div><small>Hệ số lãi/lỗ</small><b>" + pf + "</b></div><div><small>Sụt tối đa</small><b class=\"bear\">-" + (W.dd * 100).toFixed(1) + "%</b></div></div>";
     var wm = {}; W.rows.forEach(function (r) { wm[r.q.id] = r; });
     var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
@@ -3299,6 +3326,7 @@ function analyze(c, tf, L) {
     el.innerHTML = h; el.style.opacity = SC.run && (fr.length || rc.length) ? ".55" : "1"; bindOpen(el);
     Array.prototype.forEach.call(el.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); });
     var ld = el.querySelector("details.lowmain"); if (ld) ld.addEventListener("toggle", function () { SC.lowOpen = ld.open; });
+    Array.prototype.forEach.call(el.querySelectorAll("#eqr button"), function (b) { b.addEventListener("click", function () { FWR = b.dataset.r; lsSet("ictEqR", FWR); renderSig(); }); });
     var fa = $("fwall"); if (fa) fa.addEventListener("click", function () { var n = 0; ((SC.G && SC.G.pass) || []).forEach(function (o) { if (fwAdd(o, 1)) n++; }); if (n) { fwSave(); fwUpdate(false); } toast(n ? "Đã theo dõi " + n + " mã" : "Các mã này đã được theo dõi"); renderSig(); });
     Array.prototype.forEach.call(el.querySelectorAll("[data-chkb]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.chkb]; if (o) { if (o.chk && o.chk !== "run") o.chk = null; chkRun(o); } }); });
     Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { fwSave(); toast("Đã thêm vào theo dõi và ví"); fwUpdate(false); } else if (fwHas(fwId(o))) { var qq = FW.j.filter(function (x) { return x.id === fwId(o); })[0]; if (qq && !qq.done) askOk("Bỏ theo dõi kèo này khỏi nhật ký?", function () { FW.j = FW.j.filter(function (x) { return x !== qq; }); fwSave(); toast("Đã bỏ theo dõi"); b.className = "fwb"; b.textContent = "+ Theo dõi"; }); return; } else { toast("Mã này đang có kèo cùng chiến lược chưa kết thúc, không ghi thêm"); return; } b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
