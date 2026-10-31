@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="ICT Radar">
 <title>ICT Radar</title>
 <script>try{var __t=JSON.parse(localStorage.getItem("ictTheme"));if(__t&&__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 /* Giao diện app hiện đại: nền xanh đen, thẻ bo tròn, thanh tab nổi, chữ số dùng font mono */
 :root {
@@ -393,6 +393,28 @@ a.nw { display: flex; gap: 12px; padding: 11px 0; border-top: 1px solid var(--li
 .nm { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--dim); } .nm > span { display: inline-flex; align-items: center; gap: 5px; } .nm > span + span::before { content: "·"; margin-right: 3px; } .nm .pill { font-size: 10px; padding: 2px 7px; } .nm .pill::before { display: none; } .nsrc i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; } .nsrc { color: var(--fg); font-weight: 700; } .nsrc + span::before { content: "·"; }
 a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px; overflow: hidden; margin-bottom: 4px; color: #fff; text-decoration: none; } a.nfeat:active { transform: scale(.99); } .nfx { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 14px 12px; display: flex; flex-direction: column; gap: 6px; background: linear-gradient(to top, rgba(0,0,0,.88), rgba(0,0,0,.55) 55%, transparent); } .nfx .nt { font-size: 16px; -webkit-line-clamp: 3; color: #fff; } .nfx .nm, .nfx .nsrc { color: rgba(255,255,255,.8); } .nfx .nsrc { color: #fff; }
 .nskel { display: flex; flex-direction: column; gap: 12px; } .nskel i { height: 70px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.1), rgba(255,255,255,.04)); background-size: 200% 100%; animation: nsk 1.2s linear infinite; } @keyframes nsk { to { background-position: -200% 0; } }
+
+/* quant desk */
+.qd { --qm: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; --qd: "Chakra Petch", "Arial Narrow", sans-serif; --amber: #f5b83d; display: flex; flex-direction: column; gap: 8px; font-family: var(--qm); font-size: 11px; }
+.qd .qp, .qd .qbar { background: var(--card); border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; box-shadow: none; }
+.qd .qbar { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 12px; align-items: center; }
+.qbrand { font-family: var(--qd); font-weight: 700; font-size: 15px; letter-spacing: .14em; } .qbrand small { display: block; font-family: var(--qm); font-weight: 400; font-size: 8.5px; letter-spacing: .1em; color: var(--dim); margin-top: 2px; }
+.qlive { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid var(--up); color: var(--up); font-size: 10px; letter-spacing: .14em; } .qlive i { width: 6px; height: 6px; border-radius: 50%; background: var(--up); animation: dpl 1.4s ease-in-out infinite; }
+.qclock { font-family: var(--qd); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; } .qclock em { font-style: normal; font-family: var(--qm); font-size: 8px; letter-spacing: .12em; color: var(--dim); }
+.qkv { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } .qsim { grid-column: 1 / -1; font-size: 8.5px; letter-spacing: .1em; color: var(--amber); }
+.qd .kv { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .qd .kv b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } .qd .kv span, .qd .tile small { font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.qd .up, .qd b.up, .qd span.up { color: var(--up); } .qd .down { color: var(--down); } .qd .cy { color: var(--cyan); }
+.qph { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; } .qph h2 { margin: 0; font-family: var(--qd); font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg); } .qph span { font-size: 8.5px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+.qd .eqh2 b { font-family: var(--qd); font-size: 34px; line-height: 1; font-weight: 700; } .qd .eqh2 small { font-family: var(--qm); font-size: 8.5px; letter-spacing: .12em; } .qd .eqh2 span { font-size: 11px; } .qd .eqr { border-radius: 0; padding: 2px; background: transparent; border: 1px solid var(--line); } .qd .eqr button { border-radius: 0; font-family: var(--qm); font-size: 10px; padding: 5px 8px; } .qd .eqr button.on { background: rgba(var(--accrgb),.2); }
+.qstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.qag { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .qa { display: flex; align-items: center; gap: 7px; padding: 8px; background: var(--card); border: 1px solid var(--line); min-width: 0; transition: border-color .3s, box-shadow .3s; } .qa .dot { width: 22px; height: 22px; border-radius: 50%; flex: none; border: 2px solid currentColor; display: grid; place-items: center; font-size: 9px; font-weight: 700; } .qa h3 { margin: 0; font-family: var(--qd); font-size: 10px; letter-spacing: .08em; } .qa small { display: block; font-size: 8px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .qa > div:last-child { min-width: 0; color: var(--fg); } .qa.on { border-color: currentColor; box-shadow: 0 0 14px -4px currentColor; }
+.qtiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } .qd .tile { border: 1px solid var(--line); background: rgba(0,0,0,.18); padding: 5px 6px; font-weight: 700; font-variant-numeric: tabular-nums; } .qd .tile small { display: block; font-size: 7.5px; font-weight: 400; } .qd .tile span { font-size: 12px; }
+.qtk { display: flex; flex-direction: column; } .tk { display: grid; grid-template-columns: 18px minmax(0, 1.1fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); text-align: left; width: 100%; } .tk:active { background: rgba(255,255,255,.04); } .tk .tkg { width: 18px; height: 18px; border: 1px solid currentColor; display: grid; place-items: center; font-size: 9px; font-weight: 700; } .tk .ts { display: flex; align-items: baseline; gap: 5px; min-width: 0; flex-wrap: wrap; } .tk .ts b { font-size: 13px; font-weight: 700; } .tk .ts i { font-style: normal; font-size: 9px; } .tk .ts em { font-style: normal; font-size: 8.5px; color: var(--amber); }
+.tk .tm small { display: block; font-size: 7.5px; color: var(--dim); margin-top: 3px; letter-spacing: .06em; } .qd .meter { position: relative; display: block; height: 4px; background: var(--line); } .qd .meter i { display: block; height: 100%; } .qd .meter s { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--fg); opacity: .7; }
+.tk .tr { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; } .tk .tr b { font-size: 12px; } .tk .tr small { font-size: 9.5px; color: var(--dim); }
+.qtr { display: flex; flex-direction: column; gap: 2px; font-size: 10px; } .qd .tl { display: grid; grid-template-columns: 34px 50px minmax(0, 1fr) auto; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--line); white-space: nowrap; } .qd .tl .tt { color: var(--dim); } .qd .tl .an { font-weight: 700; font-size: 9px; letter-spacing: .06em; } .qd .tl .tx { overflow: hidden; text-overflow: ellipsis; }
+.qft { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 8.5px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; padding: 2px 4px; } .qft b { color: var(--fg); font-weight: 500; }
+#sigl.enter .qp, #sigl.enter .qa, #sigl.enter .qbar { animation: sgIn .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
 </style>
 </head>
 <body>
@@ -1243,7 +1265,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-31.5";
+  var VER = "2026-10-31.7";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3318,7 +3340,7 @@ function analyze(c, tf, L) {
     sv += "<line id=\"eqv\" x1=\"0\" x2=\"0\" y1=\"" + T + "\" y2=\"" + (SY + SH) + "\" style=\"stroke:var(--fg);stroke-width:1;opacity:0\"/><circle id=\"eqd\" r=\"4\" cx=\"0\" cy=\"0\" style=\"fill:var(--fg);opacity:0\"/></svg>";
     EQS = { w: w, X: pts.map(function (p) { return X(p[0]); }), Yv: pts.map(function (p) { return Y(p[1]); }), pts: pts, dp: dp, v0: v0, t0: t0 };
     var chg = (v1 / v0 - 1) * 100;
-    return "<div class=\"eqw\"><div class=\"eqh2\"><div><small>Đường vốn</small><b id=\"eqval\" class=\"" + (up ? "bull" : "bear") + "\">$" + v1.toFixed(0) + "</b> <span id=\"eqsub\" class=\"" + (up ? "bull" : "bear") + "\">" + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%</span></div><div class=\"eqr\" id=\"eqr\">" + [["24h", "24h"], ["7d", "7 ngày"], ["all", "Tất cả"]].map(function (x) { return "<button data-r=\"" + x[0] + "\" class=\"" + (FWR === x[0] ? "on" : "") + "\">" + x[1] + "</button>"; }).join("") + "</div></div>" + sv + "</div>";
+    return "<section class=\"qp eqw\"><div class=\"qph\"><h2>Swarm P&amp;L · đường vốn</h2><span>lệnh đóng → bậc thang</span></div><div class=\"eqh2\"><div><small>Vốn · % so với đầu kỳ</small><b id=\"eqval\" class=\"" + (up ? "bull" : "bear") + "\">$" + v1.toFixed(0) + "</b> <span id=\"eqsub\" class=\"" + (up ? "bull" : "bear") + "\">" + (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%</span></div><div class=\"eqr\" id=\"eqr\">" + [["24h", "24h"], ["7d", "7 ngày"], ["all", "Tất cả"]].map(function (x) { return "<button data-r=\"" + x[0] + "\" class=\"" + (FWR === x[0] ? "on" : "") + "\">" + x[1] + "</button>"; }).join("") + "</div></div>" + sv + "</section>";
   }
   function eqBind(el) {
     var sv = el.querySelector("#eqsvg"); if (!sv || !EQS) return;
@@ -3338,32 +3360,65 @@ function analyze(c, tf, L) {
     cl.forEach(function (r, i) { var v = Math.max(-2, Math.min(2, r.r.R)), h = Math.max(1.5, Math.abs(v) / 2 * 36); sv += "<rect x=\"" + (L + (40 - n + i) * bw + 1).toFixed(1) + "\" y=\"" + (v >= 0 ? mid - h : mid + 1).toFixed(1) + "\" width=\"" + Math.max(2, bw - 2).toFixed(1) + "\" height=\"" + h.toFixed(1) + "\" rx=\"2\" style=\"fill:" + (v >= 0 ? "var(--up)" : "var(--down)") + "\"/>"; });
     return "<div class=\"eqw\"><div class=\"eqh\"><b>Kết quả từng lệnh</b><span>" + n + " lệnh xong gần nhất</span></div>" + sv + "</svg></div>";
   }
+  /* phân phối R của các lệnh đã xong: cột đỏ/xanh, vạch vàng = kỳ vọng */
+  function fwDistCard(W, w, Rs, ex) {
+    if (Rs.length < 3) return "";
+    var H = 150, L = 6, Rr = 6, T = 8, B = 20, lo = -2, hi = 4, bins = 24, bw = (w - L - Rr) / bins, cnt = [], i, mx = 1;
+    for (i = 0; i < bins; i++) cnt.push(0);
+    Rs.forEach(function (r) { var k = Math.floor((Math.max(lo, Math.min(hi - .001, r)) - lo) / (hi - lo) * bins); cnt[k]++; });
+    cnt.forEach(function (c) { mx = Math.max(mx, c); });
+    var base = H - B, X = function (v) { return L + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (w - L - Rr); }, mo = "font-family:var(--qm);font-size:9.5px;fill:var(--dim)";
+    var sv = "<svg class=\"eqc\" viewBox=\"0 0 " + w + " " + H + "\" width=\"100%\" height=\"" + H + "\">";
+    for (i = 1; i < 4; i++) sv += "<line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + (T + (base - T) * i / 4).toFixed(1) + "\" y2=\"" + (T + (base - T) * i / 4).toFixed(1) + "\" style=\"stroke:var(--line);stroke-dasharray:2 4\"/>";
+    cnt.forEach(function (c, k) { var v = lo + (k + .5) * (hi - lo) / bins, h = c / mx * (base - T - 14); if (!c) return; sv += "<rect x=\"" + (L + k * bw + 1).toFixed(1) + "\" y=\"" + (base - h).toFixed(1) + "\" width=\"" + (bw - 2).toFixed(1) + "\" height=\"" + h.toFixed(1) + "\" style=\"fill:" + (v >= 0 ? "var(--up)" : "var(--down)") + ";opacity:" + (.4 + .6 * c / mx).toFixed(2) + "\"/>"; });
+    sv += "<line x1=\"" + X(0) + "\" x2=\"" + X(0) + "\" y1=\"" + T + "\" y2=\"" + base + "\" style=\"stroke:var(--dim);opacity:.8\"/><line x1=\"" + L + "\" x2=\"" + (w - Rr) + "\" y1=\"" + base + "\" y2=\"" + base + "\" style=\"stroke:var(--line)\"/>";
+    sv += "<line x1=\"" + X(ex).toFixed(1) + "\" x2=\"" + X(ex).toFixed(1) + "\" y1=\"" + T + "\" y2=\"" + base + "\" style=\"stroke:var(--amber);stroke-dasharray:3 3;stroke-width:1.4\"/><text x=\"" + Math.min(w - 44, X(ex) + 4).toFixed(1) + "\" y=\"" + (T + 8) + "\" style=\"" + mo + ";fill:var(--amber);font-weight:700\">E " + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</text>";
+    [-2, -1, 0, 1, 2, 3, 4].forEach(function (v) { sv += "<text x=\"" + X(v).toFixed(1) + "\" y=\"" + (H - 5) + "\" text-anchor=\"" + (v === -2 ? "start" : v === 4 ? "end" : "middle") + "\" style=\"" + mo + "\">" + (v > 0 ? "+" : "") + v + "R</text>"; });
+    return "<section class=\"qp\"><div class=\"qph\"><h2>Phân phối R</h2><span>" + Rs.length + " lệnh đã xong · vạch vàng = kỳ vọng</span></div>" + sv + "</svg></section>";
+  }
+  var QCL = null;
   function fwPanel() {
-    var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; }), h = "";
-    if (!all.length) return "<div class=\"sect\"><b>Ví của tôi</b><span>chưa có kèo theo dõi</span></div><div class=\"empty2\">Bấm \"+ Theo dõi\" trên thẻ kèo để ví bắt đầu chạy. Mọi kèo ông theo dõi đều chạy trong ví này.</div>";
-    var W = fwWallet(all, FW.m), td = ymd(Date.now()), today = W.unreal, cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }), gp = 0, gl = 0, pn = function (v) { return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; };
+    var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; });
+    if (!all.length) return "<div class=\"qd\"><section class=\"qp\"><div class=\"qph\"><h2>Quant desk · ví của tôi</h2><span>chưa có kèo theo dõi</span></div><div class=\"empty2\" style=\"border-radius:0\">Bấm \"+ Theo dõi\" trên thẻ kèo để ví bắt đầu chạy. Mọi kèo ông theo dõi đều chạy trong ví này.</div></section></div>";
+    var W = fwWallet(all, FW.m), td = ymd(Date.now()), today = W.unreal, cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), gp = 0, gl = 0, h = "";
     cl.forEach(function (r) { if (ymd(r.tx) === td) today += r.pnl; if (r.pnl > 0) gp += r.pnl; else gl -= r.pnl; });
-    var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", ex = W.nClosed ? W.sumR / W.nClosed : 0;
-    h += "<div class=\"sect\"><b>Ví của tôi</b><span>" + W.taken + " lệnh đã vào · " + W.nClosed + " đã xong</span></div>";
-    h += "<div class=\"stat4\"><div><small>Vốn hiện tại</small><b class=\"" + (W.eq >= SIM.cap ? "bull" : "bear") + "\">$" + W.eq.toFixed(0) + "</b><small>" + pn((W.eq / SIM.cap - 1) * 100) + "</small></div><div><small>Hôm nay</small><b class=\"" + (today >= 0 ? "bull" : "bear") + "\">" + fm$(today) + "</b><small>gồm lệnh mở</small></div><div><small>Lệnh mở</small><b>" + W.nOpen + "/" + SIM.max + "</b><small>còn chỗ " + Math.max(0, SIM.max - W.nOpen) + "</small></div><div><small>Tiền rảnh</small><b>$" + Math.max(0, W.free).toFixed(0) + "</b><small>ký quỹ $" + W.locked.toFixed(0) + "</small></div></div>";
+    var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", Rs = cl.map(function (r) { return r.r.R; }), n = Rs.length, ex = n ? W.sumR / n : 0, mu = ex, sd = n > 1 ? Math.sqrt(Rs.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / n) : 0, sh = sd > 0 ? mu / sd : 0, ws = 0, ls = 0, cw2 = 0, cl2 = 0, aw = 0, al = 0, nw = 0, nl = 0;
+    Rs.forEach(function (r) { if (r > 0) { cw2++; cl2 = 0; aw += r; nw++; } else { cl2++; cw2 = 0; al += r; nl++; } ws = Math.max(ws, cw2); ls = Math.max(ls, cl2); });
+    var pl = W.eq - SIM.cap, hit = n ? Math.round(W.wins / n * 100) : 0, cc = function (v) { return v >= 0 ? "up" : "down"; }, nowd = new Date();
+    /* thanh đầu */
+    h += "<div class=\"qd\"><header class=\"qbar\"><div class=\"qbrand\">QUANT DESK<small>VÍ GIẢ LẬP · ISOLATED x" + SIM.lev + " · " + SKEY.filter(function (k) { return SR.en[k]; }).length + " CHIẾN LƯỢC</small></div><span class=\"qlive\"><i></i>LIVE</span><div class=\"qclock\"><span id=\"qclock\">" + pad2(nowd.getHours()) + ":" + pad2(nowd.getMinutes()) + ":" + pad2(nowd.getSeconds()) + "</span> <em>GMT+7</em></div>";
+    h += "<div class=\"qkv\"><div class=\"kv\"><span>P&amp;L</span><b class=\"" + cc(pl) + "\">" + fm$(pl) + "</b></div><div class=\"kv\"><span>Hit rate</span><b>" + hit + "%</b></div><div class=\"kv\"><span>Avg edge</span><b class=\"cy\">" + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</b></div><div class=\"kv\"><span>Lệnh mở</span><b>" + W.nOpen + "/" + SIM.max + "</b></div></div><div class=\"qsim\">DỮ LIỆU GIẢ LẬP · KHÔNG PHẢI GIAO DỊCH THẬT</div></header>";
+    /* P&L + đường vốn */
     var cw = Math.max(280, Math.round(((($("sigl") || {}).clientWidth) || 360) - 26));
-    h += fwEqCard(W, cw) + fwBarsCard(W, cw);
-    if (W.nClosed) h += "<div class=\"stat4 s3\"><div><small>Thắng (sau phí)</small><b>" + Math.round(W.wins / W.nClosed * 100) + "%</b></div><div><small>Kỳ vọng</small><b class=\"" + (ex >= 0 ? "bull" : "bear") + "\">" + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</b><small>mỗi lệnh</small></div><div><small>Hệ số lãi/lỗ</small><b>" + pf + "</b></div><div><small>Sụt tối đa</small><b class=\"bear\">-" + (W.dd * 100).toFixed(1) + "%</b></div></div>";
-    if (W.nClosed > 1) {
-      var Rs = cl.slice().sort(function (a, b) { return a.tx - b.tx; }).map(function (r) { return r.r.R; }), mu = Rs.reduce(function (a, b) { return a + b; }, 0) / Rs.length, sd = Math.sqrt(Rs.reduce(function (a, b) { return a + (b - mu) * (b - mu); }, 0) / Rs.length), sh = sd > 0 ? mu / sd : 0, ws = 0, ls = 0, cw2 = 0, cl2 = 0, aw = 0, al = 0, nw = 0, nl = 0;
-      Rs.forEach(function (r) { if (r > 0) { cw2++; cl2 = 0; aw += r; nw++; } else { cl2++; cw2 = 0; al += r; nl++; } ws = Math.max(ws, cw2); ls = Math.max(ls, cl2); });
-      h += "<div class=\"stat4 s3\"><div><small>Sharpe / lệnh</small><b class=\"" + (sh >= 0 ? "bull" : "bear") + "\">" + sh.toFixed(2) + "</b></div><div><small>Lãi TB / Lỗ TB</small><b>" + (nw ? "+" + (aw / nw).toFixed(2) : "–") + " / " + (nl ? (al / nl).toFixed(2) : "–") + "</b><small>R</small></div><div><small>Chuỗi thắng</small><b class=\"bull\">" + ws + "</b><small>dài nhất</small></div><div><small>Chuỗi thua</small><b class=\"bear\">" + ls + "</b><small>dài nhất</small></div></div>";
-    }
+    h += fwEqCard(W, cw);
+    h += "<section class=\"qp\"><div class=\"qph\"><h2>Sổ ví</h2><span>" + W.taken + " lệnh vào · " + n + " xong · bỏ " + (W.sCash + W.sMax) + "</span></div><div class=\"qstats\"><div class=\"kv\"><span>Vốn</span><b class=\"" + cc(pl) + "\">$" + W.eq.toFixed(0) + "</b></div><div class=\"kv\"><span>Hôm nay</span><b class=\"" + cc(today) + "\">" + fm$(today) + "</b></div><div class=\"kv\"><span>Tiền rảnh</span><b>$" + Math.max(0, W.free).toFixed(0) + "</b></div><div class=\"kv\"><span>Ký quỹ</span><b>$" + W.locked.toFixed(0) + "</b></div></div></section>";
+    /* chiến lược */
+    var agc = SKEY.filter(function (k) { return all.some(function (q) { return q.k === k; }); });
+    if (agc.length) h += "<div class=\"qag\">" + agc.map(function (k) {
+      var rr = W.rows.filter(function (r) { return !r.skip && r.q.k === k; }), cs = rr.filter(function (r) { return isFinite(r.tx); }), er = cs.length ? cs.reduce(function (a, r) { return a + r.r.R; }, 0) / cs.length : 0, wr = cs.length ? Math.round(cs.filter(function (r) { return r.pnl > 0; }).length / cs.length * 100) : 0, op = rr.length - cs.length;
+      return "<div class=\"qa" + (op ? " on" : "") + "\" style=\"color:" + SCOL[k] + "\"><div class=\"dot\">" + k + "</div><div><h3>" + (STRAT[k] || k).toUpperCase() + "</h3><small>" + cs.length + " xong · " + wr + "% · " + (er >= 0 ? "+" : "") + er.toFixed(2) + "R" + (op ? " · " + op + " mở" : "") + "</small></div></div>";
+    }).join("") + "</div>";
+    /* phân phối + chỉ số */
+    h += fwDistCard(W, cw, Rs, ex);
+    if (n > 1) h += "<section class=\"qp\"><div class=\"qph\"><h2>Chỉ số</h2><span>trên " + n + " lệnh đã xong</span></div><div class=\"qtiles\"><div class=\"tile\"><small>KỲ VỌNG</small><span class=\"" + cc(ex) + "\">" + (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R</span></div><div class=\"tile\"><small>SHARPE/LỆNH</small><span class=\"" + cc(sh) + "\">" + sh.toFixed(2) + "</span></div><div class=\"tile\"><small>PROFIT FACTOR</small><span>" + pf + "</span></div><div class=\"tile\"><small>MAX DD</small><span class=\"down\">-" + (W.dd * 100).toFixed(1) + "%</span></div><div class=\"tile\"><small>LÃI TB</small><span class=\"up\">" + (nw ? "+" + (aw / nw).toFixed(2) + "R" : "–") + "</span></div><div class=\"tile\"><small>LỖ TB</small><span class=\"down\">" + (nl ? (al / nl).toFixed(2) + "R" : "–") + "</span></div><div class=\"tile\"><small>CHUỖI THẮNG</small><span class=\"up\">" + ws + "</span></div><div class=\"tile\"><small>CHUỖI THUA</small><span class=\"down\">" + ls + "</span></div></div></section>";
+    /* lệnh đang chạy */
     var wm = {}; W.rows.forEach(function (r) { wm[r.q.id] = r; });
-    var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
-    if (op.length) {
-      h += "<div class=\"sect\"><b>Lệnh đang chạy</b><span>bấm để mở chart</span></div><div class=\"rlist\">" + op.map(function (q) {
-        var cr = q.p[q.p.length - 1][2], r = wm[q.id], toSl = cr + 1, toTp = q.tps[0] - cr, hot = toSl < 0.4 ? "bear" : toTp < 0.5 ? "bull" : "muted";
-        return "<button class=\"rrow\" data-fwo=\"" + q.id + "\" style=\"--c:" + SCOL[q.k] + "\"><span class=\"av sm\" data-ic=\"" + splitSym(q.sym).b + "\"></span><span class=\"rn\"><b>" + splitSym(q.sym).b + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i></b><small class=\"" + hot + "\">" + (q.ms > 0 ? "SL dương +" + q.ms.toFixed(2) + "R · " : "cách SL " + toSl.toFixed(1) + "R · ") + "cách TP1 " + Math.max(0, toTp).toFixed(1) + "R</small></span><span class=\"rt\"><span class=\"" + (cr >= 0 ? "bull" : "bear") + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "R</span>" + (r && !r.skip ? "<small class=\"" + (r.pnl >= 0 ? "bull" : "bear") + "\">" + fm$(r.pnl) + "</small>" : "<small class=\"muted\">ví bỏ</small>") + "</span></button>";
-      }).join("") + "</div>";
-    }
+    var op2 = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
+    if (op2.length) h += "<section class=\"qp\"><div class=\"qph\"><h2>Lệnh đang chạy</h2><span>chạm để mở chart</span></div><div class=\"qtk\">" + op2.map(function (q) {
+      var cr = q.p[q.p.length - 1][2], r = wm[q.id], pos = Math.max(0, Math.min(100, (cr + 1) / (q.tps[0] + 1) * 100)), z0 = 100 / (q.tps[0] + 1);
+      return "<button class=\"tk\" data-fwo=\"" + q.id + "\"><span class=\"tkg\" style=\"color:" + SCOL[q.k] + "\">" + q.k + "</span><span class=\"ts\"><b>" + splitSym(q.sym).b + "</b><i class=\"" + (q.dir === 1 ? "up" : "down") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i>" + (q.ms > 0 ? "<em>SL+" + q.ms.toFixed(1) + "</em>" : "") + "</span><span class=\"tm\"><span class=\"meter\"><i style=\"width:" + pos.toFixed(0) + "%;background:" + (cr >= 0 ? "var(--up)" : "var(--down)") + "\"></i><s style=\"left:" + z0.toFixed(0) + "%\"></s></span><small>SL ←  → TP1</small></span><span class=\"tr\"><b class=\"" + cc(cr) + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "R</b><small class=\"" + (r && !r.skip ? cc(r.pnl) : "") + "\">" + (r && !r.skip ? fm$(r.pnl) : "ví bỏ") + "</small></span></button>";
+    }).join("") + "</div></section>";
+    /* nhật ký */
+    var ev = []; W.rows.forEach(function (r) { if (r.skip) return; ev.push({ t: r.te, k: "in", r: r }); if (isFinite(r.tx)) ev.push({ t: r.tx, k: "out", r: r }); });
+    ev = ev.filter(function (e) { return e.t <= Date.now() + 6e4; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 14);
+    if (ev.length) h += "<section class=\"qp\"><div class=\"qph\"><h2>Nhật ký</h2><span>mỗi bước ví đã làm</span></div><div class=\"qtr\">" + ev.map(function (e) {
+      var r = e.r, q = r.q, d = new Date(e.t), tx = e.k === "in" ? "VÀO " + (q.dir === 1 ? "MUA" : "BÁN") + " " + splitSym(q.sym).b + " x" + r.lev + " @ " + fmtPx(q.e || 0) : "CHỐT " + splitSym(q.sym).b + " " + (r.r.R >= 0 ? "+" : "") + r.r.R.toFixed(2) + "R" + (r.r.liq ? " · THANH LÝ" : "");
+      return "<div class=\"tl\"><span class=\"tt\">" + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + "</span><span class=\"an\" style=\"color:" + SCOL[q.k] + "\">" + (e.k === "in" ? "ENTRY" : "CLOSER") + "</span><span class=\"tx\">" + tx + "</span>" + (e.k === "out" ? "<span class=\"" + cc(r.pnl) + "\">" + fm$(r.pnl) + "</span>" : "<span></span>") + "</div>";
+    }).join("") + "</div></section>";
+    h += "<footer class=\"qft\"><span>Cách chốt <b>" + (FWM.filter(function (m) { return m[0] === FW.m; })[0][1].split(",")[0].replace(/\s*\(.*\)/, "")) + "</b></span><span>Rủi ro <b>" + SIM.risk + "%/lệnh</b></span><span>Phí <b>" + SIM.fee + "%</b></span><span>Feed <b>Binance</b></span></footer></div>";
     return h;
   }
+  setInterval(function () { var c = $("qclock"); if (c) { var d = new Date(); c.textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds()); } }, 1000);
   function renderSig() {
     renderSigHead();
     var el = $("sigl"); if (!el) return;
@@ -3389,7 +3444,7 @@ function analyze(c, tf, L) {
     el.innerHTML = h; el.style.opacity = SC.run && (fr.length || rc.length) ? ".55" : "1"; bindOpen(el);
     if (SCE && !SC.run) {
       SCE = false; el.classList.remove("enter"); void el.offsetWidth;
-      Array.prototype.forEach.call(el.querySelectorAll(".sgc, .eqw, .rrow"), function (c, i) { c.style.setProperty("--i", Math.min(i, 9)); });
+      Array.prototype.forEach.call(el.querySelectorAll(".sgc, .qp, .qbar, .qa"), function (c, i) { c.style.setProperty("--i", Math.min(i, 9)); });
       el.classList.add("enter"); clearTimeout(renderSig.et); renderSig.et = setTimeout(function () { el.classList.remove("enter"); }, 2200);
     }
     Array.prototype.forEach.call(el.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); });
