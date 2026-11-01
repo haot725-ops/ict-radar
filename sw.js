@@ -1,6 +1,6 @@
 /* ICT Radar service worker: lưu khung app để mở nhanh và mở được khi mất mạng.
    Dữ liệu Binance luôn lấy trực tiếp, không bao giờ lưu cache. */
-var CACHE = "ict-radar-v2";
+var CACHE = "ict-radar-v3";
 var SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

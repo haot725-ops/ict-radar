@@ -409,6 +409,18 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 /* cài đặt */
 .sset { border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.02); } .sset > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; font-size: 14px; font-weight: 800; cursor: pointer; } .sset > summary::-webkit-details-marker { display: none; } .sset > summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg); transition: transform .2s; margin-right: 2px; } .sset[open] > summary::after { transform: rotate(-135deg); } .sset > summary small { font-weight: 500; font-size: 11px; color: var(--dim); margin-left: 8px; }
 .sset .sb { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; } .sset .sb h4 { margin: 4px 0 0; font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: .04em; }
+/* progressive disclosure: giữ dữ liệu nâng cao nhưng không dồn hết lên một màn hình */
+.insight-group { margin: 0 0 10px; border: 1px solid rgba(255,255,255,.075); border-radius: 22px; background: rgba(255,255,255,.025); overflow: hidden; }
+.insight-group > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; color: var(--fg); font-size: 13px; font-weight: 800; cursor: pointer; }
+.insight-group > summary::-webkit-details-marker { display: none; }
+.insight-group > summary::after { content: ""; width: 8px; height: 8px; flex: none; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg) translateY(-2px); transition: transform .2s ease; }
+.insight-group[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.insight-group > .card { margin: 0 10px 10px; }
+.insight-group > .card:last-child { margin-bottom: 10px; }
+.tabs { padding: 6px; gap: 4px; }
+.tab { min-width: 0; padding: 8px 4px 9px; font-size: 11px; line-height: 1.1; }
+.tab svg { width: 17px; height: 17px; margin-bottom: 3px; }
+@media (max-width: 380px) { .tab { font-size: 10px; } .tab svg { width: 16px; height: 16px; } }
 </style>
 </head>
 <body>
@@ -449,11 +461,8 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
       <div data-sub="plan" class="card" id="plan"></div>
       <div data-sub="bias"><div id="bias">Đang chờ dữ liệu…</div>
         <div class="warn">Công cụ hỗ trợ phân tích kỹ thuật. Các mức và nhận định do thuật toán tự đánh dấu theo định nghĩa phổ biến của SMC/ICT, có thể khác cách bạn vẽ tay. Đây không phải lời khuyên đầu tư. Quản lý vốn và tự chịu trách nhiệm với lệnh của mình.</div></div>
-      <div data-sub="vp" class="card" id="vpc"></div><div data-sub="vp" class="card" id="ofc"></div>
-      <div data-sub="time" class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div>
-      <div data-sub="time" class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div>
-      <div data-sub="time" class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div>
-      <div data-sub="time" class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div>
+      <details data-sub="vp" class="insight-group"><summary>Volume &amp; Order Flow <small>đọc lực mua bán và vùng giá</small></summary><div data-sub="vp" class="card" id="vpc"></div><div data-sub="vp" class="card" id="ofc"></div></details>
+      <details data-sub="time" class="insight-group"><summary>Thời gian thị trường <small>killzone, chu kỳ, thống kê</small></summary><div data-sub="time" class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div><div data-sub="time" class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div><div data-sub="time" class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div><div data-sub="time" class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div></details>
     </section>
     <section class="view scroll" id="v-bt">
       <div class="subbar" id="sb-bt"></div>
