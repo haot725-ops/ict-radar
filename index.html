@@ -421,6 +421,22 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 .tab { min-width: 0; padding: 8px 4px 9px; font-size: 11px; line-height: 1.1; }
 .tab svg { width: 17px; height: 17px; margin-bottom: 3px; }
 @media (max-width: 380px) { .tab { font-size: 10px; } .tab svg { width: 16px; height: 16px; } }
+
+/* signal cards: summary first, details on demand */
+.sgc > summary { list-style: none; display: flex; flex-direction: column; gap: 10px; cursor: pointer; }
+.sgc > summary::-webkit-details-marker { display: none; }
+.sgc > summary::after { content: ""; position: absolute; right: 15px; top: 15px; width: 8px; height: 8px; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg); transition: transform .2s ease; }
+.sgc[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.sgc:not([open]) { gap: 0; }
+.sgc:not([open]) .sgdetail { display: none; }
+.sgpeek { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.sgpeek > div { min-width: 0; padding: 8px 9px; border-radius: 12px; background: rgba(255,255,255,.045); }
+.sgpeek small { display: block; margin-bottom: 3px; color: var(--dim); font-size: 10px; font-weight: 700; }
+.sgpeek b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sgpeek .pill { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sgtrust { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 22px; }
+.sgtrust .note { font-size: 11px; }
+.sgdetail { display: flex; flex-direction: column; gap: 12px; }
 </style>
 </head>
 <body>
@@ -3011,7 +3027,7 @@ function analyze(c, tf, L) {
       a.forEach(function (x) { m[x.symbol] = +x.price; });
       SC.fresh.forEach(function (o) {
         if (m[o.sym]) o.px = m[o.sym];
-        var el = document.querySelector("[data-px=\"" + o.id + "\"]"); if (el) { el.innerHTML = sigPxLine(o); var cd = el.closest(".sgc"), sx = sigStat(o); if (cd) { cd.classList.toggle("old", !!sx.x); cd.classList.toggle("warn", !!sx.w); } }
+        var el = document.querySelector("[data-px=\"" + o.id + "\"]"); if (el) { el.innerHTML = sigPxLine(o); var cd = el.closest(".sgc"), sx = sigStat(o); if (cd) { cd.classList.toggle("old", !!sx.x); cd.classList.toggle("warn", !!sx.w); } var se = document.querySelector("[data-state=\"" + o.id + "\"]"); if (se) { se.className = "pill " + sx.c; se.textContent = sx.t; } }
       });
     } catch (e) {}
   }
@@ -3068,7 +3084,7 @@ function analyze(c, tf, L) {
             if (!lock && mfe >= 1) lock = { c: "neu", t: "Đã chạy xa tới +" + mfe.toFixed(1) + "R, không nên đuổi" };
             if (!!(lock && lock.hard) !== !!(o.lock && o.lock.hard)) chg2 = true;
             o.lock = lock; if (arr.length) o.px = arr[arr.length - 1].c;
-            var el = document.querySelector("[data-px=\"" + o.id + "\"]"); if (el) { el.innerHTML = sigPxLine(o); var cd = el.closest(".sgc"), sx = sigStat(o); if (cd) { cd.classList.toggle("old", !!sx.x); cd.classList.toggle("warn", !!sx.w); } }
+            var el = document.querySelector("[data-px=\"" + o.id + "\"]"); if (el) { el.innerHTML = sigPxLine(o); var cd = el.closest(".sgc"), sx = sigStat(o); if (cd) { cd.classList.toggle("old", !!sx.x); cd.classList.toggle("warn", !!sx.w); } var se = document.querySelector("[data-state=\"" + o.id + "\"]"); if (se) { se.className = "pill " + sx.c; se.textContent = sx.t; } }
           });
         } catch (e) {}
       }
@@ -3153,12 +3169,15 @@ function analyze(c, tf, L) {
     return G;
   }
   function sigCard(o) {
-    var d = o.dir, e = o.sigClose, R = o.atr * o.cf.sl, sl = e - d * R, tp = o.tps.map(function (m) { return e + d * m * R; }), pct = R / e * 100;
-    var h = "<div class=\"sgc " + (d === 1 ? "up" : "dn") + (sigStat(o).x ? " old" : sigStat(o).w ? " warn" : "") + "\" style=\"--c:" + SCOL[o.k] + "\"><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
-    h += "<div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
+    var d = o.dir, e = o.sigClose, R = o.atr * o.cf.sl, sl = e - d * R, tp = o.tps.map(function (m) { return e + d * m * R; }), pct = R / e * 100, st = sigStat(o), trust = o.chk && o.chk.v ? "Backtest " + Math.round(o.chk.v.s.win * 100) + "% thắng" : "Chưa kiểm chứng";
+    var cls = (d === 1 ? "up" : "dn") + (st.x ? " old" : st.w ? " warn" : "");
+    var h = "<details class=\"sgc " + cls + "\" style=\"--c:" + SCOL[o.k] + "\"><summary><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
+    h += "<div class=\"sgpeek\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div><small>TP1</small><b>" + fmtPx(tp[0]) + "</b></div><div><small>Trạng thái</small><span class=\"pill " + st.c + "\" data-state=\"" + o.id + "\">" + st.t + "</span></div></div>";
+    h += "<div class=\"sgtrust\">" + qBadge(o) + "<span class=\"note\">" + trust + "</span></div></summary>";
+    h += "<div class=\"sgdetail\"><div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
     h += "<div class=\"lv tp\">" + tp.map(function (p, i) { return "<div><small>TP" + (i + 1) + " · " + o.tps[i] + "R</small><b>" + fmtPx(p) + "</b></div>"; }).join("") + "</div>";
     h += "<div class=\"pxl\" data-px=\"" + o.id + "\">" + sigPxLine(o) + "</div><div class=\"pxl chkr\" data-chk=\"" + o.id + "\">" + chkHtml(o) + "</div>" + (o.alt ? "<div class=\"pxl\"><span class=\"note\">Mã này còn kèo: " + o.alt + "</span></div>" : "");
-    h += "<div class=\"sgf\">" + qBadge(o) + (o.bst ? "<span class=\"note\">Backtest: thắng " + (o.bst.win * 100).toFixed(0) + "% · " + (o.bst.exp >= 0 ? "+" : "") + o.bst.exp.toFixed(2) + "R/lệnh (" + o.bst.n + " lệnh)</span>" : "<span class=\"note\">Chạy so sánh ở tab Backtest để có số liệu.</span>") + "<div class=\"sgb\"><button class=\"fwb chb\" data-chkb=\"" + o.id + "\">" + (o.chk && o.chk !== "run" ? "Kiểm tra lại" : "Kiểm tra mã") + "</button><button class=\"fwb" + (fwHas(fwId(o)) ? " on" : "") + "\" data-fw=\"" + o.id + "\">" + (fwHas(fwId(o)) ? "✓ Đang theo dõi" : "+ Theo dõi") + "</button><button class=\"opn\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\">Mở chart</button></div></div></div>";
+    h += "<div class=\"sgf\">" + qBadge(o) + (o.bst ? "<span class=\"note\">Backtest: thắng " + (o.bst.win * 100).toFixed(0) + "% · " + (o.bst.exp >= 0 ? "+" : "") + o.bst.exp.toFixed(2) + "R/lệnh (" + o.bst.n + " lệnh)</span>" : "<span class=\"note\">Chạy so sánh ở tab Backtest để có số liệu.</span>") + "<div class=\"sgb\"><button class=\"fwb chb\" data-chkb=\"" + o.id + "\">" + (o.chk && o.chk !== "run" ? "Kiểm tra lại" : "Kiểm tra mã") + "</button><button class=\"fwb" + (fwHas(fwId(o)) ? " on" : "") + "\" data-fw=\"" + o.id + "\">" + (fwHas(fwId(o)) ? "✓ Đang theo dõi" : "+ Theo dõi") + "</button><button class=\"opn\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\">Mở chart</button></div></div></div></details>";
     return h;
   }
   function resTxt(oc) { return oc.st === "sl" ? ["SL −1R", "bear"] : oc.st === "be" ? ["Hòa vốn sau TP" + oc.tp + " +" + oc.R.toFixed(1) + "R", "neu"] : oc.st === "tp3" ? ["TP3 +" + oc.R.toFixed(1) + "R", "bull"] : oc.st === "tp" ? ["TP" + oc.tp + " đạt +" + oc.R.toFixed(1) + "R, đang chạy", "bull"] : ["Đang chạy", "neu"]; }
