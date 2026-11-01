@@ -470,6 +470,20 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
   #v-chart .ohlc { left: 8px; right: 54px; }
   #v-chart .ohlc span { padding: 3px 5px; }
 }
+
+/* wallet compact mode: vốn và rủi ro ở trên, phân tích sâu mở khi cần */
+.wallet-balance { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 10px 2px 2px; }
+.wallet-balance small { display: block; color: var(--dim); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.wallet-balance b { display: block; margin-top: 3px; font-size: 27px; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.wallet-balance span { display: block; margin-top: 3px; color: var(--dim); font-size: 11px; }
+.wallet-pl { text-align: right; }
+.wallet-pl b { font-size: 16px; }
+.wallet-analysis { margin-top: 2px; }
+.wallet-analysis > summary { color: var(--fg); }
+.wallet-analysis .wc { margin: 0 10px 10px; border: 0; padding: 10px 4px 0; }
+.wallet-analysis .wc + .wc { border-top: 1px solid var(--line); border-radius: 0; }
+.wallet-analysis .eqc { height: 132px; }
+.wallet-open { margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -3425,22 +3439,23 @@ function analyze(c, tf, L) {
     cl.forEach(function (r) { if (ymd(r.tx) === td) today += r.pnl; if (r.pnl > 0) gp += r.pnl; else gl -= r.pnl; });
     var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", Rs = cl.map(function (r) { return r.r.R; }), n = Rs.length, ex = n ? W.sumR / n : 0, pl = W.eq - SIM.cap, hit = n ? Math.round(W.wins / n * 100) : 0, cc = function (v) { return v >= 0 ? "bull" : "bear"; };
     h += "<div class=\"wallet-head\"><div><small>VÍ CỦA TÔI</small><b>" + W.taken + " lệnh đang theo dõi</b><span>" + n + " lệnh đã hoàn tất" + (W.sCash + W.sMax ? " · " + (W.sCash + W.sMax) + " lệnh bị bỏ" : "") + "</span></div><span class=\"wallet-state\">" + (W.nOpen ? W.nOpen + " lệnh mở" : "Đang chờ lệnh") + "</span></div><div class=\"wd\">";
-    /* Bốn số liệu quyết định trước; chỉ số nâng cao không cạnh tranh sự chú ý. */
     var cell = function (l, v, c) { return "<div><small>" + l + "</small><b" + (c ? " class=\"" + c + "\"" : "") + ">" + v + "</b></div>"; };
-    h += "<section class=\"wt\">" + cell("Lãi/lỗ", fm$(pl), cc(pl)) + cell("Hôm nay", fm$(today), cc(today)) + cell("Tỷ lệ thắng", n ? hit + "%" : "–", n ? cc(hit - 50) : "") + cell("Lệnh mở", W.nOpen + "/" + SIM.max) + "</section>";
-    h += "<details class=\"wallet-more\"><summary>Xem thêm chỉ số</summary><section class=\"wt\">" + cell("Tiền rảnh", "$" + Math.max(0, W.free).toFixed(0)) + cell("Kỳ vọng", n ? (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R" : "–", n ? cc(ex) : "") + cell("Hệ số lãi/lỗ", pf) + cell("Sụt tối đa", "-" + (W.dd * 100).toFixed(1) + "%", "bear") + "</section></details>";
+    h += "<div class=\"wallet-balance\"><div><small>Vốn hiện tại</small><b>$" + W.eq.toFixed(W.eq < 100 ? 2 : 0) + "</b><span>Đã chốt $" + W.bal.toFixed(W.bal < 100 ? 2 : 0) + " · đang chạy " + fm$(W.unreal) + "</span></div><div class=\"wallet-pl\"><small>Lãi/lỗ tổng</small><b class=\"" + cc(pl) + "\">" + fm$(pl) + "</b><span>" + (pl >= 0 ? "+" : "") + (pl / SIM.cap * 100).toFixed(1) + "% vốn</span></div></div>";
+    h += "<section class=\"wt\">" + cell("Tiền rảnh", "$" + Math.max(0, W.free).toFixed(0)) + cell("Đang dùng", "$" + W.locked.toFixed(0)) + cell("Hôm nay", fm$(today), cc(today)) + cell("Lệnh mở", W.nOpen + "/" + SIM.max) + "</section>";
+    h += "<details class=\"wallet-more\"><summary>Quản lý rủi ro &amp; chỉ số</summary><section class=\"wt\">" + cell("Rủi ro / lệnh", SIM.risk + "%") + cell("Tỷ lệ thắng", n ? hit + "%" : "–", n ? cc(hit - 50) : "") + cell("Kỳ vọng", n ? (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R" : "–", n ? cc(ex) : "") + cell("Sụt tối đa", "-" + (W.dd * 100).toFixed(1) + "%", "bear") + "</section></details>";
     var cw = Math.max(280, Math.round(((($("sigl") || {}).clientWidth) || 360) - 28));
-    h += fwEqCard(W, cw) + fwDistCard(cw, Rs, ex);
+    var eq = fwEqCard(W, cw), dist = fwDistCard(cw, Rs, ex);
+    if (eq || dist) h += "<details class=\"wallet-more wallet-analysis\"><summary>Phân tích vốn &amp; hiệu suất</summary>" + eq + dist + "</details>";
     /* theo chiến lược */
     var agc = SKEY.filter(function (k) { return all.some(function (q) { return q.k === k; }); });
-    if (agc.length) h += "<section class=\"wc wallet-section\"><div class=\"wh2\"><b>Theo chiến lược</b></div><div class=\"wr hd\"><span>Chiến lược</span><span>Xong</span><span>Thắng</span><span>Kỳ vọng</span><span>Mở</span></div>" + agc.map(function (k) {
+    if (agc.length) h += "<details class=\"wallet-more wallet-analysis\"><summary>Hiệu suất theo chiến lược</summary><section class=\"wc wallet-section\"><div class=\"wh2\"><b>Theo chiến lược</b></div><div class=\"wr hd\"><span>Chiến lược</span><span>Xong</span><span>Thắng</span><span>Kỳ vọng</span><span>Mở</span></div>" + agc.map(function (k) {
       var rr = W.rows.filter(function (r) { return !r.skip && r.q.k === k; }), cs = rr.filter(function (r) { return isFinite(r.tx); }), er = cs.length ? cs.reduce(function (a, r) { return a + r.r.R; }, 0) / cs.length : 0, wr = cs.length ? Math.round(cs.filter(function (r) { return r.pnl > 0; }).length / cs.length * 100) : 0;
       return "<div class=\"wr\"><span><i style=\"background:" + SCOL[k] + "\"></i>" + (STRAT[k] || k) + "</span><span>" + cs.length + "</span><span>" + (cs.length ? wr + "%" : "–") + "</span><span class=\"" + (cs.length ? cc(er) : "") + "\">" + (cs.length ? (er >= 0 ? "+" : "") + er.toFixed(2) : "–") + "</span><span>" + (rr.length - cs.length) + "</span></div>";
-    }).join("") + "</section>";
+    }).join("") + "</section></details>";
     /* lệnh đang chạy */
     var wm = {}; W.rows.forEach(function (r) { wm[r.q.id] = r; });
     var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
-    if (op.length) h += "<section class=\"wc\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>chạm để mở chart</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + op.map(function (q) {
+    if (op.length) h += "<section class=\"wc wallet-open\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>chạm để mở chart</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + op.map(function (q) {
       var cr = q.p[q.p.length - 1][2], r = wm[q.id], pos = Math.max(0, Math.min(100, (cr + 1) / (q.tps[0] + 1) * 100)), z0 = 100 / (q.tps[0] + 1);
       return "<button class=\"wk\" data-fwo=\"" + q.id + "\"><span class=\"nm\"><i style=\"background:" + SCOL[q.k] + "\"></i><b>" + splitSym(q.sym).b + "</b><em class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</em></span><span class=\"mt\"><span class=\"meter\"><i style=\"width:" + pos.toFixed(0) + "%;background:" + (cr >= 0 ? "var(--up)" : "var(--down)") + "\"></i><s style=\"left:" + z0.toFixed(0) + "%\"></s></span></span><span class=\"" + cc(cr) + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "</span><span class=\"" + (r && !r.skip ? cc(r.pnl) : "") + "\">" + (r && !r.skip ? fm$(r.pnl) : "ví bỏ") + "</span></button>";
     }).join("") + "</section>";
