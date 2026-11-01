@@ -452,6 +452,24 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 .wallet-more .wt { margin: 0 10px 10px; }
 .wallet-more .wt > div { background: var(--card2); }
 .wallet-section { border-top: 1px solid var(--line); padding-top: 12px; }
+
+/* chart focus mode: nến là trung tâm, lớp phụ không che nội dung */
+#v-chart { background: var(--bg); }
+#v-chart .cwrap { background: radial-gradient(100% 70% at 50% 0%, rgba(var(--accrgb),.06), transparent 68%); }
+#v-chart .ohlc { top: 10px; left: 12px; right: 64px; gap: 4px 6px; font-size: 9px; text-shadow: none; }
+#v-chart .ohlc span { padding: 4px 6px; border: 1px solid rgba(255,255,255,.07); border-radius: 7px; background: rgba(26,29,36,.82); backdrop-filter: blur(8px); }
+#v-chart .ohlc span:first-child { color: var(--fg); font-weight: 700; }
+#v-chart .ohlc b { color: var(--dim); font-size: 9px; }
+#v-chart .fab { right: 56px; bottom: 16px; width: 36px; height: 36px; border-radius: 10px; background: rgba(26,29,36,.9); box-shadow: 0 5px 16px rgba(0,0,0,.28); }
+#v-chart .fab.sm { right: 12px; bottom: 16px; width: 32px; height: 32px; border-radius: 9px; font-size: 12px; }
+#v-chart .sigbar { padding: 6px 10px 8px; gap: 5px; background: rgba(26,29,36,.96); box-shadow: 0 -8px 22px rgba(0,0,0,.2); }
+#v-chart .sigbar .sigchip { padding: 5px 8px; font-size: 10px; }
+#v-chart .sigev { gap: 4px; }
+#v-chart .sigev span { padding: 3px 6px; font-size: 10px; }
+@media (max-width: 420px) {
+  #v-chart .ohlc { left: 8px; right: 54px; }
+  #v-chart .ohlc span { padding: 3px 5px; }
+}
 </style>
 </head>
 <body>
@@ -1300,8 +1318,8 @@ function analyze(c, tf, L) {
   var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
-  var LAY = { struct: 1, ob: 1, fvg: 1, inv: 1, tested: 0, weak: 0, plan: 1, vp: 1, liq: 1, pd: 1, kz: 1, sess: 1, opens: 1, cyc: 1, m90: 0 };
-  var VER = "2026-10-31.8";
+  var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
+  var VER = "2026-11-01.1";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1318,6 +1336,7 @@ function analyze(c, tf, L) {
   function saveState() { lsSet("ictState", { sym: $("sym").value || S.sym, tf: S.tf, lim: $("lim").value, sw: $("swl").value, rr: $("rrmin").value, tab: tab, sub: SUB, lay: LAY, pk: pkQuote }); }
   if (window.innerWidth < 640) { LAY.vp = 0; LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
   if (ST.lay) Object.keys(ST.lay).forEach(function (k) { if (k in LAY) LAY[k] = ST.lay[k]; });
+  if (window.innerWidth < 640 && !lsGet("ictChartFocusV2", 0)) { LAY.inv = 0; LAY.vp = 0; LAY.liq = 0; LAY.kz = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; LAY.m90 = 0; lsSet("ictChartFocusV2", 1); saveState(); }
   var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", inv: "Đảo ngược (Breaker, IFVG)", tested: "Hiện cả vùng đã test", plan: "Đường Entry / SL / TP", vp: "Volume Profile (POC, VAH, VAL)", weak: "Hiện cả vùng yếu (★)", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
   var STABLE_RE = /^(USD.{0,2}|.*USD|EUR.?|AEUR|DAI|BUSD|TRY|PAXG|XAUT|PYUSD|FRAX|GUSD|LUSD|UST)$/, AXD = 2;
   function fmtD(p) { return p.toFixed(AXD); }
@@ -1556,7 +1575,7 @@ function analyze(c, tf, L) {
     if (!isFx()) setTimeout(function () { fetchNews(false); }, 1500);
   }
   function runAnalysis() { A = analyze(C, tfms, S.sw); trackPlan(); }
-  function resetView() { V.vel = 0; V.auto = true; syncAuto(); snap = true; var n = C.length; V.bars = Math.min(n, window.innerWidth < 640 ? 60 : 120); V.start = n + 25 - V.bars; }
+  function resetView() { V.vel = 0; V.auto = true; syncAuto(); snap = true; var n = C.length; V.bars = Math.min(n, window.innerWidth < 640 ? 48 : 120); V.start = n + 25 - V.bars; }
 
   async function loadStats() {
     $("hourstat").textContent = "Đang tải…"; $("wkstat").textContent = "Đang tải…";
