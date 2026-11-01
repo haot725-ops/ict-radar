@@ -437,6 +437,21 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 .sgtrust { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 22px; }
 .sgtrust .note { font-size: 11px; }
 .sgdetail { display: flex; flex-direction: column; gap: 12px; }
+
+/* wallet dashboard: ưu tiên số liệu quyết định, phần sâu mở khi cần */
+.wallet-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 2px 2px 0; }
+.wallet-head small { display: block; color: var(--dim); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.wallet-head b { display: block; margin-top: 3px; font-size: 19px; letter-spacing: -.02em; }
+.wallet-head span { display: block; margin-top: 3px; color: var(--dim); font-size: 11px; }
+.wallet-state { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--dim); font-size: 11px; font-weight: 800; white-space: nowrap; }
+.wallet-more { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.02); }
+.wallet-more > summary { list-style: none; padding: 11px 12px; color: var(--dim); font-size: 12px; font-weight: 800; cursor: pointer; }
+.wallet-more > summary::-webkit-details-marker { display: none; }
+.wallet-more > summary::after { content: ""; float: right; width: 7px; height: 7px; margin-top: 2px; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg); transition: transform .2s ease; }
+.wallet-more[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.wallet-more .wt { margin: 0 10px 10px; }
+.wallet-more .wt > div { background: var(--card2); }
+.wallet-section { border-top: 1px solid var(--line); padding-top: 12px; }
 </style>
 </head>
 <body>
@@ -3177,7 +3192,7 @@ function analyze(c, tf, L) {
     h += "<div class=\"sgdetail\"><div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
     h += "<div class=\"lv tp\">" + tp.map(function (p, i) { return "<div><small>TP" + (i + 1) + " · " + o.tps[i] + "R</small><b>" + fmtPx(p) + "</b></div>"; }).join("") + "</div>";
     h += "<div class=\"pxl\" data-px=\"" + o.id + "\">" + sigPxLine(o) + "</div><div class=\"pxl chkr\" data-chk=\"" + o.id + "\">" + chkHtml(o) + "</div>" + (o.alt ? "<div class=\"pxl\"><span class=\"note\">Mã này còn kèo: " + o.alt + "</span></div>" : "");
-    h += "<div class=\"sgf\">" + qBadge(o) + (o.bst ? "<span class=\"note\">Backtest: thắng " + (o.bst.win * 100).toFixed(0) + "% · " + (o.bst.exp >= 0 ? "+" : "") + o.bst.exp.toFixed(2) + "R/lệnh (" + o.bst.n + " lệnh)</span>" : "<span class=\"note\">Chạy so sánh ở tab Backtest để có số liệu.</span>") + "<div class=\"sgb\"><button class=\"fwb chb\" data-chkb=\"" + o.id + "\">" + (o.chk && o.chk !== "run" ? "Kiểm tra lại" : "Kiểm tra mã") + "</button><button class=\"fwb" + (fwHas(fwId(o)) ? " on" : "") + "\" data-fw=\"" + o.id + "\">" + (fwHas(fwId(o)) ? "✓ Đang theo dõi" : "+ Theo dõi") + "</button><button class=\"opn\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\">Mở chart</button></div></div></div></details>";
+    h += "<div class=\"sgf\"><div class=\"sgb\"><button class=\"fwb chb\" data-bt=\"" + o.id + "\">Xem Backtest</button><button class=\"fwb" + (fwHas(fwId(o)) ? " on" : "") + "\" data-fw=\"" + o.id + "\">" + (fwHas(fwId(o)) ? "✓ Đang theo dõi" : "+ Theo dõi") + "</button><button class=\"opn\" data-s=\"" + o.sym + "\" data-id=\"" + o.id + "\">Mở chart</button></div></div></details>";
     return h;
   }
   function resTxt(oc) { return oc.st === "sl" ? ["SL −1R", "bear"] : oc.st === "be" ? ["Hòa vốn sau TP" + oc.tp + " +" + oc.R.toFixed(1) + "R", "neu"] : oc.st === "tp3" ? ["TP3 +" + oc.R.toFixed(1) + "R", "bull"] : oc.st === "tp" ? ["TP" + oc.tp + " đạt +" + oc.R.toFixed(1) + "R, đang chạy", "bull"] : ["Đang chạy", "neu"]; }
@@ -3390,15 +3405,16 @@ function analyze(c, tf, L) {
     var W = fwWallet(all, FW.m), td = ymd(Date.now()), today = W.unreal, cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), gp = 0, gl = 0, h = "";
     cl.forEach(function (r) { if (ymd(r.tx) === td) today += r.pnl; if (r.pnl > 0) gp += r.pnl; else gl -= r.pnl; });
     var pf = gl > 0 ? (gp / gl).toFixed(2) : cl.length ? "∞" : "–", Rs = cl.map(function (r) { return r.r.R; }), n = Rs.length, ex = n ? W.sumR / n : 0, pl = W.eq - SIM.cap, hit = n ? Math.round(W.wins / n * 100) : 0, cc = function (v) { return v >= 0 ? "bull" : "bear"; };
-    h += "<div class=\"sect\"><b>Ví của tôi</b><span>" + W.taken + " lệnh vào · " + n + " xong" + (W.sCash + W.sMax ? " · bỏ " + (W.sCash + W.sMax) : "") + "</span></div><div class=\"wd\">";
-    /* bảng chỉ số gọn */
+    h += "<div class=\"wallet-head\"><div><small>VÍ CỦA TÔI</small><b>" + W.taken + " lệnh đang theo dõi</b><span>" + n + " lệnh đã hoàn tất" + (W.sCash + W.sMax ? " · " + (W.sCash + W.sMax) + " lệnh bị bỏ" : "") + "</span></div><span class=\"wallet-state\">" + (W.nOpen ? W.nOpen + " lệnh mở" : "Đang chờ lệnh") + "</span></div><div class=\"wd\">";
+    /* Bốn số liệu quyết định trước; chỉ số nâng cao không cạnh tranh sự chú ý. */
     var cell = function (l, v, c) { return "<div><small>" + l + "</small><b" + (c ? " class=\"" + c + "\"" : "") + ">" + v + "</b></div>"; };
-    h += "<section class=\"wt\">" + cell("Lãi/lỗ", fm$(pl), cc(pl)) + cell("Hôm nay", fm$(today), cc(today)) + cell("Lệnh mở", W.nOpen + "/" + SIM.max) + cell("Tiền rảnh", "$" + Math.max(0, W.free).toFixed(0)) + cell("Thắng", n ? hit + "%" : "–") + cell("Kỳ vọng", n ? (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R" : "–", n ? cc(ex) : "") + cell("Hệ số lãi/lỗ", pf) + cell("Sụt tối đa", "-" + (W.dd * 100).toFixed(1) + "%", "bear") + "</section>";
+    h += "<section class=\"wt\">" + cell("Lãi/lỗ", fm$(pl), cc(pl)) + cell("Hôm nay", fm$(today), cc(today)) + cell("Tỷ lệ thắng", n ? hit + "%" : "–", n ? cc(hit - 50) : "") + cell("Lệnh mở", W.nOpen + "/" + SIM.max) + "</section>";
+    h += "<details class=\"wallet-more\"><summary>Xem thêm chỉ số</summary><section class=\"wt\">" + cell("Tiền rảnh", "$" + Math.max(0, W.free).toFixed(0)) + cell("Kỳ vọng", n ? (ex >= 0 ? "+" : "") + ex.toFixed(2) + "R" : "–", n ? cc(ex) : "") + cell("Hệ số lãi/lỗ", pf) + cell("Sụt tối đa", "-" + (W.dd * 100).toFixed(1) + "%", "bear") + "</section></details>";
     var cw = Math.max(280, Math.round(((($("sigl") || {}).clientWidth) || 360) - 28));
     h += fwEqCard(W, cw) + fwDistCard(cw, Rs, ex);
     /* theo chiến lược */
     var agc = SKEY.filter(function (k) { return all.some(function (q) { return q.k === k; }); });
-    if (agc.length) h += "<section class=\"wc\"><div class=\"wh2\"><b>Theo chiến lược</b></div><div class=\"wr hd\"><span>Chiến lược</span><span>Xong</span><span>Thắng</span><span>Kỳ vọng</span><span>Mở</span></div>" + agc.map(function (k) {
+    if (agc.length) h += "<section class=\"wc wallet-section\"><div class=\"wh2\"><b>Theo chiến lược</b></div><div class=\"wr hd\"><span>Chiến lược</span><span>Xong</span><span>Thắng</span><span>Kỳ vọng</span><span>Mở</span></div>" + agc.map(function (k) {
       var rr = W.rows.filter(function (r) { return !r.skip && r.q.k === k; }), cs = rr.filter(function (r) { return isFinite(r.tx); }), er = cs.length ? cs.reduce(function (a, r) { return a + r.r.R; }, 0) / cs.length : 0, wr = cs.length ? Math.round(cs.filter(function (r) { return r.pnl > 0; }).length / cs.length * 100) : 0;
       return "<div class=\"wr\"><span><i style=\"background:" + SCOL[k] + "\"></i>" + (STRAT[k] || k) + "</span><span>" + cs.length + "</span><span>" + (cs.length ? wr + "%" : "–") + "</span><span class=\"" + (cs.length ? cc(er) : "") + "\">" + (cs.length ? (er >= 0 ? "+" : "") + er.toFixed(2) : "–") + "</span><span>" + (rr.length - cs.length) + "</span></div>";
     }).join("") + "</section>";
@@ -3440,6 +3456,7 @@ function analyze(c, tf, L) {
       el.classList.add("enter"); clearTimeout(renderSig.et); renderSig.et = setTimeout(function () { el.classList.remove("enter"); }, 2200);
     }
     Array.prototype.forEach.call(el.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-bt]"), function (b) { b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); setTab("bt", "st", true); }); });
     var ld = el.querySelector("details.lowmain"); if (ld) ld.addEventListener("toggle", function () { SC.lowOpen = ld.open; });
     eqBind(el);
     Array.prototype.forEach.call(el.querySelectorAll("#eqr button"), function (b) { b.addEventListener("click", function () { FWR = b.dataset.r; lsSet("ictEqR", FWR); renderSig(); }); });
