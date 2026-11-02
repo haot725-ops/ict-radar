@@ -110,6 +110,23 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 .hist i.now { background: var(--amber); }
 .hist.lo i { background: rgba(234,57,67,.5); } .hist.lo i.now { background: var(--amber); }
 .axis { display: flex; justify-content: space-between; font-size: 9px; color: var(--dim); font-family: var(--mono); }
+
+/* tab Thời gian: thẻ hiện đại */
+.tgrp { display: flex; flex-direction: column; gap: 12px; } .tgrp[hidden] { display: none; }
+.tc { gap: 14px; } .tc > div { display: flex; flex-direction: column; gap: 12px; } .tc .hist { flex: none; } .tc .axis { margin-top: -6px; } .tc > h2 { margin: 0; }
+.tk-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tk-clock { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; } .tk-clock small { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--dim); letter-spacing: 0; }
+.tk-pill { padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; background: rgba(255,255,255,.06); color: var(--dim); white-space: nowrap; } .tk-pill.on { background: rgba(22,199,132,.15); color: var(--up); }
+.tk-next { display: flex; justify-content: space-between; align-items: center; padding: 11px 13px; border-radius: 14px; background: rgba(255,255,255,.04); font-size: 12px; color: var(--dim); } .tk-next b { color: var(--fg); font-size: 13px; }
+.tk-prog { height: 5px; border-radius: 3px; background: rgba(255,255,255,.07); overflow: hidden; flex: none; } .tk-prog i { display: block; height: 100%; background: var(--up); border-radius: 3px; }
+.tk-tl { position: relative; height: 26px; border-radius: 9px; background: rgba(255,255,255,.05); overflow: hidden; } .tk-tl i { position: absolute; top: 0; bottom: 0; opacity: .75; } .tk-tl u { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.tk-ax { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: var(--dim); font-family: var(--mono); }
+.tk-lg { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 10.5px; color: var(--dim); } .tk-lg span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: rgb(var(--c)); }
+.tk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .tk-t { padding: 11px 12px; border-radius: 14px; background: rgba(255,255,255,.04); min-width: 0; } .tk-t small { display: block; font-size: 10.5px; color: var(--dim); font-weight: 600; margin-bottom: 4px; } .tk-t b { display: block; font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; } .tk-t em { font-style: normal; font-size: 10px; color: var(--up); font-weight: 800; margin-left: 4px; }
+.tk-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: 14px; background: rgba(255,255,255,.04); } .tk-row > i { width: 8px; height: 8px; border-radius: 50%; flex: none; } .tk-row div { min-width: 0; flex: 1; font-size: 11px; color: var(--dim); } .tk-row div b { display: block; margin-top: 2px; font-size: 12.5px; color: var(--fg); }
+.tk-nt { font-size: 11px; line-height: 1.55; color: var(--dim); }
+.tk-sum { display: flex; flex-wrap: wrap; gap: 6px; } .tk-sum span { font-size: 11px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.05); color: var(--dim); } .tk-sum b { color: var(--fg); }
+.tk-h { font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: .04em; margin: 2px 0 0; }
 .warn { font-size: 10px; color: var(--dim); line-height: 1.6; padding: 2px 4px 8px; }
 
 /* cảm giác app */
@@ -287,7 +304,7 @@ html, body { background: var(--bg); }
 /* chuyển cảnh nhẹ */
 @keyframes vin { from { opacity: 0; transform: translateY(8px); } }
 .view.on { animation: vin .22s ease-out; }
-.view.scroll.on > * { animation: none; }
+.view.scroll.on > * { animation: none; flex-shrink: 0; }
 html.lite *, html.lite *::before, html.lite *::after { animation: none !important; transition: none !important; }
 .sigchip { position: absolute; top: 34px; left: 12px; z-index: 4; padding: 7px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; border: 1px solid var(--line); background: var(--card2); } .sigchip.up { color: var(--up); border-color: rgba(22,199,132,.5); } .sigchip.dn { color: var(--down); border-color: rgba(234,57,67,.5); }
 /* ===== Kiểu CoinMarketCap: Inter, xanh #3861FB, xanh/đỏ #16c784/#ea3943, thẻ phẳng bo 12px ===== */
@@ -525,7 +542,12 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
       <div data-sub="bias"><div id="bias">Đang chờ dữ liệu…</div>
         <div class="warn">Công cụ hỗ trợ phân tích kỹ thuật. Các mức và nhận định do thuật toán tự đánh dấu theo định nghĩa phổ biến của SMC/ICT, có thể khác cách bạn vẽ tay. Đây không phải lời khuyên đầu tư. Quản lý vốn và tự chịu trách nhiệm với lệnh của mình.</div></div>
       <details data-sub="vp" class="insight-group"><summary>Volume &amp; Order Flow <small>đọc lực mua bán và vùng giá</small></summary><div data-sub="vp" class="card" id="vpc"></div><div data-sub="vp" class="card" id="ofc"></div></details>
-      <details data-sub="time" class="insight-group"><summary>Thời gian thị trường <small>killzone, chu kỳ, thống kê</small></summary><div data-sub="time" class="card"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div><div data-sub="time" class="card"><h2>Chu kỳ thời gian <span>khoảng cách các đỉnh/đáy</span></h2><div id="cycle"></div></div><div data-sub="time" class="card"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div><div data-sub="time" class="card"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div></details>
+      <div data-sub="time" class="tgrp">
+        <div class="card tc"><h2>Yếu tố thời gian <span>giờ New York</span></h2><div id="time"></div></div>
+        <div class="card tc"><h2>Chu kỳ thời gian <span>đỉnh/đáy kế tiếp</span></h2><div id="cycle"></div></div>
+        <div class="card tc"><h2>Giờ tạo đỉnh/đáy ngày <span>nến 1H · giờ NY</span></h2><div id="hourstat">Đang chờ dữ liệu…</div></div>
+        <div class="card tc"><h2>Thứ trong tuần <span>nến 1D · ngày UTC</span></h2><div id="wkstat">Đang chờ dữ liệu…</div></div>
+      </div>
     </section>
     <section class="view scroll" id="v-bt">
       <div class="subbar" id="sb-bt"></div>
@@ -1333,7 +1355,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-01.1";
+  var VER = "2026-11-02.3";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3601,24 +3623,30 @@ function analyze(c, tf, L) {
     var cand = KZ.concat().sort(function (a, b) { return ((a.a - now.min + 1440) % 1440) - ((b.a - now.min + 1440) % 1440); });
     for (i = 0; i < cand.length; i++) { if (cand[i] !== kz) { next = cand[i]; break; } }
     var wait = next ? (next.a - now.min + 1440) % 1440 : 0;
-    var h = "<div class=\"kv\">";
-    h += "<span>Giờ New York</span><span>" + pad2(now.h) + ":" + pad2(now.mi) + " (" + WD[now.wd] + ")</span>";
-    h += "<span>Killzone</span><span class=\"" + (kz ? "bull" : "muted") + "\">" + (kz ? kz.n + (sb ? " · " + sb.n : "") : "Ngoài killzone") + "</span>";
-    if (next) h += "<span>Tiếp theo</span><span>" + next.n + " sau " + Math.floor(wait / 60) + "g" + pad2(wait % 60) + "</span>";
-    A.sessions.forEach(function (s) { h += "<span>" + s.n + " range</span><span>" + fmtP(s.lo) + " – " + fmtP(s.hi) + (s.live ? " (đang chạy)" : "") + "</span>"; });
+    var h = "<div class=\"tk-hero\"><div class=\"tk-clock\">" + pad2(now.h) + ":" + pad2(now.mi) + "<small>New York · " + WD[now.wd] + "</small></div><span class=\"tk-pill" + (kz ? " on" : "") + "\">" + (kz ? kz.n + (sb ? " · SB" : "") : "Ngoài killzone") + "</span></div>";
+    if (kz) h += "<div class=\"tk-prog\"><i style=\"width:" + Math.min(100, Math.max(2, (now.min - kz.a) / (kz.b - kz.a) * 100)).toFixed(0) + "%\"></i></div>";
+    if (sb) h += "<div class=\"tk-next\"><span>Silver Bullet</span><b>" + sb.n + "</b></div>";
+    if (next) h += "<div class=\"tk-next\"><span>Killzone tiếp theo</span><b>" + next.n + " · sau " + Math.floor(wait / 60) + "g" + pad2(wait % 60) + "</b></div>";
+    h += "<div><div class=\"tk-tl\">";
+    KZ.forEach(function (k) { h += "<i style=\"left:" + (k.a / 14.4).toFixed(2) + "%;width:" + ((k.b - k.a) / 14.4).toFixed(2) + "%;background:rgb(" + k.col + ")\"></i>"; });
+    h += "<u style=\"left:" + (now.min / 14.4).toFixed(2) + "%\"></u></div><div class=\"tk-ax\"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div></div>";
+    h += "<div class=\"tk-lg\">" + KZ.map(function (k) { return "<span style=\"--c:" + k.col + "\">" + k.n + " " + pad2(k.a / 60 | 0) + ":" + pad2(k.a % 60) + "–" + pad2(k.b / 60 | 0) + ":" + pad2(k.b % 60) + "</span>"; }).join("") + "</div>";
+    h += "<div class=\"tk-grid\">";
+    A.sessions.forEach(function (s) { h += "<div class=\"tk-t\"><small>" + s.n + " range" + (s.live ? "<em>LIVE</em>" : "") + "</small><b>" + fmtP(s.lo) + " – " + fmtP(s.hi) + "</b></div>"; });
     var mo = null; A.levels.forEach(function (l) { if (l.n === "Midnight Open") mo = l; });
-    if (mo) h += "<span>Midnight Open</span><span>" + fmtP(mo.p) + " · giá " + (C[C.length - 1].c > mo.p ? "trên" : "dưới") + " (" + sgn(-dist(mo.p)) + ")</span>";
-    h += "</div><div class=\"muted\" style=\"line-height:1.5\">Killzone (giờ NY): Asia 20:00–00:00 · London 02:00–05:00 · NY AM 07:00–10:00 · London Close 10:00–12:00 · NY PM 13:30–16:00. Silver Bullet: 03–04, 10–11, 14–15.</div>";
-    if (tfms > 36e5) h += "<div class=\"muted\">Khung " + S.tf + " quá lớn để tô killzone và phiên, hãy chọn khung 1H trở xuống.</div>";
+    if (mo) h += "<div class=\"tk-t\"><small>Midnight Open</small><b>" + fmtP(mo.p) + "</b><small style=\"margin:4px 0 0\">giá " + (C[C.length - 1].c > mo.p ? "trên" : "dưới") + " (" + sgn(-dist(mo.p)) + ")</small></div>";
+    h += "</div><div class=\"tk-nt\">Silver Bullet (giờ NY): 03–04, 10–11, 14–15.</div>";
+    if (tfms > 36e5) h += "<div class=\"tk-nt\">Khung " + S.tf + " quá lớn để tô killzone và phiên, hãy chọn khung 1H trở xuống.</div>";
     $("time").innerHTML = h;
   }
   function renderCycle() {
     var c = A.cyc;
-    function hrs(b) { return b == null ? "–" : b.toFixed(1) + " nến (≈ " + (b * tfms / 36e5 >= 48 ? (b * tfms / 864e5).toFixed(1) + " ngày" : (b * tfms / 36e5).toFixed(1) + " giờ") + ")"; }
-    function when(j) { if (j == null) return "–"; var t = tOf(j); return fmtNY(t) + " NY · " + fmtLocal(t) + " giờ máy"; }
-    var h = "<div class=\"kv\"><span>Đỉnh→đỉnh</span><span>" + hrs(c.mH) + "</span><span>Đáy→đáy</span><span>" + hrs(c.mL) + "</span><span>Nửa sóng</span><span>" + hrs(c.mA) + "</span>" +
-      "<span>Đỉnh kế tiếp</span><span class=\"bear\">" + when(c.nextH) + "</span><span>Đáy kế tiếp</span><span class=\"bull\">" + when(c.nextL) + "</span><span>Swing kế tiếp</span><span style=\"color:var(--cyan)\">" + when(c.nextA) + "</span></div>";
-    if (c.anchor) h += "<div class=\"muted\" style=\"line-height:1.5\">Vạch F1, F2, F3, F5, F8… trên biểu đồ là vùng thời gian Fibonacci tính từ swing " + (c.anchor.type === "H" ? "đỉnh" : "đáy") + " gần nhất (nến " + fmtNY(tOf(c.anchor.i)) + " NY). Thời điểm ước tính chỉ là trung vị khoảng cách các swing trước đó, dùng làm vùng chú ý chứ không phải dự báo chắc chắn.</div>";
+    function hrs(b) { return b == null ? "–" : b.toFixed(1) + " nến · " + (b * tfms / 36e5 >= 48 ? (b * tfms / 864e5).toFixed(1) + " ngày" : (b * tfms / 36e5).toFixed(1) + " giờ"); }
+    function when(j) { if (j == null) return "–"; var t = tOf(j); return fmtNY(t) + " NY · " + fmtLocal(t); }
+    function row(col, t, v) { return "<div class=\"tk-row\"><i style=\"background:" + col + "\"></i><div>" + t + "<b>" + v + "</b></div></div>"; }
+    var h = "<div class=\"tk-grid\"><div class=\"tk-t\"><small>Đỉnh→đỉnh</small><b>" + hrs(c.mH) + "</b></div><div class=\"tk-t\"><small>Đáy→đáy</small><b>" + hrs(c.mL) + "</b></div><div class=\"tk-t\"><small>Nửa sóng</small><b>" + hrs(c.mA) + "</b></div></div>";
+    h += row("var(--down)", "Đỉnh kế tiếp", when(c.nextH)) + row("var(--up)", "Đáy kế tiếp", when(c.nextL)) + row("var(--cyan)", "Swing kế tiếp", when(c.nextA));
+    if (c.anchor) h += "<div class=\"tk-nt\">Vạch F1, F2, F3, F5, F8… trên biểu đồ là vùng thời gian Fibonacci tính từ swing " + (c.anchor.type === "H" ? "đỉnh" : "đáy") + " gần nhất (nến " + fmtNY(tOf(c.anchor.i)) + " NY). Thời điểm chỉ là trung vị khoảng cách các swing trước, dùng làm vùng chú ý, không phải dự báo chắc chắn.</div>";
     $("cycle").innerHTML = h;
   }
   function bars(arr, nowIdx, cls, labels) {
@@ -3632,14 +3660,14 @@ function analyze(c, tf, L) {
   function renderHour(s) {
     var lab = [], i; for (i = 0; i < 24; i++) lab.push(pad2(i));
     var now = ny(Date.now()).h, top = function (a) { var b = a.map(function (v, i) { return [v, i]; }).sort(function (x, y) { return y[0] - x[0]; }); return b.slice(0, 3).map(function (x) { return pad2(x[1]) + "h"; }).join(", "); };
-    $("hourstat").innerHTML = "<div class=\"muted\">Mẫu " + s.days + " ngày · cột vàng là giờ hiện tại</div><div class=\"muted\" style=\"margin-top:4px\">ĐỈNH ngày hay hình thành lúc: <b style=\"color:var(--fg)\">" + top(s.H) + "</b></div>" + bars(s.H, now, "hi", lab) +
-      "<div class=\"muted\" style=\"margin-top:6px\">ĐÁY ngày hay hình thành lúc: <b style=\"color:var(--fg)\">" + top(s.L) + "</b></div>" + bars(s.L, now, "lo", lab);
+    $("hourstat").innerHTML = "<div class=\"tk-sum\"><span>Mẫu <b>" + s.days + "</b> ngày</span><span>Cột vàng = giờ hiện tại</span></div><div class=\"tk-h\">ĐỈNH NGÀY · hay lúc <span style=\"color:var(--fg)\">" + top(s.H) + "</span></div>" + bars(s.H, now, "hi", lab) +
+      "<div class=\"tk-h\">ĐÁY NGÀY · hay lúc <span style=\"color:var(--fg)\">" + top(s.L) + "</span></div>" + bars(s.L, now, "lo", lab);
   }
   function renderWeek(s) {
     var lab = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
     var tn = function (a) { var m = Math.max.apply(null, a), i = a.indexOf(m); return lab[i] + " (" + m + "/" + s.weeks + " tuần)"; };
-    $("wkstat").innerHTML = "<div class=\"muted\">Đỉnh tuần hay rơi vào: <b style=\"color:var(--fg)\">" + tn(s.H) + "</b></div>" + bars(s.H, -1, "hi", lab) +
-      "<div class=\"muted\" style=\"margin-top:6px\">Đáy tuần hay rơi vào: <b style=\"color:var(--fg)\">" + tn(s.L) + "</b></div>" + bars(s.L, -1, "lo", lab);
+    $("wkstat").innerHTML = "<div class=\"tk-h\">ĐỈNH TUẦN · hay rơi vào <span style=\"color:var(--fg)\">" + tn(s.H) + "</span></div>" + bars(s.H, -1, "hi", lab) +
+      "<div class=\"tk-h\">ĐÁY TUẦN · hay rơi vào <span style=\"color:var(--fg)\">" + tn(s.L) + "</span></div>" + bars(s.L, -1, "lo", lab);
   }
   function renderAll() { if (!A) return; renderHead(); renderBias(); renderPlan(); renderTime(); renderCycle(); }
 
