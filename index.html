@@ -1355,7 +1355,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-02.3";
+  var VER = "2026-11-02.4";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3454,6 +3454,49 @@ function analyze(c, tf, L) {
     [-2, 0, 2, 4].forEach(function (v) { sv += "<text x=\"" + X(v).toFixed(1) + "\" y=\"" + (H - 3) + "\" text-anchor=\"" + (v === -2 ? "start" : v === 4 ? "end" : "middle") + "\" style=\"" + tx + "\">" + (v > 0 ? "+" : "") + v + "R</text>"; });
     return "<section class=\"wc\"><div class=\"wh2\"><b>Phân phối R</b><span>" + Rs.length + " lệnh · vạch vàng = kỳ vọng</span></div>" + sv + "</svg></section>";
   }
+  /* ví chạy realtime: cứ vài giây lấy giá mới, cập nhật điểm cuối của đường giá rồi chỉ vá lại số liệu trên màn hình (không dựng lại cả trang) */
+  function syncDom(a, b) {
+    if (a.children.length !== b.children.length) return false;
+    var i, ok = true;
+    if (a.className !== b.className) a.className = b.className;
+    if ((a.getAttribute("style") || "") !== (b.getAttribute("style") || "")) a.setAttribute("style", b.getAttribute("style") || "");
+    if (!a.children.length) { if (a.textContent !== b.textContent) a.textContent = b.textContent; return true; }
+    for (i = 0; i < a.children.length; i++) if (!syncDom(a.children[i], b.children[i])) ok = false;
+    return ok;
+  }
+  var FLB = false;
+  function fwLivePatch() {
+    var root = $("sigl"); if (!root || !root.querySelector(".wd")) return;
+    var tmp = document.createElement("div"); tmp.innerHTML = fwPanel();
+    ["wallet-head", "wd"].forEach(function (cls) { });
+    var h0 = root.querySelector(".wallet-head"), h1 = tmp.querySelector(".wallet-head"); if (h0 && h1) syncDom(h0, h1);
+    var b0 = root.querySelector(".wallet-balance"), b1 = tmp.querySelector(".wallet-balance"); if (b0 && b1) syncDom(b0, b1);
+    var t0 = root.querySelector(".wd > .wt"), t1 = tmp.querySelector(".wd > .wt"); if (t0 && t1) syncDom(t0, t1);
+    var o0 = root.querySelector(".wallet-open"), o1 = tmp.querySelector(".wallet-open");
+    if (o0 && o1) {
+      if (!syncDom(o0, o1)) { o0.replaceWith(o1); Array.prototype.forEach.call(o1.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); }); }
+    } else if (!!o0 !== !!o1) renderSig();
+  }
+  async function fwLive() {
+    if (FLB || document.hidden || tab !== "sig" || FW.run || SC.run) return;
+    var op = FW.j.filter(function (q) { return !q.done && q.st !== "lost" && q.p && q.p.length && q.e > 0 && q.atr > 0; });
+    if (!op.length) return;
+    FLB = true;
+    try {
+      var syms = Array.from(new Set(op.map(function (q) { return q.sym; }))).slice(0, 40), m = {};
+      var a = await bget("/api/v3/ticker/price?symbols=" + encodeURIComponent(JSON.stringify(syms)));
+      a.forEach(function (x) { m[x.symbol] = +x.price; });
+      var ch = false;
+      op.forEach(function (q) {
+        var px = m[q.sym]; if (!(px > 0)) return;
+        var R = q.atr * q.sl, x = r2(q.dir * (px - q.e) / R), last = q.p[q.p.length - 1];
+        if (last[2] !== x) { last[2] = x; if (x > last[0]) last[0] = x; if (x < last[1]) last[1] = x; ch = true; }
+      });
+      if (ch && tab === "sig") fwLivePatch();
+    } catch (e) {}
+    FLB = false;
+  }
+  setInterval(fwLive, 2500);
   function fwPanel() {
     var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; });
     if (!all.length) return "<div class=\"sect\"><b>Ví của tôi</b><span>chưa có kèo theo dõi</span></div><div class=\"empty2\">Bấm \"+ Theo dõi\" trên thẻ kèo để ví bắt đầu chạy. Mọi kèo ông theo dõi đều chạy trong ví này.</div>";
@@ -3504,7 +3547,7 @@ function analyze(c, tf, L) {
       }
       if (dead.length) h += "<details class=\"alt lowd\"><summary>Đã hết hiệu lực (" + dead.length + " kèo): chạm SL hoặc đạt TP1</summary>" + dead.map(sigCard).join("") + "</details>";
       h += fwPanel();
-    }
+    } else h += fwPanel();
     el.innerHTML = h; el.style.opacity = SC.run && (fr.length || rc.length) ? ".55" : "1"; bindOpen(el);
     if (SCE && !SC.run) {
       SCE = false; el.classList.remove("enter"); void el.offsetWidth;
