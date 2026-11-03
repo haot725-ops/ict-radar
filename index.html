@@ -127,7 +127,8 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 .tk-nt { font-size: 11px; line-height: 1.55; color: var(--dim); }
 .tk-sum { display: flex; flex-wrap: wrap; gap: 6px; } .tk-sum span { font-size: 11px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.05); color: var(--dim); } .tk-sum b { color: var(--fg); }
 .tk-h { font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: .04em; margin: 2px 0 0; }
-.mk { font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .02em; padding: 2px 6px; border-radius: 6px; margin-left: 6px; vertical-align: middle; white-space: nowrap; } .mk.f { background: rgba(97,136,255,.18); color: var(--cyan); } .mk.s { background: rgba(255,255,255,.08); color: var(--dim); }
+.mk { display: inline-flex !important; align-items: center; width: auto !important; max-width: max-content; flex: 0 0 auto !important; height: 16px; line-height: 1; font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .03em; padding: 0 6px; border-radius: 5px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; border: 1px solid transparent; } .mk.f { color: var(--cyan); border-color: rgba(97,136,255,.45); background: rgba(97,136,255,.10); } .mk.s { color: var(--dim); border-color: rgba(255,255,255,.14); background: transparent; }
+#plan .lv, #bias .lv, #vpc .lv, #ofc .lv { border-top: 0; background: rgba(255,255,255,.04); border-radius: 14px; padding: 12px 13px; } #plan .lv + .lv, #bias .lv + .lv { margin-top: -4px; }
 .warn { font-size: 10px; color: var(--dim); line-height: 1.6; padding: 2px 4px 8px; }
 
 /* cảm giác app */
@@ -1356,7 +1357,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-03.1";
+  var VER = "2026-11-04.2";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
