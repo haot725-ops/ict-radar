@@ -127,6 +127,7 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 .tk-nt { font-size: 11px; line-height: 1.55; color: var(--dim); }
 .tk-sum { display: flex; flex-wrap: wrap; gap: 6px; } .tk-sum span { font-size: 11px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.05); color: var(--dim); } .tk-sum b { color: var(--fg); }
 .tk-h { font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: .04em; margin: 2px 0 0; }
+.mk { font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .02em; padding: 2px 6px; border-radius: 6px; margin-left: 6px; vertical-align: middle; white-space: nowrap; } .mk.f { background: rgba(97,136,255,.18); color: var(--cyan); } .mk.s { background: rgba(255,255,255,.08); color: var(--dim); }
 .warn { font-size: 10px; color: var(--dim); line-height: 1.6; padding: 2px 4px 8px; }
 
 /* cảm giác app */
@@ -1355,7 +1356,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-02.4";
+  var VER = "2026-11-03.1";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1369,7 +1370,7 @@ function analyze(c, tf, L) {
   if (ST.tab === "news") { SUB.mkt = "news"; ST.tab = "mkt"; }
   if (ST.tab === "bias" || ST.tab === "plan" || ST.tab === "time") { SUB.keo = ST.tab; ST.tab = "keo"; }
   if (["chart", "sig", "mkt", "keo", "bt"].indexOf(ST.tab) >= 0) tab = ST.tab;
-  function saveState() { lsSet("ictState", { sym: $("sym").value || S.sym, tf: S.tf, lim: $("lim").value, sw: $("swl").value, rr: $("rrmin").value, tab: tab, sub: SUB, lay: LAY, pk: pkQuote }); }
+  function saveState() { lsSet("ictState", { sym: $("sym").value || S.sym, tf: S.tf, lim: $("lim").value, sw: $("swl").value, rr: $("rrmin").value, tab: tab, sub: SUB, lay: LAY, pk: pkQuote, pkMk: pkMk }); }
   if (window.innerWidth < 640) { LAY.vp = 0; LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
   if (ST.lay) Object.keys(ST.lay).forEach(function (k) { if (k in LAY) LAY[k] = ST.lay[k]; });
   if (window.innerWidth < 640 && !lsGet("ictChartFocusV2", 0)) { LAY.inv = 0; LAY.vp = 0; LAY.liq = 0; LAY.kz = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; LAY.m90 = 0; lsSet("ictChartFocusV2", 1); saveState(); }
@@ -1430,6 +1431,19 @@ function analyze(c, tf, L) {
   $("symBtn").addEventListener("click", openPicker);
   /* ---------- Danh sách mã + icon coin ---------- */
   var QUOTES = ["FDUSD", "USDT", "USDC", "TUSD", "BUSD", "USD1", "USDP", "BTC", "ETH", "BNB", "TRY", "EUR", "BRL", "JPY", "GBP", "ARS", "MXN", "PLN", "RON", "UAH", "ZAR", "AUD", "CZK", "COP", "IDR", "NGN", "RUB", "SEK", "DAI", "XRP", "DOGE", "TRX"];
+  var FUTS = lsGet("ictFut", {}), FUTT = lsGet("ictFutT", 0), pkMk = ST.pkMk || "";
+  function mkOf(sym) { if (!sym || sym.indexOf("FX:") === 0 || !FUTT) return ""; return FUTS[sym] ? "f" : "s"; }
+  function mk(sym, sh) { var t = mkOf(sym); return t ? "<em class=\"mk " + t + "\">" + (t === "f" ? (sh ? "F" : "FUT") : (sh ? "S" : "SPOT")) + "</em>" : ""; }
+  async function loadFut() {
+    if (FUTT && Date.now() - FUTT < 6 * 36e5 && Object.keys(FUTS).length) return;
+    try {
+      var r = await fetch("https://fapi.binance.com/fapi/v1/ticker/price"); if (!r.ok) throw new Error("HTTP " + r.status);
+      var j = await r.json(), m = {};
+      j.forEach(function (x) { if (/^[A-Z0-9]+USDT$/.test(x.symbol)) { m[x.symbol] = 1; var n = x.symbol.replace(/^(1000000|1000|1M)(?=[A-Z])/, ""); m[n] = 1; } });
+      if (Object.keys(m).length > 50) { FUTS = m; FUTT = Date.now(); lsSet("ictFut", m); lsSet("ictFutT", FUTT); if (!$("pk").hidden) renderPicker(); if (typeof renderMovers === "function") renderMovers(); if (typeof renderSig === "function") try { renderSig(); } catch (e) {} setSymSub(); }
+    } catch (e) {}
+  }
+  function setSymSub() { if (isFx()) return; var t = mkOf(S.sym); $("symSub").textContent = "Binance " + (t === "f" ? "Future + Spot" : t === "s" ? "Spot" : "Spot") + " · đổi mã ▾"; }
   var ALL = [], pkQuote = ST.pk || "USDT", pkShown = 0, PK_PAGE = 80, pkList = [];
   function splitSym(sym) {
     if (sym.indexOf("FX:") === 0) { var pr = sym.slice(3).split("/"); return { b: pr[0], q: pr[1] || "" }; }
@@ -1525,6 +1539,10 @@ function analyze(c, tf, L) {
   function closePicker() { $("pk").hidden = true; }
   function renderChips() {
     var c = $("pkc"); c.innerHTML = "";
+    [["", "Tất cả loại"], ["f", "Future"], ["s", "Chỉ Spot"]].forEach(function (z) {
+      var b = document.createElement("button"); b.textContent = z[1]; b.className = (pkMk === z[0] ? "on" : "") + " mkc";
+      b.addEventListener("click", function () { pkMk = z[0]; ST.pkMk = pkMk; saveState(); renderChips(); renderPicker(); }); c.appendChild(b);
+    });
     ["USDT", "USDC", "FDUSD", "BTC", "ETH", "BNB", "EUR", "TRY", "Forex", "Tất cả"].forEach(function (q) {
       var b = document.createElement("button"); b.textContent = q; b.className = (q === pkQuote || (q === "Tất cả" && pkQuote === "ALL")) ? "on" : "";
       b.addEventListener("click", function () { pkQuote = q === "Tất cả" ? "ALL" : q; saveState(); renderChips(); renderPicker(); }); c.appendChild(b);
@@ -1533,7 +1551,7 @@ function analyze(c, tf, L) {
   function renderPicker() {
     var q = $("pkq").value.trim().toUpperCase();
     if (pkQuote === "Forex") pkList = FXL.map(function (p) { var a = p.split("/"); return { s: "FX:" + p, b: a[0], q: a[1], px: null, fx: 1, note: FXI[p] || "Forex" }; }).filter(function (x) { return !q || x.s.indexOf(q) >= 0; });
-    else pkList = ALL.filter(function (x) { return (pkQuote === "ALL" || x.q === pkQuote) && (!q || x.s.indexOf(q) >= 0); });
+    else pkList = ALL.filter(function (x) { return (pkQuote === "ALL" || x.q === pkQuote) && (!q || x.s.indexOf(q) >= 0) && (!pkMk || mkOf(x.s) === pkMk); });
     pkShown = 0; $("pkl").innerHTML = ""; $("pkl").scrollTop = 0; moreItems();
   }
   function moreItems() {
@@ -1544,7 +1562,7 @@ function analyze(c, tf, L) {
       (function (x) {
         var b = document.createElement("button"); b.className = "it";
         var av = document.createElement("span"); av.className = "av"; fillIcon(av, x.b, x.fx);
-        var nm = document.createElement("span"); nm.className = "nm"; nm.innerHTML = "<b>" + x.b + (x.q ? "<span style=\"color:var(--dim);font-weight:600\">/" + x.q + "</span>" : "") + "</b><small>" + (x.fx ? x.note + " · Twelve Data" : "Vol " + fmtVol(x.v) + " " + x.q) + "</small>";
+        var nm = document.createElement("span"); nm.className = "nm"; nm.innerHTML = "<b>" + x.b + (x.q ? "<span style=\"color:var(--dim);font-weight:600\">/" + x.q + "</span>" : "") + mk(x.s) + "</b><small>" + (x.fx ? x.note + " · Twelve Data" : "Vol " + fmtVol(x.v) + " " + x.q) + "</small>";
         var rt = document.createElement("span"); rt.className = "rt"; rt.innerHTML = (x.px === null ? "" : fmtP(x.px)) + (x.px === null ? "" : "") + "<span class=\"pill " + (x.ch >= 0 ? "bull" : "bear") + "\">" + (x.ch >= 0 ? "▲ " : "▼ ") + Math.abs(x.ch).toFixed(2) + "%</span>";
         b.appendChild(av); b.appendChild(nm); b.appendChild(rt);
         b.addEventListener("click", function () { $("sym").value = x.s; closePicker(); if (x.fx && !tdKey()) { askKey(); return; } load(); });
@@ -1590,7 +1608,7 @@ function analyze(c, tf, L) {
     var sp = splitSym(S.sym);
     $("sym").value = S.sym; $("symTxt").textContent = sp.b + "/" + sp.q; setAvatar();
     var fx = isFx(); PDEC = fx ? fxDec(S.sym) : null;
-    $("symSub").textContent = fx ? (FXI[S.sym.slice(3)] || "Forex") + " · Twelve Data ▾" : "Binance Spot · đổi mã ▾";
+    if (fx) $("symSub").textContent = (FXI[S.sym.slice(3)] || "Forex") + " · Twelve Data ▾"; else setSymSub();
     if (fx && !tdKey()) { hideSplash(); askKey(); return; }
     S.lim = +$("lim").value; S.sw = +$("swl").value; PLAN_CFG.rr = +$("rrmin").value || 2; tfms = TFMS[S.tf]; markTf(); PLK = null; saveState();
     setStatus("Đang tải " + dispSym(S.sym) + " " + S.tf + (fx ? " từ Twelve Data…" : " từ Binance…"));
@@ -1623,21 +1641,61 @@ function analyze(c, tf, L) {
     } catch (e) { $("hourstat").textContent = "Không tải được thống kê."; $("wkstat").textContent = "Không tải được thống kê."; }
   }
 
-  function connectWS() {
-    if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
-    try {
-      ws = new WebSocket("wss://stream.binance.com:9443/ws/" + S.sym.toLowerCase() + "@kline_" + S.tf);
-      ws.onmessage = function (m) {
-        var d = JSON.parse(m.data); if (!d.k) return;
-        var k = d.k, nk = { t: +k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v, tb: +k.V }; nk.ny = ny(nk.t);
-        var last = C[C.length - 1];
-        if (last && last.t === nk.t) C[C.length - 1] = nk; else if (last && nk.t > last.t) { C.push(nk); if (C.length > 1200) C.shift(); }
-        renderHead(); if (tab === "chart") draw();
-        if (!reTimer) reTimer = setTimeout(function () { reTimer = null; runAnalysis(); renderAll(); if (tab === "chart") draw(); }, 2500);
-      };
-      ws.onclose = function () { ws = null; };
-    } catch (e) { ws = null; }
+  /* kết nối trực tiếp: tự nối lại khi rớt, khi thoát app rồi quay lại thì bù nến thiếu; có đồng hồ canh và lấy giá bằng REST dự phòng */
+  var WSH = ["wss://stream.binance.com:9443/ws/", "wss://stream.binance.com/ws/", "wss://data-stream.binance.vision/ws/"], wsHi = 0, wsGen = 0, wsLast = 0, wsRt = 0, wsFail = 0;
+  function applyK(rows) {
+    if (!rows.length || !C.length) return false;
+    var ch = false;
+    rows.forEach(function (nk) {
+      nk.ny = ny(nk.t); var last = C[C.length - 1];
+      if (nk.t === last.t) { C[C.length - 1] = nk; ch = true; }
+      else if (nk.t > last.t) { C.push(nk); if (C.length > 1200) C.shift(); ch = true; }
+      else { for (var i = C.length - 2; i >= 0 && i > C.length - 40; i--) if (C[i].t === nk.t) { C[i] = nk; ch = true; break; } }
+    });
+    return ch;
   }
+  function afterLive() { renderHead(); if (tab === "chart") draw(); if (!reTimer) reTimer = setTimeout(function () { reTimer = null; runAnalysis(); renderAll(); if (tab === "chart") draw(); }, 2500); }
+  var CUB = false;
+  async function catchUp() {
+    if (CUB || isFx() || !C.length) return; CUB = true;
+    var sym = S.sym, tf = S.tf;
+    try {
+      var last = C[C.length - 1], n = Math.min(1000, Math.max(3, Math.ceil((Date.now() - last.t) / tfms) + 2));
+      var rows = mapK(await bget("/api/v3/klines?symbol=" + sym + "&interval=" + tf + "&limit=" + n));
+      if (sym === S.sym && tf === S.tf && applyK(rows)) afterLive();
+    } catch (e) {}
+    CUB = false;
+  }
+  function connectWS() {
+    var gen = ++wsGen; clearTimeout(wsRt);
+    if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.close(); } catch (e) {} ws = null; }
+    if (isFx()) return;
+    var sym = S.sym, tf = S.tf, w;
+    try { w = new WebSocket(WSH[wsHi % WSH.length] + sym.toLowerCase() + "@kline_" + tf); } catch (e) { w = null; }
+    if (!w) { wsRt = setTimeout(function () { if (gen === wsGen) { wsHi++; connectWS(); } }, 3000); return; }
+    ws = w; wsLast = Date.now();
+    w.onopen = function () { if (gen !== wsGen) return; wsFail = 0; wsLast = Date.now(); catchUp(); };
+    w.onmessage = function (m) {
+      if (gen !== wsGen) return; wsLast = Date.now();
+      var d; try { d = JSON.parse(m.data); } catch (e) { return; } if (!d.k) return;
+      var k = d.k, nk = { t: +k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v, tb: +k.V };
+      if (applyK([nk])) afterLive();
+    };
+    w.onclose = function () { if (gen !== wsGen) return; ws = null; wsFail++; if (wsFail > 1) wsHi++; wsRt = setTimeout(function () { if (gen === wsGen) connectWS(); }, Math.min(8000, 800 * wsFail)); };
+    w.onerror = function () { try { w.close(); } catch (e) {} };
+  }
+  function liveKick(force) { if (isFx() || !C.length) return; if (force || !ws || ws.readyState > 1) connectWS(); else if (Date.now() - wsLast > 15000) connectWS(); catchUp(); }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) liveKick(true); });
+  window.addEventListener("pageshow", function () { liveKick(true); });
+  window.addEventListener("focus", function () { liveKick(false); });
+  window.addEventListener("online", function () { liveKick(true); });
+  /* canh chừng: im quá 12 giây thì lấy nến mới bằng REST, im quá 20 giây thì nối lại */
+  setInterval(function () {
+    if (document.hidden || isFx() || !C.length) return;
+    var q = Date.now() - wsLast;
+    if (q > 12000) catchUp();
+    if (q > 20000 && (!ws || ws.readyState !== 0)) connectWS();
+  }, 4000);
 
   /* ----- vẽ biểu đồ ----- */
   function draw() { if (!raf) raf = requestAnimationFrame(frame); }
@@ -2659,7 +2717,7 @@ function analyze(c, tf, L) {
   function fwTbl(list, wm) {
     return "<div class=\"tw\"><table class=\"tb\"><tr><th>Kèo</th><th>Trạng thái</th><th>Kết quả</th><th></th></tr>" + list.map(function (q) {
         var lb = fwLabel(q), d = " data-fwo=\"" + q.id + "\"", wr = wm[q.id];
-        return "<tr" + (q.done ? " class=\"fdn\"" : "") + "><td" + d + ">" + dispSym(q.sym) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i><br><small>" + q.k + " · " + q.tf + " · " + fmtLocal(q.t) + "</small></td><td" + d + "><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span>" + (lb[2] ? "<br><small>" + lb[2] + "</small>" : "") + "</td><td" + d + (wr && !wr.skip ? " class=\"" + (wr.pnl >= 0 ? "bull" : "bear") + "\"" : "") + ">" + (wr ? (wr.skip ? "<small>Ví bỏ: " + wr.skip + (wr.blk ? " lúc " + hhmm(wr.at) + " (" + wr.blk + ")" : "") + "</small>" : fm$(wr.pnl) + "<br><small>cỡ $" + wr.nt.toFixed(0) + " · x" + wr.lev + " · " + (wr.pnl >= 0 ? "+" : "") + (wr.pnl / SIM.cap * 100).toFixed(2) + "% vốn</small>") : "<small>chưa có dữ liệu</small>") + "</td><td class=\"xc\"><button class=\"rx\" data-fwx=\"" + q.id + "\" title=\"Bỏ theo dõi\">✕</button></td></tr>";
+        return "<tr" + (q.done ? " class=\"fdn\"" : "") + "><td" + d + ">" + dispSym(q.sym) + mk(q.sym, 1) + " <i class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</i><br><small>" + q.k + " · " + q.tf + " · " + fmtLocal(q.t) + "</small></td><td" + d + "><span class=\"pill " + lb[1] + "\">" + lb[0] + "</span>" + (lb[2] ? "<br><small>" + lb[2] + "</small>" : "") + "</td><td" + d + (wr && !wr.skip ? " class=\"" + (wr.pnl >= 0 ? "bull" : "bear") + "\"" : "") + ">" + (wr ? (wr.skip ? "<small>Ví bỏ: " + wr.skip + (wr.blk ? " lúc " + hhmm(wr.at) + " (" + wr.blk + ")" : "") + "</small>" : fm$(wr.pnl) + "<br><small>cỡ $" + wr.nt.toFixed(0) + " · x" + wr.lev + " · " + (wr.pnl >= 0 ? "+" : "") + (wr.pnl / SIM.cap * 100).toFixed(2) + "% vốn</small>") : "<small>chưa có dữ liệu</small>") + "</td><td class=\"xc\"><button class=\"rx\" data-fwx=\"" + q.id + "\" title=\"Bỏ theo dõi\">✕</button></td></tr>";
       }).join("") + "</table></div>";
   }
   function calStats() {
@@ -3241,7 +3299,7 @@ function analyze(c, tf, L) {
   function sigCard(o) {
     var d = o.dir, e = o.sigClose, R = o.atr * o.cf.sl, sl = e - d * R, tp = o.tps.map(function (m) { return e + d * m * R; }), pct = R / e * 100, st = sigStat(o), trust = o.chk && o.chk.v ? "Backtest " + Math.round(o.chk.v.s.win * 100) + "% thắng" : "Chưa kiểm chứng";
     var cls = (d === 1 ? "up" : "dn") + (st.x ? " old" : st.w ? " warn" : "");
-    var h = "<details class=\"sgc " + cls + "\" style=\"--c:" + SCOL[o.k] + "\"><summary><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small></b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
+    var h = "<details class=\"sgc " + cls + "\" style=\"--c:" + SCOL[o.k] + "\"><summary><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small>" + mk(o.sym) + "</b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
     h += "<div class=\"sgpeek\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div><small>TP1</small><b>" + fmtPx(tp[0]) + "</b></div><div><small>Trạng thái</small><span class=\"pill " + st.c + "\" data-state=\"" + o.id + "\">" + st.t + "</span></div></div>";
     h += "<div class=\"sgtrust\">" + qBadge(o) + "<span class=\"note\">" + trust + "</span></div></summary>";
     h += "<div class=\"sgdetail\"><div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
@@ -3522,7 +3580,7 @@ function analyze(c, tf, L) {
     var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
     if (op.length) h += "<section class=\"wc wallet-open\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>chạm để mở chart</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + op.map(function (q) {
       var cr = q.p[q.p.length - 1][2], r = wm[q.id], pos = Math.max(0, Math.min(100, (cr + 1) / (q.tps[0] + 1) * 100)), z0 = 100 / (q.tps[0] + 1);
-      return "<button class=\"wk\" data-fwo=\"" + q.id + "\"><span class=\"nm\"><i style=\"background:" + SCOL[q.k] + "\"></i><b>" + splitSym(q.sym).b + "</b><em class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</em></span><span class=\"mt\"><span class=\"meter\"><i style=\"width:" + pos.toFixed(0) + "%;background:" + (cr >= 0 ? "var(--up)" : "var(--down)") + "\"></i><s style=\"left:" + z0.toFixed(0) + "%\"></s></span></span><span class=\"" + cc(cr) + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "</span><span class=\"" + (r && !r.skip ? cc(r.pnl) : "") + "\">" + (r && !r.skip ? fm$(r.pnl) : "ví bỏ") + "</span></button>";
+      return "<button class=\"wk\" data-fwo=\"" + q.id + "\"><span class=\"nm\"><i style=\"background:" + SCOL[q.k] + "\"></i><b>" + splitSym(q.sym).b + "</b>" + mk(q.sym, 1) + "<em class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</em></span><span class=\"mt\"><span class=\"meter\"><i style=\"width:" + pos.toFixed(0) + "%;background:" + (cr >= 0 ? "var(--up)" : "var(--down)") + "\"></i><s style=\"left:" + z0.toFixed(0) + "%\"></s></span></span><span class=\"" + cc(cr) + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "</span><span class=\"" + (r && !r.skip ? cc(r.pnl) : "") + "\">" + (r && !r.skip ? fm$(r.pnl) : "ví bỏ") + "</span></button>";
     }).join("") + "</section>";
     return h + "</div>";
   }
@@ -3572,7 +3630,7 @@ function analyze(c, tf, L) {
     var l = ALL.filter(function (x) { return x.q === "USDT" && x.v >= 3e6 && !stable.test(x.b); });
     if (!l.length) { a.innerHTML = "<h2>Top tăng</h2><div class=\"empty2\">Đang tải danh sách…</div>"; b.innerHTML = ""; return; }
     var up = l.slice().sort(function (x, y) { return y.ch - x.ch; }).slice(0, 12), dn = l.slice().sort(function (x, y) { return x.ch - y.ch; }).slice(0, 12), g = l.filter(function (x) { return x.ch > 0; }).length;
-    function rows(arr) { return "<div class=\"rlist\">" + arr.map(function (x, i) { return "<button class=\"rrow mvr\" data-s=\"" + x.s + "\"><span class=\"rk\">" + (i + 1) + "</span><span class=\"av sm\" data-ic=\"" + x.b + "\"></span><span class=\"rn\"><b>" + x.b + "</b><small>Vol " + fmtVol(x.v) + "</small></span><span class=\"rt\">" + fmtPx(x.px) + "<span class=\"pill " + (x.ch >= 0 ? "bull" : "bear") + "\">" + (x.ch >= 0 ? "▲ " : "▼ ") + Math.abs(x.ch).toFixed(2) + "%</span></span></button>"; }).join("") + "</div>"; }
+    function rows(arr) { return "<div class=\"rlist\">" + arr.map(function (x, i) { return "<button class=\"rrow mvr\" data-s=\"" + x.s + "\"><span class=\"rk\">" + (i + 1) + "</span><span class=\"av sm\" data-ic=\"" + x.b + "\"></span><span class=\"rn\"><b>" + x.b + mk(x.s) + "</b><small>Vol " + fmtVol(x.v) + "</small></span><span class=\"rt\">" + fmtPx(x.px) + "<span class=\"pill " + (x.ch >= 0 ? "bull" : "bear") + "\">" + (x.ch >= 0 ? "▲ " : "▼ ") + Math.abs(x.ch).toFixed(2) + "%</span></span></button>"; }).join("") + "</div>"; }
     a.innerHTML = "<h2>Top tăng 24h <span>" + g + "/" + l.length + " mã đang xanh · vol ≥ 3M USDT</span></h2>" + rows(up) + "<button class=\"go ghost\" id=\"mvref\" style=\"min-height:40px\">Làm mới</button>";
     b.innerHTML = "<h2>Top giảm 24h <span>bấm để mở chart</span></h2>" + rows(dn);
     bindOpen(a); bindOpen(b);
@@ -3721,7 +3779,7 @@ function analyze(c, tf, L) {
     setTimeout(function () { var el = $("splash"); if (el) el.className = "gone"; }, Math.max(0, 900 - (Date.now() - t0)));
   }
   setTimeout(hideSplash, 3500);
-  setInterval(function () { if (tab === "chart" && !document.hidden) draw(); }, 1000);
+  setInterval(function () { if (tab === "chart" && !document.hidden) draw(); }, 1000); loadFut(); setInterval(loadFut, 36e5);
   function buzz() { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {} }
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) buzz(); });
   var dlgCb = null;
