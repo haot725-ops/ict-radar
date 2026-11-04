@@ -532,7 +532,7 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
       <div class="sigbar" id="sigbar" hidden><button class="sigchip" id="sigchip" hidden></button><div class="sigev" id="sigev"></div></div>
     </section>
 
-    <section class="view scroll" id="v-sig"><div class="card hero" id="sigh"></div><div id="sigl"></div></section>
+    <section class="view scroll" id="v-sig"><div class="card hero" id="sigh"></div><div class="card btcc" id="btcc"></div><div id="sigl"></div></section>
     <section class="view scroll" id="v-mkt">
       <div class="subbar" id="sb-mkt"></div>
       <div data-sub="mv" class="card" id="mvu"></div><div data-sub="mv" class="card" id="mvd"></div>
@@ -649,7 +649,7 @@ function findSwings(c, L) {
   return sw;
 }
 
-function findStructure(c, sw, L) {
+function findStructure(c, sw, L, atr) {
   var ev = [], trend = 0, hi = null, lo = null, ptr = 0;
   for (var i = 0; i < c.length; i++) {
     while (ptr < sw.length && sw[ptr].i + L <= i) {
@@ -659,6 +659,16 @@ function findStructure(c, sw, L) {
     if (hi && !hi.broken && c[i].c > hi.p) { hi.broken = true; ev.push({ kind: trend === -1 ? "CHoCH" : "BOS", dir: 1, i: i, from: hi.i, p: hi.p }); trend = 1; }
     if (lo && !lo.broken && c[i].c < lo.p) { lo.broken = true; ev.push({ kind: trend === 1 ? "CHoCH" : "BOS", dir: -1, i: i, from: lo.i, p: lo.p }); trend = -1; }
   }
+  /* thật / nghi giả: cần nến đẩy mạnh, đóng vượt đủ xa mốc và giữ được 3 nến sau đó */
+  if (atr) ev.forEach(function (e) {
+    var k = c[e.i], a = atr[e.i] || 0, body = Math.abs(k.c - k.o), rng = Math.max(k.h - k.l, 1e-12), beyond = e.dir === 1 ? k.c - e.p : e.p - k.c, why = [], j, back = false, seen = 0;
+    if (beyond < 0.15 * a) why.push("đóng vượt mốc quá ít");
+    if (body < 0.6 * a || body < 0.5 * rng) why.push("nến phá không có lực đẩy");
+    for (j = e.i + 1; j <= Math.min(c.length - 1, e.i + 3); j++) { seen++; if (e.dir === 1 ? c[j].c < e.p : c[j].c > e.p) { back = true; break; } }
+    if (back) why.push("giá quay lại đóng cửa phía trong mốc");
+    e.fail = back; e.why = why;
+    e.q = why.length ? 0 : (seen < 3 ? null : 1);   /* 1 thật, 0 nghi giả, null chưa đủ nến để kết luận */
+  });
   return { ev: ev, trend: trend };
 }
 
@@ -676,9 +686,13 @@ function findFVGs(c, atr, ev, sweeps) {
     /* điều kiện đủ: nến giữa là nến displacement (thân lớn, đúng hướng) và khoảng trống không quá nhỏ */
     if (gap < 0.2 * a || body < 0.9 * a || body < 0.6 * rng || (g.dir === 1) !== (m.c > m.o)) continue;
     var sc = 1, j;
-    for (j = 0; j < ev.length; j++) if (ev[j].dir === g.dir && ev[j].i >= i - 2 && ev[j].i <= i + 1) { sc++; break; }
+    for (j = 0; j < ev.length; j++) if (ev[j].dir === g.dir && ev[j].i >= i - 2 && ev[j].i <= i + 1 && ev[j].q !== 0) { sc++; g.bk = 1; break; }
     if (gap >= 0.5 * a && body >= 1.5 * a) sc++;
     if (sweepNear(sweeps, g.dir, i - 15, i)) sc++;
+    /* loại FVG theo đà của nến 3 so với nến 2: mạnh = đóng vượt cực trị nến 2, yếu = không đóng vượt giá đóng cửa nến 2 */
+    var c3 = c[i];
+    g.fq = g.dir === 1 ? (c3.c > m.h ? 2 : c3.c <= m.c ? 0 : 1) : (c3.c < m.l ? 2 : c3.c >= m.c ? 0 : 1);
+    if (g.fq === 2) sc = Math.min(4, sc + 1); else if (g.fq === 0) sc = Math.max(1, sc - 1);
     g.i = i - 2; g.formed = i; g.touched = null; g.ce = null; g.filled = null; g.sc = sc;
     var ce = (g.top + g.bottom) / 2;
     for (j = i + 1; j < n; j++) {
@@ -721,7 +735,7 @@ function findOBs(c, ev, fvgs, atr, sweeps) {
     var sc = 1;
     if (sweepNear(sweeps, e.dir, k - 10, k + 2)) sc++;              /* quét thanh khoản trước khi đẩy */
     if (leg >= 3 * atr[k]) sc++;                                    /* cú đẩy rất mạnh */
-    if (e.kind === "CHoCH") sc++;                                   /* đổi hướng cấu trúc */
+    if (e.kind === "CHoCH" && e.q !== 0) sc++;                                   /* đổi hướng cấu trúc */
     var ob = { dir: e.dir, i: k, formed: e.i, top: c[k].h, bottom: c[k].l, touched: null, broken: null, ev: e.kind, sc: sc };
     for (j = e.i + 1; j < n; j++) {
       if (e.dir === 1) {
@@ -795,6 +809,51 @@ function findLiquidity(c, sw, atr, L) {
     return o;
   }
   return { eq: eq, bsl: open(hs, true), ssl: open(ls, false) };
+}
+
+/* Unicorn: Breaker Block chồng lên FVG cùng hướng, hình thành gần nhau */
+function findUnicorns(c, inv, fvgs, atr) {
+  var out = [], n = c.length;
+  inv.forEach(function (b) {
+    if (b.kind !== "BRK") return;
+    fvgs.forEach(function (f) {
+      if (f.dir !== b.dir || f.fq === 0 || Math.abs(f.formed - b.formed) > 6) return;
+      var top = Math.min(b.top, f.top), bot = Math.max(b.bottom, f.bottom), a = atr[Math.min(n - 1, Math.max(b.formed, f.formed))] || 0;
+      if (top - bot < Math.max(0.1 * a, 1e-12)) return;
+      var from = Math.max(b.formed, f.formed), u = { kind: "UNI", dir: b.dir, top: top, bottom: bot, i: Math.min(b.i, f.i), formed: from, touched: null, dead: null, sc: Math.min(4, Math.max(b.sc, f.sc) + 1) }, j;
+      for (j = from + 1; j < n; j++) {
+        if (u.dir === 1) { if (u.touched === null && c[j].l <= u.top) u.touched = j; if (c[j].c < u.bottom) { u.dead = j; break; } }
+        else { if (u.touched === null && c[j].h >= u.bottom) u.touched = j; if (c[j].c > u.top) { u.dead = j; break; } }
+      }
+      out.push(u);
+    });
+  });
+  return out;
+}
+
+/* Turtle Soup: quét đỉnh/đáy 20 nến (đỉnh/đáy cũ ít nhất 4 nến trước) rồi đóng cửa quay lại trong biên */
+function findTurtle(c, atr, N) {
+  var out = [], n = c.length, i, k;
+  for (i = N; i < n; i++) {
+    var H = -1e30, L2 = 1e30, iH = 0, iL = 0, a = atr[i] || 0;
+    for (k = i - N; k < i; k++) { if (c[k].h > H) { H = c[k].h; iH = k; } if (c[k].l < L2) { L2 = c[k].l; iL = k; } }
+    if (c[i].h > H && c[i].c < H && iH <= i - 4 && c[i].h - H >= 0.05 * a) out.push({ dir: -1, i: i, p: H, ext: c[i].h });
+    else if (c[i].l < L2 && c[i].c > L2 && iL <= i - 4 && L2 - c[i].l >= 0.05 * a) out.push({ dir: 1, i: i, p: L2, ext: c[i].l });
+  }
+  return out;
+}
+
+/* IDM (inducement): đỉnh/đáy nhỏ nằm giữa giá và vùng, thường bị quét trước khi giá vào vùng thật. 1 = đã quét, -1 = chưa quét, 0 = không có */
+function idmState(c, sw2, z, d) {
+  var pick = null, q, j;
+  for (q = sw2.length - 1; q >= 0; q--) {
+    var w = sw2[q]; if (w.i <= z.f) break;
+    if (d === 1 && w.type === "L" && w.p > z.top) { pick = w; break; }
+    if (d === -1 && w.type === "H" && w.p < z.bottom) { pick = w; break; }
+  }
+  if (!pick) return 0;
+  for (j = pick.i + 3; j < c.length; j++) { if (d === 1 ? c[j].l < pick.p : c[j].h > pick.p) return 1; }
+  return -1;
 }
 
 function findSweeps(c, sw, L) {
@@ -926,8 +985,10 @@ function buildBias(c, A) {
   if (tr === 1) { s += 2; why.push("Cấu trúc đang tăng: giá đóng trên đỉnh swing gần nhất (BOS tăng)."); }
   else if (tr === -1) { s -= 2; why.push("Cấu trúc đang giảm: giá đóng dưới đáy swing gần nhất (BOS giảm)."); }
   else why.push("Chưa có phá vỡ cấu trúc rõ ràng.");
-  if (last && last.kind === "CHoCH" && n - 1 - last.i <= 40) { s += last.dir; why.push("CHoCH " + (last.dir === 1 ? "tăng" : "giảm") + " mới xuất hiện (" + (n - 1 - last.i) + " nến trước), dấu hiệu đổi hướng."); }
+  if (last && last.kind === "CHoCH" && last.q === 0 && n - 1 - last.i <= 40) why.push("CHoCH " + (last.dir === 1 ? "tăng" : "giảm") + " gần đây nghi là giả (" + last.why.join(", ") + "), không tính điểm.");
+  else if (last && last.kind === "CHoCH" && n - 1 - last.i <= 40) { s += last.dir; why.push("CHoCH " + (last.dir === 1 ? "tăng" : "giảm") + " mới xuất hiện (" + (n - 1 - last.i) + " nến trước), dấu hiệu đổi hướng."); }
   var zones = [];
+  A.uni.forEach(function (g) { if (g.dead === null && g.touched === null) zones.push({ k: "Unicorn", dir: g.dir, top: g.top, bottom: g.bottom, touched: false }); });
   A.inv.forEach(function (g) { if (g.dead === null && g.touched === null && g.sc >= 2) zones.push({ k: g.kind === "BRK" ? "Breaker" : "IFVG", dir: g.dir, top: g.top, bottom: g.bottom, touched: false }); });
   A.obs.forEach(function (o) { if (o.broken === null && o.touched === null && o.sc >= 2) zones.push({ k: "OB", dir: o.dir, top: o.top, bottom: o.bottom, touched: o.touched !== null }); });
   A.fvgs.forEach(function (g) { if (g.filled === null && g.ce === null && g.sc >= 2) zones.push({ k: "FVG", dir: g.dir, top: g.top, bottom: g.bottom, touched: g.touched !== null }); });
@@ -1033,9 +1094,10 @@ function buildPlan(c, A, tf) {
   function ov(a, b) { return Math.min(a.top, b.top) - Math.max(a.bottom, b.bottom); }
   function mk(d) {
     var cand = [];
-    A.obs.forEach(function (o) { if (o.dir === d && o.broken === null && o.touched === null && o.sc >= 2) cand.push({ k: "OB", top: o.top, bottom: o.bottom, sc: o.sc, base: 2 }); });
-    A.fvgs.forEach(function (g) { if (g.dir === d && g.filled === null && g.ce === null && g.sc >= 2) cand.push({ k: "FVG", top: g.top, bottom: g.bottom, sc: g.sc, base: 1.5 }); });
-    A.inv.forEach(function (g) { if (g.dir === d && g.dead === null && g.touched === null && g.sc >= 2) cand.push({ k: g.kind === "BRK" ? "Breaker" : "IFVG", top: g.top, bottom: g.bottom, sc: g.sc, base: 2 }); });
+    A.obs.forEach(function (o) { if (o.dir === d && o.broken === null && o.touched === null && o.sc >= 2) cand.push({ k: "OB", top: o.top, bottom: o.bottom, sc: o.sc, base: 2, f: o.i }); });
+    A.fvgs.forEach(function (g) { if (g.dir === d && g.filled === null && g.ce === null && g.sc >= 2) cand.push({ k: "FVG", top: g.top, bottom: g.bottom, sc: g.sc, base: 1.5, f: g.formed, fq: g.fq }); });
+    A.inv.forEach(function (g) { if (g.dir === d && g.dead === null && g.touched === null && g.sc >= 2) cand.push({ k: g.kind === "BRK" ? "Breaker" : "IFVG", top: g.top, bottom: g.bottom, sc: g.sc, base: 2, f: g.formed }); });
+    A.uni.forEach(function (g) { if (g.dir === d && g.dead === null && g.touched === null) cand.push({ k: "Unicorn", top: g.top, bottom: g.bottom, sc: g.sc, base: 3, f: g.formed }); });
     var ote = null;
     if (A.pd && ((d === 1 && A.pd.ote.side === "mua") || (d === -1 && A.pd.ote.side === "bán"))) { ote = { k: "OTE", top: A.pd.ote.b, bottom: A.pd.ote.a, sc: 1, base: 1 }; cand.push(ote); }
     cand = cand.filter(function (z) { return d === 1 ? (z.bottom < p && z.top <= p + 0.3 * atr && p - z.top <= 3 * atr) : (z.top > p && z.bottom >= p - 0.3 * atr && z.bottom - p <= 3 * atr); });
@@ -1054,8 +1116,12 @@ function buildPlan(c, A, tf) {
       }
       var sw = A.sweeps.filter(function (s) { return s.dir === d && s.i > n - 40; });
       if (sw.length) { pts += 1; why.push("Vừa quét thanh khoản " + (d === 1 ? "SSL" : "BSL") + " trước đó"); }
+      var ts = A.turtle.filter(function (t) { return t.dir === d && t.i > n - 12; });
+      if (ts.length) { pts += 1.5; why.push("Turtle Soup: quét " + (d === 1 ? "đáy" : "đỉnh") + " 20 nến rồi đóng cửa quay lại"); }
+      if (z.fq === 2) { pts += 0.5; why.push("FVG mạnh: nến 3 đóng vượt nến 2"); } else if (z.fq === 1) { why.push("FVG trung bình"); }
+      var idm = 0; if (z.f !== undefined && A.sw2) { idm = idmState(c, A.sw2, z, d); if (idm === 1) { pts += 1.5; why.push("Đã quét IDM trước khi vào vùng"); } else if (idm === -1) { pts -= 0.5; why.push("IDM chưa bị quét (giá thường quét IDM rồi mới vào vùng)"); } }
       if (tr === d) { pts += 2; why.push("Cấu trúc thị trường cùng hướng (BOS)"); }
-      else if (lastEv && lastEv.kind === "CHoCH" && lastEv.dir === d && n - 1 - lastEv.i <= 40) { pts += 1.5; why.push("CHoCH mới cùng hướng, đang đổi xu hướng"); }
+      else if (lastEv && lastEv.kind === "CHoCH" && lastEv.q !== 0 && lastEv.dir === d && n - 1 - lastEv.i <= 40) { pts += 1.5; why.push("CHoCH mới cùng hướng, đang đổi xu hướng"); }
       else { pts -= 1; why.push("Ngược cấu trúc hiện tại (rủi ro cao hơn)"); }
       if (of && of.has) { if (of.score * d > 0) { pts += Math.min(2, of.score * d); why.push("Order flow ủng hộ (delta/CVD/hấp thụ)"); } else if (of.score * d < 0) { pts -= 1; why.push("Order flow đang ngược hướng"); } }
       var IN = A.ind, ctr = false;
@@ -1070,7 +1136,7 @@ function buildPlan(c, A, tf) {
       if (kz) { pts += 1; why.push("Đang trong " + (kz.n || "killzone")); }
       var dist = d === 1 ? p - mid : mid - p;
       pts -= 0.3 * Math.max(0, Math.abs(dist) / atr - 1);          /* càng xa giá càng ít khả năng khớp */
-      if (!best || pts > best.pts || (pts === best.pts && Math.abs(dist) < Math.abs(best.dist))) best = { z: z, zz: zz, pts: pts, why: why, dist: dist, ctr: ctr, mid: (zz.top + zz.bottom) / 2 };
+      if (!best || pts > best.pts || (pts === best.pts && Math.abs(dist) < Math.abs(best.dist))) best = { z: z, zz: zz, pts: pts, why: why, dist: dist, ctr: ctr, mid: (zz.top + zz.bottom) / 2, x: { uni: cand.some(function (o) { return o.k === "Unicorn" && (o === z || ov(z, o) > 0); }), ts: ts.length > 0, idm: idm, fq: z.fq === undefined ? 1 : z.fq } };
     });
     if (PLAN_CFG.hard && best.ctr) return null;
     var zone = best.zz, k = best.z.k, entry = d === 1 ? zone.top - 0.15 * (zone.top - zone.bottom) : zone.bottom + 0.15 * (zone.top - zone.bottom);   /* entry nằm sát mép gần giá (sâu 15% vùng) để dễ khớp */
@@ -1106,12 +1172,12 @@ function buildPlan(c, A, tf) {
       tps.push(f);
     });
     var inZone = p <= zone.top + 0.05 * atr && p >= zone.bottom - 0.05 * atr;
-    return { dir: d, kind: k, top: zone.top, bottom: zone.bottom, entry: entry, sl: [sl1, sl2, sl3], tp: tps, R: R, pts: best.pts - (tps[0].fb ? 1 : 0), ctr: best.ctr, fb: !!tps[0].fb, conf: Math.max(0, Math.min(100, Math.round((best.pts - (tps[0].fb ? 1 : 0)) / 14 * 100))), why: best.why, vp: best.why.some(function (w) { return /Volume Profile|POC/.test(w); }), inZone: inZone, dist: Math.abs(p - entry), distAtr: Math.abs(p - entry) / atr };
+    return { dir: d, kind: k, top: zone.top, bottom: zone.bottom, entry: entry, sl: [sl1, sl2, sl3], tp: tps, R: R, pts: best.pts - (tps[0].fb ? 1 : 0), ctr: best.ctr, fb: !!tps[0].fb, conf: Math.max(0, Math.min(100, Math.round((best.pts - (tps[0].fb ? 1 : 0)) / 14 * 100))), x: best.x, why: best.why, vp: best.why.some(function (w) { return /Volume Profile|POC/.test(w); }), inZone: inZone, dist: Math.abs(p - entry), distAtr: Math.abs(p - entry) / atr };
   }
   var L = mk(1), S = mk(-1), pick = null;
   if (PLAN_CFG.f.length && n > 60) {
     var st0 = indState(indArrays(c), n - 1, of && of.has ? of.score : 0);
-    [L, S].forEach(function (x) { if (x) x.blk = PLAN_CFG.f.filter(function (k) { return k === "vp" ? !x.vp : st0[k] !== x.dir; }); });
+    [L, S].forEach(function (x) { if (x) x.blk = PLAN_CFG.f.filter(function (k) { return k === "vp" ? !x.vp : XK.indexOf(k) >= 0 ? xState(x.x, k, x.dir, BTC_NOW, null) !== x.dir : st0[k] !== x.dir; }); });
   }
   var ok = function (x) { return x && x.pts >= PLAN_CFG.min && !(x.blk && x.blk.length); };
   if (ok(L) && (!ok(S) || L.pts >= S.pts)) pick = L; else if (ok(S)) pick = S;
@@ -1121,6 +1187,37 @@ function buildPlan(c, A, tf) {
 
 /* ===== Chỉ báo bổ sung + cấu hình kèo + backtest ===== */
 var BT_MODES = [[2, 3, 4.5], [2, 3.5, 5.5], [2.5, 4.5, 7]];
+/* ===== Bộ lọc ICT bổ sung (dùng chung cho kèo thật và Backtest) + bối cảnh BTC ===== */
+var XK = ["uni", "ts", "idm", "fq", "btc"], BTC_NOW = null;
+function btcOk(cx, d) { if (!cx) return true; return !((cx.s4 === -d && cx.s1 === -d) || cx.shock === -d); }
+function btcLab(cx, d) { if (!cx) return "mid"; if (!btcOk(cx, d)) return "bad"; return cx.s1 === d && cx.s4 !== -d && cx.shock !== -d ? "ok" : "mid"; }
+function xState(x, k, d, cx, sym) {
+  if (!x) return 0;
+  if (k === "uni") return x.uni ? d : 0;
+  if (k === "ts") return x.ts ? d : 0;
+  if (k === "idm") return x.idm === -1 ? 0 : d;
+  if (k === "fq") return x.fq === 0 ? 0 : d;
+  if (k === "btc") return (sym === "BTCUSDT" || btcOk(cx, d)) ? d : 0;
+  return 0;
+}
+function trendSt(p, e20, e50) { return p > e20 && e20 > e50 ? 1 : p < e20 && e20 < e50 ? -1 : 0; }
+/* chuỗi bối cảnh BTC theo từng nến: xu hướng khung hiện tại, ~1h, ~4h (gộp từ nến hiện tại) và cú sốc giá 4 nến */
+function btcSeries(c, tfms) {
+  var out = {}, arr = [], k20 = 2 / 21, k50 = 2 / 51, n = c.length, j, atr = 0;
+  function mkAgg(b) { return { b: b, id: null, cl: 0, e20: 0, e50: 0, cnt: 0 }; }
+  function aggPush(a, v) { a.cnt++; if (a.cnt === 1) { a.e20 = v; a.e50 = v; } else { a.e20 = v * k20 + a.e20 * (1 - k20); a.e50 = v * k50 + a.e50 * (1 - k50); } }
+  var A1 = mkAgg(Math.max(1, Math.round(36e5 / tfms))), A4 = mkAgg(Math.max(1, Math.round(144e5 / tfms))), B = mkAgg(1);
+  function step(a, bar) { var id = Math.floor(bar.t / (tfms * a.b)); if (a.id !== null && id !== a.id) aggPush(a, a.cl); a.id = id; a.cl = bar.c; }
+  function st(a, p) { return a.cnt >= 50 ? trendSt(p, a.e20, a.e50) : 0; }
+  for (j = 0; j < n; j++) {
+    var bar = c[j], tr = j ? Math.max(bar.h - bar.l, Math.abs(bar.h - c[j - 1].c), Math.abs(bar.l - c[j - 1].c)) : bar.h - bar.l;
+    atr = j === 0 ? tr : (atr * 13 + tr) / 14;
+    aggPush(B, bar.c); step(A1, bar); step(A4, bar);
+    var sh = 0; if (j >= 4) { var mv = bar.c - c[j - 4].c; if (Math.abs(mv) >= 3 * atr) sh = mv > 0 ? 1 : -1; }
+    out[bar.t] = { s15: st(B, bar.c), s1: st(A1, bar.c), s4: st(A4, bar.c), shock: sh };
+  }
+  return out;
+}
 var PLAN_CFG = { min: 5, hard: 0, tp: [2, 3.5, 5.5], sl: 1, rr: 2, f: [] };
 function emaArr(c, len) { var k = 2 / (len + 1), e = [], v = c[0].c, i; for (i = 0; i < c.length; i++) { v = i === 0 ? c[0].c : c[i].c * k + v * (1 - k); e.push(v); } return e; }
 function rsiLast(c, len) {
@@ -1287,7 +1384,7 @@ function stratOutcome(c, P, sg, slAtr, tps) {
   return { st: tp >= 3 ? "tp3" : stop ? (tp > 0 ? "be" : "sl") : tp > 0 ? "tp" : "run", R: r, tp: tp, entry: e, R1: R };
 }
 function sumStats(l) { var n = l.length, w = 0, s = 0, m = {}, pos = 0, tot = 0, k; l.forEach(function (t) { if (t.tp > 0) w++; s += t.R; m[t.sy] = (m[t.sy] || 0) + t.R; }); for (k in m) { tot++; if (m[k] > 0) pos++; } return { n: n, win: n ? w / n : 0, exp: n ? s / n : 0, sum: s, pos: pos, tot: tot }; }
-function btPoint(c, tf, L, i, IA) {
+function btPoint(c, tf, L, i, IA, BX, sym) {
   var sub = c.slice(Math.max(0, i - 800), i), A = analyze(sub, tf, L), out = [], oldTp = PLAN_CFG.tp, oldHard = PLAN_CFG.hard, oldSl = PLAN_CFG.sl, oldF = PLAN_CFG.f;
   var ofs = A.of && A.of.has ? A.of.score : 0, st = IA ? indState(IA, i - 1, ofs) : null;
   PLAN_CFG.hard = 0; PLAN_CFG.f = [];
@@ -1297,7 +1394,8 @@ function btPoint(c, tf, L, i, IA) {
       var P = buildPlan(sub, A, tf), best = null;
       [P.long, P.short].forEach(function (x) { if (x && (!best || x.pts > best.pts)) best = x; });
       if (!best) return;
-      out.push({ i: i, mode: mi * 2 + (si - 1), pts: best.pts, ctr: !!best.ctr, vp: best.vp ? 1 : 0, dir: best.dir, st: st, r: simPlan(best, c, i, si) });
+      var cx = BX ? BX[c[i - 1].t] : null, stx = st ? Object.assign({}, st) : null; if (stx) XK.forEach(function (k) { stx[k] = xState(best.x, k, best.dir, cx, sym); });
+      out.push({ i: i, mode: mi * 2 + (si - 1), pts: best.pts, ctr: !!best.ctr, vp: best.vp ? 1 : 0, dir: best.dir, st: stx, r: simPlan(best, c, i, si) });
     });
   });
   PLAN_CFG.tp = oldTp; PLAN_CFG.hard = oldHard; PLAN_CFG.sl = oldSl; PLAN_CFG.f = oldF;
@@ -1329,11 +1427,14 @@ function analyze(c, tf, L) {
   var A = {}, n = c.length;
   A.atr = atrArr(c, 14);
   A.swings = findSwings(c, L);
-  A.struct = findStructure(c, A.swings, L);
+  A.struct = findStructure(c, A.swings, L, A.atr);
   A.sweeps = findSweeps(c, A.swings, L);
   A.fvgs = findFVGs(c, A.atr, A.struct.ev, A.sweeps);
   A.obs = findOBs(c, A.struct.ev, A.fvgs, A.atr, A.sweeps);
   A.inv = findInversions(c, A.obs, A.fvgs, A.atr, A.struct.ev);
+  A.uni = findUnicorns(c, A.inv, A.fvgs, A.atr);
+  A.turtle = findTurtle(c, A.atr, 20);
+  A.sw2 = findSwings(c, 2);
   A.liq = findLiquidity(c, A.swings, A.atr, L);
   A.sweeps = findSweeps(c, A.swings, L);
   A.pd = premiumDiscount(c, A.swings);
@@ -1356,8 +1457,8 @@ function analyze(c, tf, L) {
   var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
-  var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-04.2";
+  var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
+  var VER = "2026-11-04.4";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1375,7 +1476,7 @@ function analyze(c, tf, L) {
   if (window.innerWidth < 640) { LAY.vp = 0; LAY.liq = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; } /* điện thoại: mặc định gọn, bật thêm trong Cài đặt */
   if (ST.lay) Object.keys(ST.lay).forEach(function (k) { if (k in LAY) LAY[k] = ST.lay[k]; });
   if (window.innerWidth < 640 && !lsGet("ictChartFocusV2", 0)) { LAY.inv = 0; LAY.vp = 0; LAY.liq = 0; LAY.kz = 0; LAY.sess = 0; LAY.opens = 0; LAY.cyc = 0; LAY.m90 = 0; lsSet("ictChartFocusV2", 1); saveState(); }
-  var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", inv: "Đảo ngược (Breaker, IFVG)", tested: "Hiện cả vùng đã test", plan: "Đường Entry / SL / TP", vp: "Volume Profile (POC, VAH, VAL)", weak: "Hiện cả vùng yếu (★)", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
+  var LABELS = { struct: "BOS / CHoCH", ob: "Order Block", fvg: "FVG", inv: "Đảo ngược (Breaker, IFVG)", mdl: "Mô hình (Unicorn, Turtle Soup)", tested: "Hiện cả vùng đã test", plan: "Đường Entry / SL / TP", vp: "Volume Profile (POC, VAH, VAL)", weak: "Hiện cả vùng yếu (★)", liq: "Thanh khoản (EQH/EQL)", pd: "Premium / Discount, OTE", kz: "Killzone", sess: "Phiên Á / Âu", opens: "Open & PDH/PDL", cyc: "Chu kỳ thời gian", m90: "Chu kỳ 90 phút" };
   var STABLE_RE = /^(USD.{0,2}|.*USD|EUR.?|AEUR|DAI|BUSD|TRY|PAXG|XAUT|PYUSD|FRAX|GUSD|LUSD|UST)$/, AXD = 2;
   function fmtD(p) { return p.toFixed(AXD); }
   var COL = { up: "#16c784", down: "#ea3943", amber: "#f5b73b", cyan: "#6188ff", violet: "#9b7bff", dim: "#9aa3b5", line: "rgba(255,255,255,.06)", fg: "#f2f4f8" };
@@ -1418,7 +1519,7 @@ function analyze(c, tf, L) {
   Object.keys(LAY).forEach(function (k) {
     var b = document.createElement("button"); b.className = "swrow" + (LAY[k] ? " on" : "");
     b.innerHTML = "<span>" + LABELS[k] + "</span><span class=\"tg\"></span>";
-    b.addEventListener("click", function () { LAY[k] = LAY[k] ? 0 : 1; saveState(); b.className = "swrow" + (LAY[k] ? " on" : ""); if (A && (k === "tested" || k === "inv" || k === "weak")) renderAll(); draw(); });
+    b.addEventListener("click", function () { LAY[k] = LAY[k] ? 0 : 1; saveState(); b.className = "swrow" + (LAY[k] ? " on" : ""); if (A && (k === "tested" || k === "inv" || k === "weak" || k === "mdl")) renderAll(); draw(); });
     $("layers").appendChild(b);
   });
   ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT"].forEach(function (s) {
@@ -1592,7 +1693,7 @@ function analyze(c, tf, L) {
     if (GR[v]) applySub(v);
     if (v === "chart") { syncSigChip(); requestAnimationFrame(draw); }
     if (v === "mkt") onSub("mkt");
-    if (v === "sig") { SCE = true; sigLoad(); renderSig(); sigAutoChk(); setTimeout(function () { sigKRefresh(false); recRefresh(true); }, 300); }
+    if (v === "sig") { SCE = true; sigLoad(); renderBtcCard(); btcRefresh(true); renderSig(); sigAutoChk(); setTimeout(function () { sigKRefresh(false); recRefresh(true); }, 300); }
     if (v === "bt") { renderBT(); renderStrat(); }
   }
   function applySub(g) {
@@ -1775,7 +1876,7 @@ function analyze(c, tf, L) {
         var xa = X(g.i) - bw / 2, col = g.dir === 1 ? "22,199,132" : "234,57,67";
         x.fillStyle = "rgba(" + col + (g.touched !== null ? ",.10)" : ",.2)"); x.fillRect(xa, Y(g.top), pw - xa, Y(g.bottom) - Y(g.top));
         x.strokeStyle = "rgba(" + col + ",.55)"; x.setLineDash([3, 3]); x.strokeRect(xa, Y(g.top), pw - xa, Y(g.bottom) - Y(g.top)); x.setLineDash([]);
-        x.fillStyle = "rgba(" + col + ",.95)"; x.fillText("FVG " + stars(g.sc), Math.max(xa + 3, 3), Y(g.top) + 10);
+        x.fillStyle = "rgba(" + col + ",.95)"; x.fillText("FVG " + stars(g.sc) + (g.fq === 2 ? " mạnh" : g.fq === 0 ? " yếu" : ""), Math.max(xa + 3, 3), Y(g.top) + 10);
       });
     }
     if (LAY.vp && A.vp) {
@@ -1806,6 +1907,19 @@ function analyze(c, tf, L) {
         x.fillStyle = "rgba(" + col + (o.touched !== null ? ",.14)" : ",.26)"); x.fillRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
         x.strokeStyle = "rgba(" + col + ",.9)"; x.lineWidth = 1; x.strokeRect(xa, Y(o.top), pw - xa, Y(o.bottom) - Y(o.top));
         x.fillStyle = "rgba(" + col + ",1)"; x.fillText((o.dir === 1 ? "OB+ " : "OB- ") + stars(o.sc) + (o.touched !== null ? " (đã test)" : ""), Math.max(xa + 3, 3), Y(o.top) + 10);
+      });
+    }
+    if (LAY.mdl) {
+      A.uni.filter(function (g) { return g.dead === null && g.formed <= i1; }).slice(-3).forEach(function (g) {
+        var xa = Math.max(X(g.i) - bw / 2, -2), col = g.dir === 1 ? "22,199,132" : "255,92,112", w = Math.max(pw - xa, 1), yt = Y(g.top), hh = Y(g.bottom) - yt;
+        x.fillStyle = "rgba(245,183,59," + (g.touched !== null ? ".10)" : ".22)"); x.fillRect(xa, yt, w, hh);
+        x.strokeStyle = "rgba(245,183,59,1)"; x.lineWidth = 1.4; x.strokeRect(xa, yt, w, hh); x.lineWidth = 1;
+        x.fillStyle = "rgba(245,183,59,1)"; x.fillText("Unicorn" + (g.dir === 1 ? " ▲ " : " ▼ ") + stars(g.sc) + (g.touched !== null ? " (đã test)" : ""), Math.max(xa + 3, 3), yt + 10);
+      });
+      A.turtle.slice(-6).forEach(function (t) {
+        if (t.i < i0 || t.i > i1) return;
+        var up2 = t.dir === 1, yy = up2 ? Y(C[t.i].l) + 24 : Y(C[t.i].h) - 18;
+        x.fillStyle = "rgba(56,208,232,1)"; x.textAlign = "center"; x.fillText(up2 ? "▲ Turtle" : "▼ Turtle", X(t.i), yy); x.textAlign = "left";
       });
     }
     if (LAY.inv) {
@@ -1855,10 +1969,10 @@ function analyze(c, tf, L) {
     if (LAY.struct) {
       A.struct.ev.slice(-26).forEach(function (e) {
         if (e.i < i0 - 2 || e.from > i1) return;
-        var col = e.dir === 1 ? COL.up : COL.down, y = Math.round(Y(e.p)) + .5;
-        x.strokeStyle = col; x.setLineDash(e.kind === "CHoCH" ? [] : [5, 3]); x.lineWidth = e.kind === "CHoCH" ? 1.4 : 1;
+        var col = e.q === 0 ? "rgba(150,160,180,.85)" : e.dir === 1 ? COL.up : COL.down, y = Math.round(Y(e.p)) + .5;
+        x.strokeStyle = col; x.setLineDash(e.q === 0 ? [2, 3] : e.kind === "CHoCH" ? [] : [5, 3]); x.lineWidth = e.kind === "CHoCH" ? 1.4 : 1;
         x.beginPath(); x.moveTo(X(e.from), y); x.lineTo(X(e.i), y); x.stroke(); x.setLineDash([]);
-        x.fillStyle = col; x.textAlign = "center"; x.fillText(e.kind, (X(e.from) + X(e.i)) / 2, e.dir === 1 ? y - 4 : y + 12); x.textAlign = "left";
+        x.fillStyle = col; x.textAlign = "center"; x.fillText(e.kind + (e.q === 0 ? "?" : ""), (X(e.from) + X(e.i)) / 2, e.dir === 1 ? y - 4 : y + 12); x.textAlign = "left";
       });
       A.sweeps.slice(-8).forEach(function (s) {
         if (s.i < i0 || s.i > i1) return;
@@ -2023,9 +2137,10 @@ function analyze(c, tf, L) {
   function renderLevels() {
     if (!$("levels")) return;
     var p = C[C.length - 1].c, rows = [];
+    A.uni.forEach(function (g) { if (g.dead === null) rows.push({ t: "Unicorn " + (g.dir === 1 ? "tăng " : "giảm ") + stars(g.sc) + (g.touched !== null ? " · đã test" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
     A.inv.forEach(function (g) { if (g.dead === null && okZ(g)) rows.push({ t: (g.kind === "BRK" ? "Breaker " : "IFVG ") + (g.dir === 1 ? "tăng" : "giảm") + (g.touched !== null ? " · đã test" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
     A.obs.forEach(function (o) { if (o.broken === null && okZ(o)) rows.push({ t: (o.dir === 1 ? "OB tăng " : "OB giảm ") + stars(o.sc) + (o.touched !== null ? " · đã test" : ""), a: o.bottom, b: o.top, c: o.dir === 1 ? "bull" : "bear" }); });
-    A.fvgs.forEach(function (g) { if (g.filled === null && g.sc >= minSc() && (LAY.tested || g.ce === null)) rows.push({ t: (g.dir === 1 ? "FVG tăng " : "FVG giảm ") + stars(g.sc) + (g.touched !== null ? " · lấp 1 phần" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
+    A.fvgs.forEach(function (g) { if (g.filled === null && g.sc >= minSc() && (LAY.tested || g.ce === null)) rows.push({ t: (g.dir === 1 ? "FVG tăng " : "FVG giảm ") + stars(g.sc) + (g.fq === 2 ? " · mạnh" : g.fq === 0 ? " · yếu" : "") + (g.touched !== null ? " · lấp 1 phần" : ""), a: g.bottom, b: g.top, c: g.dir === 1 ? "bull" : "bear" }); });
     A.liq.eq.forEach(function (q) { if (q.swept === null) rows.push({ t: q.type, a: q.p, b: q.p, c: q.type === "EQH" ? "bear" : "bull" }); });
     A.levels.forEach(function (l) { rows.push({ t: l.n, a: l.p, b: l.p, c: "neu" }); });
     if (A.pd) { rows.push({ t: "OTE " + A.pd.ote.side, a: A.pd.ote.a, b: A.pd.ote.b, c: "neu" }); rows.push({ t: "Equilibrium", a: A.pd.eq, b: A.pd.eq, c: "neu" }); }
@@ -2250,7 +2365,7 @@ function analyze(c, tf, L) {
 
   /* ---------- Backtest & tối ưu cấu hình kèo ---------- */
   var BT = { run: false, pct: 0, msg: "", cancel: false, trades: null, ind: null, tf: "", sug: null, calSrc: "st", calM: null, set: lsGet("ictBTset", { n: 5, depth: 3000 }), meta: null };
-  var FN = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow", vp: "Volume Profile" }, FORDER = ["rsi", "ema", "macd", "of", "vp"];
+  var FN = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow", vp: "Volume Profile", uni: "Unicorn", ts: "Turtle Soup", idm: "Bỏ IDM chưa quét", fq: "Bỏ FVG yếu", btc: "BTC không ngược" }, FORDER = ["rsi", "ema", "macd", "of", "vp", "uni", "ts", "idm", "fq", "btc"], FBASE = ["rsi", "ema", "macd", "of", "vp"];
   var TPN = ["vừa", "xa", "rất xa"];
   function cfgName(c) { return "Ngưỡng ≥" + c.min + " · " + (c.hard ? "thuận xu hướng EMA" : "cả ngược xu hướng") + " · TP " + TPN[c.mode] + " · SL" + (c.sl + 1) + (c.f && c.f.length ? " · +" + c.f.map(function (k) { return FN[k]; }).join("+") : ""); }
   function curCfg() { return { min: PLAN_CFG.min, hard: PLAN_CFG.hard, mode: PLAN_CFG.mode === undefined ? 1 : PLAN_CFG.mode, sl: PLAN_CFG.sl, f: PLAN_CFG.f.slice() }; }
@@ -2266,9 +2381,9 @@ function analyze(c, tf, L) {
   /* gợi ý + tự tối ưu: thử mọi tổ hợp, kiểm chứng hai nửa dữ liệu và độ đều giữa các mã */
   function perSym(list) { var m = {}, pos = 0, tot = 0, k; list.forEach(function (t) { m[t.sy] = (m[t.sy] || 0) + t.R; }); for (k in m) { tot++; if (m[k] > 0) pos++; } return { pos: pos, tot: tot }; }
   function btSug() {
-    var rows = [], mn, hd, md, sl, fm, nf = FORDER.length;
+    var rows = [], mn, hd, md, sl, fm, nf = FBASE.length;
     for (mn = 3; mn <= 8; mn++) for (hd = 0; hd <= 1; hd++) for (md = 0; md < 3; md++) for (sl = 0; sl < 2; sl++) for (fm = 0; fm < (1 << nf); fm++) {
-      var f = FORDER.filter(function (k, q) { return fm & (1 << q); }), a = btAggregate(BT.trades, mn, hd, md * 2 + sl, f);
+      var f = FBASE.filter(function (k, q) { return fm & (1 << q); }), a = btAggregate(BT.trades, mn, hd, md * 2 + sl, f);
       if (a.n >= 10) rows.push({ cfg: { min: mn, hard: hd, mode: md, sl: sl, f: f }, a: a });
     }
     var cand = rows.slice().sort(function (x, y) { return y.a.exp - x.a.exp; }).slice(0, 60);
@@ -2327,7 +2442,11 @@ function analyze(c, tf, L) {
     renderBT();
     (async function () {
       try {
-        var si2;
+        var si2, BXS = null;
+        if (!isFx() && syms.some(function (z) { return z !== "BTCUSDT"; })) {
+          BT.msg = "Tải BTC để tính bối cảnh…"; renderBT();
+          try { var bt0 = await histKlines("BTCUSDT", depth); if (bt0.length > 300) BXS = btcSeries(bt0, tf0); } catch (e) {}
+        }
         for (si2 = 0; si2 < syms.length; si2++) {
           if (BT.cancel) break;
           var arr;
@@ -2341,7 +2460,7 @@ function analyze(c, tf, L) {
           while (k < pos.length && !BT.cancel) {
             var t0 = Date.now();
             while (k < pos.length && Date.now() - t0 < 40) {
-              var r = btPoint(arr, tf0, sw, pos[k], IA);
+              var r = btPoint(arr, tf0, sw, pos[k], IA, BXS, syms[si2]);
               r.tr.forEach(function (x) { if (x.pts >= 3) { x.sy = si2; x.h = pos[k] < mid ? 0 : 1; all.push(x); } });
               ofs.push({ i: pos[k] - 1, s: r.of, has: r.has }); k++; ptsDone++;
             }
@@ -2825,7 +2944,7 @@ function analyze(c, tf, L) {
     var h = "<h2>So sánh từng chỉ báo <span>cùng quy tắc SL/TP</span></h2>";
     if (!BT.ind || !BT.trades) { el.innerHTML = h + "<div class=\"note\">Chạy backtest để so sánh RSI, EMA, MACD, Order flow với kèo ICT.</div>"; return; }
     var cf = curCfg(), ict = btAggregate(BT.trades, cf.min, cf.hard, cf.mode * 2 + cf.sl, cf.f), il = ict.list;
-    var names = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow" }, desc = { rsi: "RSI(14) cắt lên 30 mua, cắt xuống 70 bán", ema: "EMA20 cắt EMA50", macd: "MACD(12,26,9) cắt đường tín hiệu", of: "Điểm order flow ≥ +2 mua, ≤ −2 bán" };
+    var names = { rsi: "RSI", ema: "EMA", macd: "MACD", of: "Order flow", uni: "Có Unicorn", ts: "Có Turtle Soup", idm: "IDM không chờ", fq: "FVG không yếu", btc: "BTC không ngược" }, desc = { rsi: "RSI(14) cắt lên 30 mua, cắt xuống 70 bán", ema: "EMA20 cắt EMA50", macd: "MACD(12,26,9) cắt đường tín hiệu", of: "Điểm order flow ≥ +2 mua, ≤ −2 bán" };
     function pill(v, pct) { return "<span class=\"pill " + (pct ? (v >= 0.5 ? "bull" : v < 0.4 ? "bear" : "neu") : (v > 0 ? "bull" : v < 0 ? "bear" : "neu")) + "\">" + (pct ? (v * 100).toFixed(0) + "%" : (v >= 0 ? "+" : "") + v.toFixed(2)) + "</span>"; }
     h += "<h3 class=\"sub\">1. Mỗi chỉ báo giao dịch riêng</h3><div class=\"note\">Vào lệnh ở nến sau tín hiệu, SL theo ATR, TP1 tối thiểu " + (PLAN_CFG.rr || 2) + "R, cùng cách chốt 1/3 và dời SL như kèo ICT.</div>";
     h += "<table class=\"tb\"><tr><th>Chiến lược</th><th>Lệnh</th><th>Win</th><th>E (R)</th><th>Tổng R</th></tr>";
@@ -2837,7 +2956,7 @@ function analyze(c, tf, L) {
     h += "</table><div class=\"note\">" + ["rsi", "ema", "macd", "of"].map(function (k) { return "<b>" + names[k] + ":</b> " + desc[k]; }).join(" · ") + "</div>";
     h += "<h3 class=\"sub\">2. Chỉ báo có khớp entry ICT không</h3><div class=\"note\">Tại lúc kèo ICT xuất hiện, xem chỉ báo có cùng hướng không (RSI: dưới 40 là mua, trên 60 là bán; EMA20 trên EMA50 là mua; MACD trên tín hiệu là mua; Order flow dương là mua). Rồi so kết quả của kèo ICT khi khớp và khi không khớp.</div>";
     h += "<table class=\"tb\"><tr><th>Chỉ báo</th><th>Khớp</th><th>Khi khớp</th><th>Khi không</th></tr>";
-    ["rsi", "ema", "macd", "of"].forEach(function (k) {
+    ["rsi", "ema", "macd", "of", "uni", "ts", "idm", "fq", "btc"].forEach(function (k) {
       if (k === "of" && !BT.ind.hasOf) return;
       var ag = il.filter(function (t) { return t.st && t.st[k] === t.dir; }), dg = il.filter(function (t) { return !(t.st && t.st[k] === t.dir); }), sa = listStats(ag), sd = listStats(dg);
       function cell(x) { return x.n ? (x.win * 100).toFixed(0) + "% · " + (x.exp >= 0 ? "+" : "") + x.exp.toFixed(2) + "R<small> (" + x.n + ")</small>" : "–"; }
@@ -2911,7 +3030,7 @@ function analyze(c, tf, L) {
     h += chipRow("Hướng kèo", "hard", [[0, "Cả hai chiều"], [1, "Thuận xu hướng EMA"]], cur.hard);
     h += chipRow("Độ xa của TP", "mode", [[0, "Vừa"], [1, "Xa"], [2, "Rất xa"]], cur.mode);
     h += chipRow("Vị trí SL", "sl", [[1, "SL2 · cấu trúc"], [2, "SL3 · rộng"]], cur.sl);
-    h += chipRow("Bộ lọc (RSI, EMA, MACD, Order flow cùng hướng; Volume Profile: vùng phải trùng VAL/VAH/POC)", "f", FORDER.map(function (k) { return [k, FN[k]]; }), cur.f);
+    h += chipRow("Bộ lọc (RSI, EMA, MACD, Order flow cùng hướng; Volume Profile: vùng phải trùng VAL/VAH/POC; Unicorn/Turtle Soup: phải có mô hình; Bỏ IDM chưa quét / FVG yếu; BTC không ngược: BTC không đang xả/pump ngược hướng kèo)", "f", FORDER.map(function (k) { return [k, FN[k]]; }), cur.f);
     if (BT.sug) {
       var rowH = function (r, tag) {
         return "<button class=\"btrow\" data-c=\"" + [r.cfg.min, r.cfg.hard, r.cfg.mode, r.cfg.sl, r.cfg.f.join("+")].join(",") + "\"><span class=\"bn\"><b>" + tag + "</b><small>" + cfgName(r.cfg) + "</small></span><span class=\"bs\"><span class=\"pill " + (r.a.win >= 0.6 ? "bull" : r.a.win < 0.4 ? "bear" : "neu") + "\">Win " + (r.a.win * 100).toFixed(0) + "%</span><span class=\"pill " + (r.a.exp > 0 ? "bull" : "bear") + "\">E " + (r.a.exp >= 0 ? "+" : "") + r.a.exp.toFixed(2) + "R</span><small>" + r.a.n + " lệnh</small></span></button>";
@@ -3147,6 +3266,53 @@ function analyze(c, tf, L) {
     var t3 = o.tps[2], span = t3 + 1, pc = function (m) { return Math.max(0, Math.min(100, (m + 1) / span * 100)).toFixed(1); }, bar = "<div class=\"pbar\"><b class=\"zl\" style=\"width:" + pc(0) + "%\"></b><b class=\"zg\" style=\"left:" + pc(0) + "%;width:" + (100 - pc(0)).toFixed(1) + "%\"></b><s style=\"left:" + pc(0) + "%\"></s><s style=\"left:" + pc(o.tps[0]) + "%\"></s><s style=\"left:" + pc(o.tps[1]) + "%\"></s><i class=\"" + (st.mv >= 0 ? "g" : "r") + "\" style=\"left:" + pc(st.mv) + "%\"></i></div><div class=\"pbl\"><span>SL</span><span style=\"left:" + pc(0) + "%\">Entry</span><span style=\"left:" + pc(o.tps[0]) + "%\">TP1</span><span style=\"left:" + pc(o.tps[1]) + "%\">TP2</span><span style=\"left:100%\">TP3</span></div>";
     return bar + "Giá hiện tại <b>" + fmtPx(o.px) + "</b> · cách Entry " + (st.mv >= 0 ? "+" : "") + st.mv.toFixed(2) + "R <span class=\"pill " + st.c + "\">" + st.t + "</span>" + (function () { var lq = levLine(o.sigClose, o.sigClose - o.dir * o.atr * o.cf.sl, o.dir); return "<br><small class=\"" + (lq.warn ? "bear" : "muted") + "\">" + lq.full + "</small>"; })();
   }
+  /* ----- bối cảnh BTC trong ngày ----- */
+  var BTCL = { cx: null, t: 0, day: null, sig: "", run: false, tfq: "15m" };
+  function btcPill(o) {
+    if (!BTCL.cx || o.sym === "BTCUSDT") return "";
+    var l = btcLab(BTCL.cx, o.dir);
+    return l === "ok" ? "<span class=\"pill bull\">BTC thuận</span>" : l === "bad" ? "<span class=\"pill bear\">BTC ngược</span>" : "";
+  }
+  function trTxt(v) { return v === 1 ? "▲ Tăng" : v === -1 ? "▼ Giảm" : "■ Đi ngang"; }
+  function trCls(v) { return v === 1 ? "bull" : v === -1 ? "bear" : ""; }
+  function renderBtcCard() {
+    var el = $("btcc"); if (!el) return;
+    if (isFx()) { el.hidden = true; return; } el.hidden = false;
+    var cx = BTCL.cx; if (!cx) { el.innerHTML = "<h2>BTC trong ngày <span>đang tải…</span></h2>"; return; }
+    var tg = function (l) { return l === "ok" ? ["Thuận lợi", "bull"] : l === "bad" ? ["Nguy hiểm", "bear"] : ["Trung lập", ""]; };
+    var b = tg(btcLab(cx, 1)), s2 = tg(btcLab(cx, -1)), adv;
+    if (cx.shock === -1) adv = "BTC đang giảm mạnh bất thường trong vài nến gần nhất. Tránh vào kèo mua alt ngay lúc này, chờ BTC ổn định.";
+    else if (cx.shock === 1) adv = "BTC đang tăng mạnh bất thường trong vài nến gần nhất. Kèo bán alt dễ bị quét, chờ BTC ổn định.";
+    else if (cx.s1 === 1 && cx.s4 === 1) adv = "BTC tăng ở cả 1h và 4h: ưu tiên kèo mua, kèo bán là đi ngược xu hướng lớn.";
+    else if (cx.s1 === -1 && cx.s4 === -1) adv = "BTC giảm ở cả 1h và 4h: ưu tiên kèo bán, kèo mua alt rủi ro cao.";
+    else adv = "BTC chưa có xu hướng rõ ở các khung lớn: kèo alt phải tự đứng vững, không nên dựa vào BTC.";
+    var h = "<h2>BTC trong ngày <span>cập nhật " + hhmm(BTCL.t) + "</span></h2><div class=\"tk-grid\">";
+    h += "<div class=\"tk-t\"><small>Khung " + BTCL.tfq + "</small><b class=\"" + trCls(cx.s15) + "\">" + trTxt(cx.s15) + "</b></div><div class=\"tk-t\"><small>Khung ~1h</small><b class=\"" + trCls(cx.s1) + "\">" + trTxt(cx.s1) + "</b></div><div class=\"tk-t\"><small>Khung ~4h</small><b class=\"" + trCls(cx.s4) + "\">" + trTxt(cx.s4) + "</b></div>";
+    if (BTCL.day) { var d = BTCL.day; h += "<div class=\"tk-t\"><small>Hôm nay</small><b class=\"" + (d.chg >= 0 ? "bull" : "bear") + "\">" + (d.chg >= 0 ? "+" : "") + d.chg.toFixed(2) + "%</b><small style=\"margin:4px 0 0\">Giá nằm " + d.pos.toFixed(0) + "% trong biên ngày</small></div>"; }
+    h += "</div><div class=\"tk-grid\"><div class=\"tk-t\"><small>Kèo MUA alt</small><b class=\"" + b[1] + "\">" + b[0] + "</b></div><div class=\"tk-t\"><small>Kèo BÁN alt</small><b class=\"" + s2[1] + "\">" + s2[0] + "</b></div></div><div class=\"tk-nt\">" + adv + "</div>";
+    el.innerHTML = h;
+  }
+  async function btcRefresh(force) {
+    if (BTCL.run || isFx() || document.hidden) return;
+    if (!force && Date.now() - BTCL.t < 55000) return;
+    BTCL.run = true;
+    try {
+      var tfq = tfms < 9e5 ? "15m" : S.tf, ms = TFMS[tfq] || 9e5, a = mapK(await bget("/api/v3/klines?symbol=BTCUSDT&interval=" + tfq + "&limit=1000"));
+      if (a.length > 100) {
+        var live = a[a.length - 1], ser = btcSeries(a, ms), cx = ser[live.t];
+        BTCL.cx = cx; BTCL.t = Date.now(); BTCL.tfq = tfq; BTC_NOW = cx; BTCL.day = null;
+        if (ms <= 36e5) {
+          var m0 = new Date(); m0.setHours(0, 0, 0, 0); var ds = a.filter(function (k) { return k.t >= m0.getTime(); });
+          if (ds.length) { var hi = Math.max.apply(null, ds.map(function (k) { return k.h; })), lo = Math.min.apply(null, ds.map(function (k) { return k.l; })); BTCL.day = { chg: (live.c / ds[0].o - 1) * 100, pos: hi > lo ? (live.c - lo) / (hi - lo) * 100 : 50 }; }
+        }
+        var sg = [cx.s1, cx.s4, cx.shock, btcLab(cx, 1), btcLab(cx, -1)].join("|");
+        renderBtcCard();
+        if (sg !== BTCL.sig) { BTCL.sig = sg; if (tab === "sig") renderSig(); }
+      }
+    } catch (e) {}
+    BTCL.run = false;
+  }
+  setInterval(function () { if (tab === "sig") btcRefresh(false); }, 20000);
   var PXT = null;
   async function sigPxRefresh() {
     if (document.hidden || tab !== "sig" || !SC.fresh.length) return;
@@ -3302,7 +3468,7 @@ function analyze(c, tf, L) {
     var cls = (d === 1 ? "up" : "dn") + (st.x ? " old" : st.w ? " warn" : "");
     var h = "<details class=\"sgc " + cls + "\" style=\"--c:" + SCOL[o.k] + "\"><summary><div class=\"sg1\"><span class=\"av\" data-ic=\"" + splitSym(o.sym).b + "\"></span><div class=\"sgn\"><b>" + splitSym(o.sym).b + "<small>/USDT · " + S.tf + "</small>" + mk(o.sym) + "</b><span><i class=\"dotc\"></i>" + STRAT[o.k] + (o.src === "mv" ? " · tăng/giảm" : "") + " · " + fmtAge(o.age * tfms / 6e4) + "</span></div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
     h += "<div class=\"sgpeek\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div><small>TP1</small><b>" + fmtPx(tp[0]) + "</b></div><div><small>Trạng thái</small><span class=\"pill " + st.c + "\" data-state=\"" + o.id + "\">" + st.t + "</span></div></div>";
-    h += "<div class=\"sgtrust\">" + qBadge(o) + "<span class=\"note\">" + trust + "</span></div></summary>";
+    h += "<div class=\"sgtrust\">" + qBadge(o) + btcPill(o) + "<span class=\"note\">" + trust + "</span></div></summary>";
     h += "<div class=\"sgdetail\"><div class=\"lv\"><div><small>Entry</small><b>" + fmtPx(e) + "</b></div><div class=\"sl\"><small>SL · -" + pct.toFixed(2) + "%</small><b>" + fmtPx(sl) + "</b></div></div>";
     h += "<div class=\"lv tp\">" + tp.map(function (p, i) { return "<div><small>TP" + (i + 1) + " · " + o.tps[i] + "R</small><b>" + fmtPx(p) + "</b></div>"; }).join("") + "</div>";
     h += "<div class=\"pxl\" data-px=\"" + o.id + "\">" + sigPxLine(o) + "</div><div class=\"pxl chkr\" data-chk=\"" + o.id + "\">" + chkHtml(o) + "</div>" + (o.alt ? "<div class=\"pxl\"><span class=\"note\">Mã này còn kèo: " + o.alt + "</span></div>" : "");
