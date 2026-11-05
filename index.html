@@ -129,6 +129,11 @@ ul.why li::before { content: ""; position: absolute; left: 3px; top: .55em; widt
 .tk-h { font-size: 11px; font-weight: 800; color: var(--dim); letter-spacing: .04em; margin: 2px 0 0; }
 .mk { display: inline-flex !important; align-items: center; width: auto !important; max-width: max-content; flex: 0 0 auto !important; height: 16px; line-height: 1; font-style: normal; font-size: 9px; font-weight: 800; letter-spacing: .03em; padding: 0 6px; border-radius: 5px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; border: 1px solid transparent; } .mk.f { color: var(--cyan); border-color: rgba(97,136,255,.45); background: rgba(97,136,255,.10); } .mk.s { color: var(--dim); border-color: rgba(255,255,255,.14); background: transparent; }
 #plan .lv, #bias .lv, #vpc .lv, #ofc .lv { border-top: 0; background: rgba(255,255,255,.04); border-radius: 14px; padding: 12px 13px; } #plan .lv + .lv, #bias .lv + .lv { margin-top: -4px; }
+.btcc { padding: 12px 14px; gap: 0; } .scopt { margin-top: 2px; } .scopt > summary { padding: 11px 14px; font-size: 13px; } .scopt .sb { padding: 0 14px 14px; gap: 8px; }
+.bd > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 8px; position: relative; padding-right: 22px; } .bd > summary::-webkit-details-marker { display: none; } .bd > summary::after { content: ""; position: absolute; right: 4px; top: 5px; width: 8px; height: 8px; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg); transition: transform .2s; } .bd[open] > summary::after { transform: rotate(225deg); top: 9px; }
+.bdh { display: flex; align-items: center; gap: 8px; } .bdh > b { font-size: 15px; font-weight: 800; } .bdp { height: 20px !important; font-size: 10px !important; } .bdp.bear { color: var(--down) !important; border-color: rgba(234,57,67,.45) !important; background: rgba(234,57,67,.10) !important; }
+.bdb { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; }
+.tk-sum b.bull { color: var(--up); } .tk-sum b.bear { color: var(--down); }
 .warn { font-size: 10px; color: var(--dim); line-height: 1.6; padding: 2px 4px 8px; }
 
 /* cảm giác app */
@@ -1458,7 +1463,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-04.4";
+  var VER = "2026-11-05.1";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2686,7 +2691,7 @@ function analyze(c, tf, L) {
     return { st: tp >= 3 ? "tp3" : stop ? (tp > 0 ? "be" : "sl") : "exp", R: rr2, tp: tp, done: 1, tEnd: arr[end].t + q.tfm };
   }
   async function fwUpdate(force) {
-    if (FW.run) return;
+    if (FW.run) { if (force) FW.again = 1; return; }
     var bfN = function (q) { return q.done && (!q.p || q.pv !== 2) && q.st !== "lost"; }, pend = FW.j.filter(function (q) { return !q.done; }).concat(FW.j.filter(bfN).slice(0, 40));
     if (!pend.length || (!force && Date.now() - FW.last < 120000)) return;
     FW.run = true; FW.last = Date.now(); if (BT.calSrc === "fw") renderCal();
@@ -2716,7 +2721,10 @@ function analyze(c, tf, L) {
     }
     await Promise.all([worker(), worker(), worker()]);
     FW.run = false; FW.last = Date.now(); fwDedupe(); fwSave();
-    if (tab === "sig" && !SC.run) renderSig();
+    var nDn = FW.j.filter(function (q) { return q.done; }).length;
+    if (tab === "sig" && !SC.run) { if ($("fwp") && nDn === FW.nDn) fwPanelRefresh(); else renderSig(); }
+    FW.nDn = nDn;
+    if (FW.again) { FW.again = 0; fwUpdate(true); }
     FW.bl = (FW.bl || 0) + 1; if (FW.j.some(bfN) && FW.bl < 15) setTimeout(function () { FW.last = 0; fwUpdate(true); }, 1500); if (BT.calSrc === "fw") renderCal();
     if (fail && force) toast("Một số mã chưa tải được, thử lại sau");
   }
@@ -3278,7 +3286,7 @@ function analyze(c, tf, L) {
   function renderBtcCard() {
     var el = $("btcc"); if (!el) return;
     if (isFx()) { el.hidden = true; return; } el.hidden = false;
-    var cx = BTCL.cx; if (!cx) { el.innerHTML = "<h2>BTC trong ngày <span>đang tải…</span></h2>"; return; }
+    var cx = BTCL.cx; if (!cx) { el.innerHTML = "<div class=\"bdh\"><b>BTC trong ngày</b><span class=\"tk-nt\">đang tải…</span></div>"; return; }
     var tg = function (l) { return l === "ok" ? ["Thuận lợi", "bull"] : l === "bad" ? ["Nguy hiểm", "bear"] : ["Trung lập", ""]; };
     var b = tg(btcLab(cx, 1)), s2 = tg(btcLab(cx, -1)), adv;
     if (cx.shock === -1) adv = "BTC đang giảm mạnh bất thường trong vài nến gần nhất. Tránh vào kèo mua alt ngay lúc này, chờ BTC ổn định.";
@@ -3286,11 +3294,13 @@ function analyze(c, tf, L) {
     else if (cx.s1 === 1 && cx.s4 === 1) adv = "BTC tăng ở cả 1h và 4h: ưu tiên kèo mua, kèo bán là đi ngược xu hướng lớn.";
     else if (cx.s1 === -1 && cx.s4 === -1) adv = "BTC giảm ở cả 1h và 4h: ưu tiên kèo bán, kèo mua alt rủi ro cao.";
     else adv = "BTC chưa có xu hướng rõ ở các khung lớn: kèo alt phải tự đứng vững, không nên dựa vào BTC.";
-    var h = "<h2>BTC trong ngày <span>cập nhật " + hhmm(BTCL.t) + "</span></h2><div class=\"tk-grid\">";
-    h += "<div class=\"tk-t\"><small>Khung " + BTCL.tfq + "</small><b class=\"" + trCls(cx.s15) + "\">" + trTxt(cx.s15) + "</b></div><div class=\"tk-t\"><small>Khung ~1h</small><b class=\"" + trCls(cx.s1) + "\">" + trTxt(cx.s1) + "</b></div><div class=\"tk-t\"><small>Khung ~4h</small><b class=\"" + trCls(cx.s4) + "\">" + trTxt(cx.s4) + "</b></div>";
-    if (BTCL.day) { var d = BTCL.day; h += "<div class=\"tk-t\"><small>Hôm nay</small><b class=\"" + (d.chg >= 0 ? "bull" : "bear") + "\">" + (d.chg >= 0 ? "+" : "") + d.chg.toFixed(2) + "%</b><small style=\"margin:4px 0 0\">Giá nằm " + d.pos.toFixed(0) + "% trong biên ngày</small></div>"; }
-    h += "</div><div class=\"tk-grid\"><div class=\"tk-t\"><small>Kèo MUA alt</small><b class=\"" + b[1] + "\">" + b[0] + "</b></div><div class=\"tk-t\"><small>Kèo BÁN alt</small><b class=\"" + s2[1] + "\">" + s2[0] + "</b></div></div><div class=\"tk-nt\">" + adv + "</div>";
-    el.innerHTML = h;
+    var vd = cx.shock === -1 ? ["Giảm mạnh", "bear"] : cx.shock === 1 ? ["Tăng mạnh", "bull"] : btcLab(cx, 1) === "bad" ? ["Mua nguy hiểm", "bear"] : btcLab(cx, -1) === "bad" ? ["Bán nguy hiểm", "bear"] : btcLab(cx, 1) === "ok" ? ["Thuận mua", "bull"] : btcLab(cx, -1) === "ok" ? ["Thuận bán", "bull"] : ["Trung lập", ""];
+    var ic = function (v) { return "<b class=\"" + trCls(v) + "\">" + (v === 1 ? "▲" : v === -1 ? "▼" : "■") + "</b>"; };
+    var h = "<details class=\"bd\" id=\"btcd\"" + (BTCL.open ? " open" : "") + "><summary><div class=\"bdh\"><b>BTC trong ngày</b><span class=\"mk " + (vd[1] === "bull" ? "f" : "s") + " bdp " + vd[1] + "\">" + vd[0] + "</span></div><div class=\"tk-sum\"><span>" + BTCL.tfq + " " + ic(cx.s15) + "</span><span>1h " + ic(cx.s1) + "</span><span>4h " + ic(cx.s4) + "</span>" + (BTCL.day ? "<span>Hôm nay <b class=\"" + (BTCL.day.chg >= 0 ? "bull" : "bear") + "\">" + (BTCL.day.chg >= 0 ? "+" : "") + BTCL.day.chg.toFixed(2) + "%</b></span>" : "") + "</div></summary><div class=\"bdb\">";
+    h += "<div class=\"tk-grid\"><div class=\"tk-t\"><small>Kèo MUA alt</small><b class=\"" + b[1] + "\">" + b[0] + "</b></div><div class=\"tk-t\"><small>Kèo BÁN alt</small><b class=\"" + s2[1] + "\">" + s2[0] + "</b></div>";
+    if (BTCL.day) h += "<div class=\"tk-t\"><small>Vị trí trong biên ngày</small><b>" + BTCL.day.pos.toFixed(0) + "%</b></div>";
+    h += "<div class=\"tk-t\"><small>Cập nhật</small><b>" + hhmm(BTCL.t) + "</b></div></div><div class=\"tk-nt\">" + adv + "</div></div></details>";
+    el.innerHTML = h; var bd = $("btcd"); if (bd) bd.addEventListener("toggle", function () { BTCL.open = bd.open; });
   }
   async function btcRefresh(force) {
     if (BTCL.run || isFx() || document.hidden) return;
@@ -3482,16 +3492,20 @@ function analyze(c, tf, L) {
     var fr = scF(SC.fresh), rc = scF(SC.recent), missing = SKEY.some(function (k) { return SR.en[k] && SC.when && !SC.kinds[k]; });
     stRestore();
     var h = "<div class=\"herot\"><div><small>QUÉT TÍN HIỆU · " + S.tf + "</small><b>" + (SC.run ? "<span id=\"sctxt\">Đang quét… " + SC.pct + "%</span>" : SC.when ? fr.length + " kèo mới" : "Chưa quét khung này") + "</b></div><button class=\"go\" id=\"scgo\" style=\"min-height:44px;padding:0 18px\">" + (SC.run ? "…" : "QUÉT") + "</button></div>";
-    h += "<div class=\"seg3\" id=\"scsrc\"><button data-src=\"vol\" class=\"" + (SCS === "vol" ? "on" : "") + "\">Top vol</button><button data-src=\"mv\" class=\"" + (SCS === "mv" ? "on" : "") + "\">Top tăng/giảm</button></div><div class=\"seg3\" id=\"scn\" style=\"margin-top:6px\">" + [20, 50, 100].map(function (n) { return "<button data-n=\"" + n + "\" class=\"" + (SCN === n ? "on" : "") + "\">" + n + " mã</button>"; }).join("") + "</div>";
+    h += "<div class=\"tk-sum\"><span><b>" + fr.length + "</b> kèo mới</span><span><b>" + (fr.length + rc.length) + "</b> trong 24h</span><span><b>" + SC.nsym + "</b> mã</span><span>" + (SC.when ? fmtAge((Date.now() - SC.when) / 6e4) : "chưa quét") + "</span></div>";
     if (SC.run) h += "<div class=\"conf\"><i id=\"scbar\" style=\"width:" + SC.pct + "%\"></i></div>";
-    h += "<div class=\"stat4\"><div><small>Kèo mới</small><b>" + fr.length + "</b></div><div><small>24h qua</small><b>" + (fr.length + rc.length) + "</b></div><div><small>Số mã quét</small><b>" + SC.nsym + "</b></div><div><small>Cập nhật</small><b style=\"font-size:11px\">" + (SC.when ? fmtAge((Date.now() - SC.when) / 6e4) : "–") + "</b></div></div>";
-    h += "<div class=\"fchips\">" + SKEY.map(function (k) { return "<button data-k=\"" + k + "\" class=\"" + (SR.en[k] ? "on" : "") + "\" style=\"--c:" + SCOL[k] + "\">" + (SR.en[k] ? "✓ " : "") + STRAT[k] + "</button>"; }).join("") + "</div>";
+    var nEn = SKEY.filter(function (k) { return SR.en[k]; }).length;
+    h += "<details class=\"sset scopt\" id=\"scopt\"" + (SC.optOpen ? " open" : "") + "><summary>Tùy chọn quét <small>" + (SCS === "vol" ? "Top vol" : "Tăng/giảm") + " · " + SCN + " mã · " + nEn + " chiến lược</small></summary><div class=\"sb\">";
+    h += "<h4>NGUỒN MÃ</h4><div class=\"seg3\" id=\"scsrc\"><button data-src=\"vol\" class=\"" + (SCS === "vol" ? "on" : "") + "\">Top vol</button><button data-src=\"mv\" class=\"" + (SCS === "mv" ? "on" : "") + "\">Top tăng/giảm</button></div>";
+    h += "<h4>SỐ MÃ QUÉT</h4><div class=\"seg3\" id=\"scn\">" + [20, 50, 100].map(function (n) { return "<button data-n=\"" + n + "\" class=\"" + (SCN === n ? "on" : "") + "\">" + n + " mã</button>"; }).join("") + "</div>";
+    h += "<h4>CHIẾN LƯỢC</h4><div class=\"fchips\">" + SKEY.map(function (k) { return "<button data-k=\"" + k + "\" class=\"" + (SR.en[k] ? "on" : "") + "\" style=\"--c:" + SCOL[k] + "\">" + (SR.en[k] ? "✓ " : "") + STRAT[k] + "</button>"; }).join("") + "</div></div></details>";
     if (missing) h += "<div class=\"note\">Chiến lược vừa bật chưa có dữ liệu quét. Bấm QUÉT để cập nhật.</div>";
     else if (SC.when && Date.now() - SC.when > 9e5) h += "<div class=\"note\">Dữ liệu quét đã cũ (" + fmtAge((Date.now() - SC.when) / 6e4) + "). Bấm QUÉT để cập nhật trước khi vào lệnh.</div>";
     if (!SR.res) h += "<div class=\"note\">Các chiến lược chưa được kiểm chứng trên dữ liệu thật. Vào tab Backtest → Chiến lược và bấm so sánh trước khi tin tín hiệu.</div>";
     if (SC.err) h += "<div class=\"sc\">" + SC.err + "</div>";
     el.innerHTML = h;
     var g = $("scgo"); if (g) g.addEventListener("click", startScan);
+    var so = $("scopt"); if (so) so.addEventListener("toggle", function () { SC.optOpen = so.open; });
     Array.prototype.forEach.call(el.querySelectorAll("#scn button"), function (b) { b.addEventListener("click", function () { if (SC.run || SCN === +b.dataset.n) return; SCN = +b.dataset.n; lsSet("ictScanN", SCN); renderSig(); toast("Lần quét tới sẽ quét " + SCN + " mã"); }); });
     Array.prototype.forEach.call(el.querySelectorAll("#scsrc button"), function (b) { b.addEventListener("click", function () { if (SC.run || SCS === b.dataset.src) return; SCS = b.dataset.src; lsSet("ictScanSrc", SCS); SC.tf = ""; sigLoad(); renderSig(); sigAutoChk(); }); });
     Array.prototype.forEach.call(el.querySelectorAll(".fchips button"), function (b) { b.addEventListener("click", function () { SR.en[b.dataset.k] = SR.en[b.dataset.k] ? 0 : 1; lsSet("ictStratOn", SR.en); renderSig(); }); });
@@ -3598,8 +3612,8 @@ function analyze(c, tf, L) {
         [Y(L.tp[0]), Y(L.tp[1]), yT3].forEach(function (yy) { x.beginPath(); x.moveTo(tx - 6, yy); x.lineTo(tx + 6, yy); x.stroke(); });
         rr(x, tx - 10, msy - 8, 20, 16, 6); x.fillStyle = COL.amber; x.fill(); x.strokeStyle = "#0f1115"; x.lineWidth = 1.5; x.stroke();
         x.fillStyle = "#0f1115"; x.font = "800 11px Inter, sans-serif"; x.textAlign = "center"; x.fillText("⇅", tx, msy + 4); x.textAlign = "left";
-        var lbT = L.ms > 0 ? "SL +" + L.ms.toFixed(2) + "R" : "SL dương", lw = x.measureText(lbT).width + 12;
-        x.font = "700 10px Inter, sans-serif"; lw = x.measureText(lbT).width + 12; rr(x, tx + 14, msy - 8, lw, 16, 5); x.fillStyle = "rgba(15,17,21,.75)"; x.fill(); x.fillStyle = COL.amber; x.fillText(lbT, tx + 20, msy + 4);
+        var lbT = L.ms > 0 ? "+" + L.ms.toFixed(2) + "R" : "", lw;
+        if (lbT) { x.font = "700 10px Inter, sans-serif"; lw = x.measureText(lbT).width + 12; rr(x, tx + 14, msy - 8, lw, 16, 5); x.fillStyle = "rgba(15,17,21,.75)"; x.fill(); x.fillStyle = COL.amber; x.fillText(lbT, tx + 20, msy + 4); }
         SLH = { x: tx, hy: msy, y0: yE, y1: yT3, t3: L.tps[2], cur: curR };
       }
     }
@@ -3609,7 +3623,7 @@ function analyze(c, tf, L) {
       var base = "✕ " + STRAT[L.k] + " · " + (L.dir === 1 ? "MUA" : "BÁN"), sm = "", chips = "";
       if (se) {
         var nm = (FWM.filter(function (m) { return m[0] === FW.m; })[0] || ["", ""])[1].replace(/ \(.*\)/, "");
-        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + (L.ms > 0 ? "Thủ công, SL dương +" + L.ms.toFixed(2) + "R" : ({ third: "Chốt 1/3 mỗi TP", tp1: "Chốt hết ở TP1", tp2: "Chốt hết ở TP2", swing: "Dời SL theo đáy", trail: "Trailing 1R" })[FW.m] || nm);
+        sm = (se.end >= 0 ? "Đã đóng " : "Đang chạy ") + (se.R >= 0 ? "+" : "") + se.R.toFixed(2) + "R · " + (L.ms > 0 ? "Thủ công · SL +" + L.ms.toFixed(2) + "R" : ({ third: "Chốt 1/3 mỗi TP", tp1: "Chốt hết ở TP1", tp2: "Chốt hết ở TP2", swing: "Dời SL theo đáy", trail: "Trailing 1R" })[FW.m] || nm);
         chips = "<span class=\"ent\">▲ Vào " + hhmm(C[se.j + 1].t) + "</span>" + se.ev.map(function (e) { return "<span class=\"" + e.c + "\">" + (e.t === "SL" ? "✕ SL" : e.t === "BE" ? "B · về Entry" : e.t === "Thoát" ? "T · Thoát" : e.t.slice(2) + " · " + e.t) + " " + hhmm(C[e.i].t) + "</span>"; }).join("") + (se.end < 0 ? "<span>đang chạy</span>" : "");
       }
       var lqb = levLine(L.e, L.sl, L.dir), key = base + "|" + sm + "|" + chips + "|" + lqb.txt;
@@ -3689,6 +3703,13 @@ function analyze(c, tf, L) {
     for (i = 0; i < a.children.length; i++) if (!syncDom(a.children[i], b.children[i])) ok = false;
     return ok;
   }
+  function bindWallet(el) {
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fwo]"), function (b) { b.addEventListener("click", function () { fwOpen(b.dataset.fwo); }); });
+    eqBind(el);
+    Array.prototype.forEach.call(el.querySelectorAll("#eqr button"), function (b) { b.addEventListener("click", function () { FWR = b.dataset.r; lsSet("ictEqR", FWR); renderSig(); }); });
+  }
+  /* cập nhật riêng phần ví, không dựng lại cả danh sách kèo (giữ nguyên thẻ đang mở) */
+  function fwPanelRefresh() { var el = $("fwp"); if (!el) { if (tab === "sig") renderSig(); return; } el.innerHTML = fwPanel(); bindWallet(el); }
   var FLB = false;
   function fwLivePatch() {
     var root = $("sigl"); if (!root || !root.querySelector(".wd")) return;
@@ -3723,7 +3744,9 @@ function analyze(c, tf, L) {
   }
   setInterval(fwLive, 2500);
   function fwPanel() {
-    var all = fwView().filter(function (q) { return q.st !== "lost" && q.p && q.p.length; });
+    var allv = fwView().filter(function (q) { return q.st !== "lost"; }), all = allv.filter(function (q) { return q.p && q.p.length; }), pend = allv.filter(function (q) { return !(q.p && q.p.length) && !q.done; });
+    var pendRow = function (q) { return "<button class=\"wk\" data-fwo=\"" + q.id + "\"><span class=\"nm\"><i style=\"background:" + SCOL[q.k] + "\"></i><b>" + splitSym(q.sym).b + "</b>" + mk(q.sym, 1) + "<em class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</em></span><span class=\"mt\"><span class=\"meter\"></span></span><span>…</span><span>đang tải</span></button>"; };
+    if (!all.length && pend.length) return "<div class=\"sect\"><b>Ví của tôi</b><span>" + pend.length + " kèo đang tải dữ liệu</span></div><section class=\"wc wallet-open\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>vừa thêm</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + pend.map(pendRow).join("") + "</section>";
     if (!all.length) return "<div class=\"sect\"><b>Ví của tôi</b><span>chưa có kèo theo dõi</span></div><div class=\"empty2\">Bấm \"+ Theo dõi\" trên thẻ kèo để ví bắt đầu chạy. Mọi kèo ông theo dõi đều chạy trong ví này.</div>";
     var W = fwWallet(all, FW.m), td = ymd(Date.now()), today = W.unreal, cl = W.rows.filter(function (r) { return !r.skip && isFinite(r.tx); }).sort(function (a, b) { return a.tx - b.tx; }), gp = 0, gl = 0, h = "";
     cl.forEach(function (r) { if (ymd(r.tx) === td) today += r.pnl; if (r.pnl > 0) gp += r.pnl; else gl -= r.pnl; });
@@ -3745,10 +3768,10 @@ function analyze(c, tf, L) {
     /* lệnh đang chạy */
     var wm = {}; W.rows.forEach(function (r) { wm[r.q.id] = r; });
     var op = all.filter(function (q) { return !q.done; }).sort(function (a, b) { return b.t - a.t; }).slice(0, 12);
-    if (op.length) h += "<section class=\"wc wallet-open\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>chạm để mở chart</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + op.map(function (q) {
+    if (op.length || pend.length) h += "<section class=\"wc wallet-open\"><div class=\"wh2\"><b>Lệnh đang chạy</b><span>chạm để mở chart</span></div><div class=\"wk hd\"><span>Mã</span><span>SL → TP1</span><span>R</span><span>Lãi/lỗ</span></div>" + op.map(function (q) {
       var cr = q.p[q.p.length - 1][2], r = wm[q.id], pos = Math.max(0, Math.min(100, (cr + 1) / (q.tps[0] + 1) * 100)), z0 = 100 / (q.tps[0] + 1);
       return "<button class=\"wk\" data-fwo=\"" + q.id + "\"><span class=\"nm\"><i style=\"background:" + SCOL[q.k] + "\"></i><b>" + splitSym(q.sym).b + "</b>" + mk(q.sym, 1) + "<em class=\"" + (q.dir === 1 ? "bull" : "bear") + "\">" + (q.dir === 1 ? "MUA" : "BÁN") + "</em></span><span class=\"mt\"><span class=\"meter\"><i style=\"width:" + pos.toFixed(0) + "%;background:" + (cr >= 0 ? "var(--up)" : "var(--down)") + "\"></i><s style=\"left:" + z0.toFixed(0) + "%\"></s></span></span><span class=\"" + cc(cr) + "\">" + (cr >= 0 ? "+" : "") + cr.toFixed(2) + "</span><span class=\"" + (r && !r.skip ? cc(r.pnl) : "") + "\">" + (r && !r.skip ? fm$(r.pnl) : "ví bỏ") + "</span></button>";
-    }).join("") + "</section>";
+    }).join("") + pend.map(pendRow).join("") + "</section>";
     return h + "</div>";
   }
   function renderSig() {
@@ -3771,8 +3794,8 @@ function analyze(c, tf, L) {
         SC.G = G;
       }
       if (dead.length) h += "<details class=\"alt lowd\"><summary>Đã hết hiệu lực (" + dead.length + " kèo): chạm SL hoặc đạt TP1</summary>" + dead.map(sigCard).join("") + "</details>";
-      h += fwPanel();
-    } else h += fwPanel();
+      h += "<div id=\"fwp\">" + fwPanel() + "</div>";
+    } else h += "<div id=\"fwp\">" + fwPanel() + "</div>";
     el.innerHTML = h; el.style.opacity = SC.run && (fr.length || rc.length) ? ".55" : "1"; bindOpen(el);
     if (SCE && !SC.run) {
       SCE = false; el.classList.remove("enter"); void el.offsetWidth;
@@ -3786,7 +3809,7 @@ function analyze(c, tf, L) {
     Array.prototype.forEach.call(el.querySelectorAll("#eqr button"), function (b) { b.addEventListener("click", function () { FWR = b.dataset.r; lsSet("ictEqR", FWR); renderSig(); }); });
     var fa = $("fwall"); if (fa) fa.addEventListener("click", function () { var n = 0; ((SC.G && SC.G.pass) || []).forEach(function (o) { if (fwAdd(o, 1)) n++; }); if (n) { fwSave(); fwUpdate(false); } toast(n ? "Đã theo dõi " + n + " mã" : "Các mã này đã được theo dõi"); renderSig(); });
     Array.prototype.forEach.call(el.querySelectorAll("[data-chkb]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.chkb]; if (o) { if (o.chk && o.chk !== "run") o.chk = null; chkRun(o); } }); });
-    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { fwSave(); toast("Đã thêm vào theo dõi và ví"); fwUpdate(false); } else if (fwHas(fwId(o))) { var qq = FW.j.filter(function (x) { return x.id === fwId(o); })[0]; if (qq && !qq.done) askOk("Bỏ theo dõi kèo này khỏi nhật ký?", function () { FW.j = FW.j.filter(function (x) { return x !== qq; }); fwSave(); toast("Đã bỏ theo dõi"); b.className = "fwb"; b.textContent = "+ Theo dõi"; }); return; } else { toast("Mã này đang có kèo cùng chiến lược chưa kết thúc, không ghi thêm"); return; } b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fw]"), function (b) { b.addEventListener("click", function () { var o = SC_MAP[b.dataset.fw]; if (!o) return; if (fwAdd(o, 1)) { fwSave(); toast("Đã thêm vào theo dõi và ví"); fwPanelRefresh(); fwUpdate(true); } else if (fwHas(fwId(o))) { var qq = FW.j.filter(function (x) { return x.id === fwId(o); })[0]; if (qq && !qq.done) askOk("Bỏ theo dõi kèo này khỏi nhật ký?", function () { FW.j = FW.j.filter(function (x) { return x !== qq; }); fwSave(); fwPanelRefresh(); toast("Đã bỏ theo dõi"); b.className = "fwb"; b.textContent = "+ Theo dõi"; }); return; } else { toast("Mã này đang có kèo cùng chiến lược chưa kết thúc, không ghi thêm"); return; } b.className = "fwb on"; b.textContent = "✓ Đang theo dõi"; }); });
   }
   (function () { var c = $("sigchip"); if (c) c.addEventListener("click", function () { SIGLV = null; lsSet("ictSigLv", null); syncSigChip(); draw(); toast("Đã ẩn mức SL/TP của kèo"); }); })();
   /* ----- top tăng / giảm trong ngày ----- */
