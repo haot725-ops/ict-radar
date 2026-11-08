@@ -518,13 +518,16 @@ html[data-theme="lux"] .card, html[data-theme="lux"] .sgc { background: linear-g
 html[data-theme="lux"] .hero { background: linear-gradient(160deg, #1a2234, #0d1119); border-color: rgba(217,184,114,.22); }
 html[data-theme="lux"] .tabs { background: rgba(14,18,27,.92); border: 1px solid rgba(217,184,114,.16); box-shadow: 0 -8px 28px rgba(0,0,0,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 html[data-theme="lux"] .tab.on { color: var(--acc); } html[data-theme="lux"] .tab.on::after { background: linear-gradient(90deg, #f1dca4, #c9a55a); box-shadow: 0 0 10px rgba(217,184,114,.6); }
-html[data-theme="lux"] .tfs, html[data-theme="lux"] .icon { background: rgba(21,26,38,.85); border: 1px solid rgba(217,184,114,.10); }
+html[data-theme="lux"] .icon { background: rgba(21,26,38,.85); border: 1px solid rgba(217,184,114,.10); }
 html[data-theme="lux"] .tf.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; font-weight: 800; }
 html[data-theme="lux"] .go { background: linear-gradient(135deg, #ecd391, #c19a45); color: #1a1406; box-shadow: 0 6px 18px rgba(193,154,69,.28); }
 html[data-theme="lux"] .go.ghost { background: var(--card2); color: var(--fg); box-shadow: none; border: 1px solid rgba(217,184,114,.14); }
 html[data-theme="lux"] .px b, html[data-theme="lux"] .symtx b { letter-spacing: -.02em; }
 html[data-theme="lux"] .card h2, html[data-theme="lux"] .herot b { background: linear-gradient(90deg, #fff, #e9d6a4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on, html[data-theme="lux"] .chs button.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; }
+/* thanh khung thời gian: không viền, mờ dần ở mép phải thay vì cắt cụt */
+.tfs { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 22px 0 0 !important; gap: 4px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); scroll-padding-right: 22px; }
+.tfs .tf { flex: none; }
 /* khung biểu đồ: đen tuyền cho mọi giao diện */
 #v-chart .cwrap, .cwrap { background: #000 !important; }
 #v-chart { background: #000; }
@@ -582,16 +585,18 @@ html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on
 .sgt5 .pill { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; }
 .sgt6 { display: flex; align-items: center; gap: 5px; min-height: 20px; overflow: hidden; } .sgt6 .note { font-size: 10px; white-space: nowrap; } .sgt6 > * { flex: 0 1 auto; min-width: 0; white-space: nowrap; } .sgt6 .pill, .sgt6 .qb, .sgt6 span:not(.note) { font-size: 10px !important; padding: 3px 7px !important; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
 .sgfull { display: none; }
-.sgc.big { position: fixed; z-index: 90; padding: 18px; border-radius: 26px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; cursor: default; content-visibility: visible; box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(217,184,114,.25); background: linear-gradient(160deg, #141a28, #0b0e16); -webkit-overflow-scrolling: touch; }
+.sgc.big { animation: sgpop .2s cubic-bezier(.2,.9,.3,1) both; transform-origin: 50% 40%; position: fixed; z-index: 90; padding: 18px; border-radius: 26px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; cursor: default; content-visibility: visible; box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(217,184,114,.25); background: linear-gradient(160deg, #141a28, #0b0e16); -webkit-overflow-scrolling: touch; }
 .sgc.big .sgtile { display: none; } .sgc.big.old, .sgc.big.warn { opacity: 1; }
-.sgc.big .sgfull { display: flex; flex-direction: column; gap: 12px; animation: sgfade .35s .12s ease-out both; }
-.sgc.big.closing .sgfull { animation: none; opacity: 0; transition: opacity .15s; }
+.sgc.big .sgfull { display: flex; flex-direction: column; gap: 12px; }
+.sgc.big.closing { animation: sgpopout .15s ease-in both; }
 .sgc.big .sgdetail { display: flex !important; }
 .sgx { position: sticky; top: 0; align-self: flex-end; z-index: 3; width: 38px; height: 38px; margin: -4px -4px -22px 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.14); background: rgba(10,13,20,.85); color: var(--fg); font-size: 16px; font-weight: 700; display: grid; place-items: center; cursor: pointer; backdrop-filter: blur(6px); }
 .sgc.big .sg1 { padding-right: 36px; }
-#sgbd { position: fixed; inset: 0; z-index: 89; background: rgba(2,4,8,.74); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); opacity: 0; transition: opacity .35s ease; touch-action: none; } #sgbd.on { opacity: 1; }
+#sgbd { position: fixed; inset: 0; z-index: 89; background: rgba(2,4,8,.74); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); opacity: 0; transition: opacity .18s ease; touch-action: none; } #sgbd.on { opacity: 1; }
+@keyframes sgpop { from { opacity: 0; transform: scale(.9) translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes sgpopout { to { opacity: 0; transform: scale(.94) translateY(10px); } }
 @keyframes sgfade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .sgc.big { transition: none !important; } .sgc.big .sgfull { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sgc.big, .sgc.big.closing { animation: none; } }
 </style>
 </head>
 <body>
@@ -1549,7 +1554,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.16";
+  var VER = "2026-11-08.17";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3664,25 +3669,22 @@ function analyze(c, tf, L) {
   var SGB = null;
   function sgOpen(c) {
     if (SGB) return;
-    var w = c.parentNode, r = c.getBoundingClientRect(), st = c.style, m = 10, bd = document.createElement("div"); bd.id = "sgbd";
+    var w = c.parentNode, st = c.style, m = 10, bd = document.createElement("div"); bd.id = "sgbd";
     SGB = { c: c, w: w, bd: bd };
     document.body.appendChild(bd);
-    st.transition = "none"; st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
-    c.classList.add("big"); document.body.appendChild(c); void c.offsetWidth;
-    st.transition = "left .4s cubic-bezier(.2,.8,.2,1), top .4s cubic-bezier(.2,.8,.2,1), width .4s cubic-bezier(.2,.8,.2,1), height .4s cubic-bezier(.2,.8,.2,1), border-radius .4s";
     st.left = m + "px"; st.top = m + "px"; st.width = (window.innerWidth - 2 * m) + "px"; st.height = (window.innerHeight - 2 * m) + "px";
+    c.classList.add("big"); document.body.appendChild(c);
     requestAnimationFrame(function () { bd.classList.add("on"); });
     bd.addEventListener("click", function () { sgClose(); }); bd.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
   }
   function sgClose(now) {
     var g = SGB; if (!g || g.closing) return; g.closing = 1;
     var c = g.c, w = g.w, st = c.style, alive = document.body.contains(w);
-    function done() { c.classList.remove("big", "closing"); st.left = st.top = st.width = st.height = st.transition = st.opacity = ""; if (alive && document.body.contains(w)) w.appendChild(c); else if (c.parentNode) c.parentNode.removeChild(c); if (g.bd.parentNode) g.bd.parentNode.removeChild(g.bd); SGB = null; }
+    function done() { c.classList.remove("big", "closing"); st.left = st.top = st.width = st.height = ""; if (alive && document.body.contains(w)) w.appendChild(c); else if (c.parentNode) c.parentNode.removeChild(c); if (g.bd.parentNode) g.bd.parentNode.removeChild(g.bd); SGB = null; }
     g.bd.classList.remove("on");
-    if (now === true || !alive) { done(); return; }
-    var r = w.getBoundingClientRect(); c.scrollTop = 0; c.classList.add("closing");
-    st.left = r.left + "px"; st.top = r.top + "px"; st.width = r.width + "px"; st.height = r.height + "px";
-    setTimeout(done, 420);
+    if (now === true) { done(); return; }
+    c.scrollTop = 0; c.classList.add("closing");
+    setTimeout(done, 150);
   }
   (function () {
     var sl = $("sigl"); if (!sl) return;
