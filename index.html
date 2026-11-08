@@ -597,6 +597,21 @@ html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on
 @keyframes sgpopout { to { opacity: 0; transform: scale(.94) translateY(10px); } }
 @keyframes sgfade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .sgc.big, .sgc.big.closing { animation: none; } }
+
+/* ô kèo gọn: chiều cao theo nội dung, không bị cắt chữ */
+.sgw { aspect-ratio: auto; display: flex; }
+.sgw > .sgc { position: relative; inset: auto; flex: 1; min-width: 0; padding: 10px 11px; }
+.sgtile { height: auto; gap: 3px; }
+.sgt1 { gap: 7px; } .sgt1 .av { width: 26px; height: 26px; font-size: 8px; }
+.sgt2 { flex: 1; min-width: 0; margin: 0; } .sgt2 b { font-size: 16px; } .sgt1 .dirp { font-size: 10.5px; padding: 4px 7px; border-radius: 8px; flex: none; }
+.sgt3 { font-size: 10px; margin-top: 1px; }
+.sgt4 { margin-top: 3px; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; } .sgt4 small { font-size: 9.5px; } .sgt4 b { font-size: 14px; }
+.sgt5 { margin-top: 1px; } .sgt5 .pill { font-size: 10px; padding: 3px 7px; }
+.sgt6 { min-height: 0; margin-top: 1px; } .sgt6 .note { font-size: 9.5px; }
+
+/* thanh tab con: nền đặc, phủ kín khe phía trên để nội dung không lọt qua */
+.subbar { top: -8px !important; margin: 0 -16px 0 !important; padding: 14px 16px 10px !important; background: var(--bg, #07090f) !important; z-index: 20; position: sticky; }
+.subbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; background: linear-gradient(180deg, var(--bg, #07090f), transparent); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -1554,7 +1569,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.17";
+  var VER = "2026-11-08.20";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -2111,7 +2126,7 @@ function analyze(c, tf, L) {
         x.fillStyle = col; x.fillText(q.type + (q.swept !== null ? " ✓" : ""), Math.max(xa + 3, 3), y - 3); x.globalAlpha = 1;
       });
     }
-    var bdv = Math.max(1, Math.floor(bw * 0.6 * d)); if (bdv > 1 && bdv % 2 === 0) bdv -= 1;   /* thân nến chiếm ~60% bước nến, luôn chừa khe rõ giữa các nến */
+    var bdv = Math.max(1, Math.floor(bw * 0.8 * d)); if (bdv > 1 && bdv % 2 === 0) bdv -= 1;   /* thân nến chiếm ~80% bước nến, luôn chừa khe rõ giữa các nến */
     for (i = i0; i <= i1; i++) {
       var k = kc(i), up = k.c >= k.o, col2 = up ? COL.up : COL.down, cxd = Math.floor(X(i) * d);
       x.fillStyle = col2;
@@ -3649,8 +3664,7 @@ function analyze(c, tf, L) {
     var B = splitSym(o.sym).b, cell = SCOL[o.k], bt = o.chk && o.chk.v ? "BT " + Math.round(o.chk.v.s.win * 100) + "%" : "Chưa kiểm";
     var h = "<div class=\"sgw\"><div class=\"sgc " + cls + "\" data-sg=\"" + o.id + "\" style=\"--c:" + cell + "\">";
     /* mặt thẻ vuông */
-    h += "<div class=\"sgtile\"><div class=\"sgt1\"><span class=\"av\" data-ic=\"" + B + "\"></span><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
-    h += "<div class=\"sgt2\"><b>" + B + "<small>/USDT</small></b>" + mk(o.sym) + "</div>";
+    h += "<div class=\"sgtile\"><div class=\"sgt1\"><span class=\"av\" data-ic=\"" + B + "\"></span><div class=\"sgt2\"><b>" + B + "</b>" + mk(o.sym) + "</div><span class=\"dirp " + (d === 1 ? "up" : "dn") + "\">" + (d === 1 ? "MUA ▲" : "BÁN ▼") + "</span></div>";
     h += "<div class=\"sgt3\"><i class=\"dotc\"></i>" + STRAT[o.k] + " · " + fmtAge(o.age * tfms / 6e4) + "</div>";
     h += "<div class=\"sgt4\"><small>Entry</small><b>" + fmtPx(e) + "</b></div>";
     h += "<div class=\"sgt5\"><span class=\"pill " + st.c + "\" data-state=\"" + o.id + "\">" + st.t + "</span></div>";
@@ -3669,7 +3683,7 @@ function analyze(c, tf, L) {
   var SGB = null;
   function sgOpen(c) {
     if (SGB) return;
-    var w = c.parentNode, st = c.style, m = 10, bd = document.createElement("div"); bd.id = "sgbd";
+    var w = c.parentNode, st = c.style, m = 10, bd = document.createElement("div"); bd.id = "sgbd"; w.style.height = c.offsetHeight + "px";
     SGB = { c: c, w: w, bd: bd };
     document.body.appendChild(bd);
     st.left = m + "px"; st.top = m + "px"; st.width = (window.innerWidth - 2 * m) + "px"; st.height = (window.innerHeight - 2 * m) + "px";
@@ -3680,7 +3694,7 @@ function analyze(c, tf, L) {
   function sgClose(now) {
     var g = SGB; if (!g || g.closing) return; g.closing = 1;
     var c = g.c, w = g.w, st = c.style, alive = document.body.contains(w);
-    function done() { c.classList.remove("big", "closing"); st.left = st.top = st.width = st.height = ""; if (alive && document.body.contains(w)) w.appendChild(c); else if (c.parentNode) c.parentNode.removeChild(c); if (g.bd.parentNode) g.bd.parentNode.removeChild(g.bd); SGB = null; }
+    function done() { w.style.height = ""; c.classList.remove("big", "closing"); st.left = st.top = st.width = st.height = ""; if (alive && document.body.contains(w)) w.appendChild(c); else if (c.parentNode) c.parentNode.removeChild(c); if (g.bd.parentNode) g.bd.parentNode.removeChild(g.bd); SGB = null; }
     g.bd.classList.remove("on");
     if (now === true) { done(); return; }
     c.scrollTop = 0; c.classList.add("closing");
