@@ -174,6 +174,7 @@ input { text-transform: uppercase; font-size: 15px; font-family: var(--mono); }
 .tg { width: 44px; height: 26px; border-radius: 13px; background: rgba(255,255,255,.12); position: relative; flex: none; transition: background .18s; }
 .tg::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--dim); transition: transform .18s, background .18s; }
 .swrow.on .tg { background: var(--blue); } .swrow.on .tg::after { transform: translateX(18px); background: #fff; }
+@keyframes icin { from { opacity: 0; transform: scale(.85); } }
 .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: rgba(0,0,0,.3); }
 .pk { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; animation: up .2s ease-out; padding-top: env(safe-area-inset-top, 0px); }
 .pk .hd { display: flex; gap: 10px; align-items: center; padding: 12px 14px 8px; }
@@ -528,29 +529,27 @@ html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on
 #v-chart .cwrap, .cwrap { background: #000 !important; }
 #v-chart { background: #000; }
 #v-chart .ohlc span { background: rgba(8,10,16,.88); }
-/* ===== Bìa mở đầu ===== */
-#splash { background: radial-gradient(90% 60% at 50% 38%, #141d33 0%, #05070c 62%, #000 100%); overflow: hidden; gap: 0; transition: opacity .55s ease .05s, transform .7s cubic-bezier(.7,0,.2,1), visibility .7s; }
-#splash.gone { opacity: 0; transform: scale(1.08); visibility: hidden; }
-#splash::before { content: ""; position: absolute; width: 140vmax; height: 140vmax; left: 50%; top: 38%; margin: -70vmax 0 0 -70vmax; background: conic-gradient(from 0deg, transparent 0 70%, rgba(217,184,114,.10) 85%, transparent 100%); animation: spl-rot 5s linear infinite; }
+/* ===== Bìa mở đầu: nối liền với màn hình khởi động của Android (cùng nền, cùng logo, cùng vị trí) ===== */
+#splash { background: #06090d; overflow: hidden; gap: 0; transition: opacity .5s ease; will-change: opacity; }
+#splash.gone { opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility 0s .5s; }
+#splash::before { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 45% at 50% 46%, rgba(217,184,114,.13), rgba(20,30,52,.35) 45%, transparent 75%); opacity: 0; animation: spl-glow 1.2s .1s ease-out forwards; }
 #splash > * { position: relative; }
-.spl-ring { width: 128px; height: 128px; display: grid; place-items: center; animation: spl-in .9s cubic-bezier(.2,.8,.2,1) both; }
-.spl-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-.spl-ring circle { fill: none; stroke-width: 2; }
-.spl-ring .c0 { stroke: rgba(217,184,114,.16); } .spl-ring .c1 { stroke: #d9b872; stroke-linecap: round; stroke-dasharray: 352; stroke-dashoffset: 352; animation: spl-draw 1.3s .15s ease-out forwards; filter: drop-shadow(0 0 6px rgba(217,184,114,.7)); }
-#splash img { width: 84px; height: 84px; border-radius: 22px; animation: none; box-shadow: 0 10px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(217,184,114,.25); }
-#splash b { margin-top: 26px; font-size: 22px; font-weight: 800; letter-spacing: .34em; padding-left: .34em; background: linear-gradient(90deg, #fff 0%, #f1dca4 50%, #c9a55a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: spl-up .8s .35s both; }
-#splash small { margin-top: 8px; letter-spacing: .3em; color: #8d96a8; animation: spl-up .8s .55s both; }
-.spl-ch { margin-top: 30px; width: 170px; height: 46px; animation: spl-up .8s .7s both; }
-.spl-ch path { fill: none; stroke: #d9b872; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 260; animation: spl-draw 1.4s .8s ease-out forwards; filter: drop-shadow(0 0 5px rgba(217,184,114,.6)); }
+.spl-ring { width: 110px; height: 110px; display: block; animation: none; margin-top: -40px; }
+.spl-ring svg { display: none; }
+#splash img { width: 110px; height: 110px; border-radius: 50%; box-shadow: 0 0 0 0 rgba(217,184,114,0); animation: spl-pulse 1.8s .3s ease-out infinite; }
+#splash b { margin-top: 30px; font-size: 21px; font-weight: 800; letter-spacing: .34em; padding-left: .34em; background: linear-gradient(90deg, #fff 0%, #f1dca4 50%, #c9a55a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: spl-up .7s .25s ease-out forwards; }
+#splash small { margin-top: 8px; letter-spacing: .3em; color: #8d96a8; opacity: 0; animation: spl-up .7s .4s ease-out forwards; }
+.spl-ch { margin-top: 26px; width: 170px; height: 46px; opacity: 0; animation: spl-up .7s .5s ease-out forwards; }
+.spl-ch path { fill: none; stroke: #d9b872; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 260; animation: spl-draw 1.3s .6s ease-out forwards; }
 .spl-ch rect { opacity: 0; animation: spl-fade .5s ease-out forwards; }
-#splash i { margin-top: 26px; width: 150px; height: 2px; background: rgba(255,255,255,.07); border-radius: 2px; }
+#splash i { margin-top: 24px; width: 150px; height: 2px; background: rgba(255,255,255,.07); border-radius: 2px; opacity: 0; animation: spl-up .6s .7s ease-out forwards; }
 #splash i::after { background: linear-gradient(90deg, transparent, #d9b872, transparent); animation: sweep 1.1s ease-in-out infinite; }
-@keyframes spl-rot { to { transform: rotate(360deg); } }
-@keyframes spl-in { from { opacity: 0; transform: scale(.6); } }
-@keyframes spl-up { from { opacity: 0; transform: translateY(14px); } }
+@keyframes spl-glow { to { opacity: 1; } }
+@keyframes spl-pulse { 0% { box-shadow: 0 0 0 0 rgba(217,184,114,.35); } 100% { box-shadow: 0 0 0 26px rgba(217,184,114,0); } }
+@keyframes spl-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes spl-draw { to { stroke-dashoffset: 0; } }
 @keyframes spl-fade { to { opacity: .9; } }
-@media (prefers-reduced-motion: reduce) { #splash::before, .spl-ring, .spl-ring .c1, .spl-ch path, #splash b, #splash small, .spl-ch { animation: none; } .spl-ring .c1, .spl-ch path { stroke-dashoffset: 0; } .spl-ch rect { opacity: .9; animation: none; } }
+@media (prefers-reduced-motion: reduce) { #splash::before, #splash img, #splash b, #splash small, .spl-ch, #splash i, .spl-ch path { animation: none; opacity: 1; } .spl-ch path { stroke-dashoffset: 0; } .spl-ch rect { opacity: .9; animation: none; } #splash::before { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -1508,7 +1507,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.3";
+  var VER = "2026-11-08.5";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1660,14 +1659,19 @@ function analyze(c, tf, L) {
   }
   function hue(b) { var h = 0, i; for (i = 0; i < b.length; i++) h = (h * 31 + b.charCodeAt(i)) % 360; return h; }
   var CCY = { EUR: "eu", USD: "us", GBP: "gb", JPY: "jp", AUD: "au", NZD: "nz", CAD: "ca", CHF: "ch", CNH: "cn", SGD: "sg", HKD: "hk", SEK: "se", NOK: "no", MXN: "mx", ZAR: "za", TRY: "tr", PLN: "pl", INR: "in" };
+  var ICOK = {};
   function fillIcon(el, b, fx) {
+    var key = (fx ? "x:" : "c:") + b;
+    if (el.dataset.ic === key) return;          /* cùng coin: giữ nguyên, không vẽ lại nên không nháy */
+    el.dataset.ic = key;
     var h = hue(b);
+    if (ICOK[key]) { el.textContent = ""; el.style.background = "#14171d"; var im = new Image(); im.alt = ""; im.src = ICOK[key]; if (fx) im.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%"; el.appendChild(im); return; }
     el.textContent = b.slice(0, 3);
     el.style.background = "linear-gradient(135deg, hsl(" + h + ",75%,62%), hsl(" + ((h + 50) % 360) + ",70%,48%))";
     var urls = fx ? (CCY[b] ? ["https://flagcdn.com/w80/" + CCY[b] + ".png"] : []) : iconUrls(b), k = 0, img = new Image();
     if (!urls.length) { if (b === "XAU") el.style.background = "linear-gradient(135deg,#ffd76a,#b8860b)"; else if (b === "XAG") el.style.background = "linear-gradient(135deg,#e8eef5,#8a97a6)"; return; }
     img.alt = ""; img.decoding = "async";
-    img.onload = function () { if (img.naturalWidth > 8) { el.textContent = ""; el.style.background = "#14171d"; if (fx) img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%"; el.appendChild(img); } else next(); };
+    img.onload = function () { if (el.dataset.ic !== key) return; if (img.naturalWidth > 8) { ICOK[key] = img.src; img.style.animation = "icin .35s ease-out"; el.textContent = ""; el.style.background = "#14171d"; if (fx) img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%"; el.appendChild(img); } else next(); };
     function next() { k++; if (k < urls.length) img.src = urls[k]; }
     img.onerror = next;
     img.src = urls[0];
@@ -4068,7 +4072,7 @@ function analyze(c, tf, L) {
   var t0 = Date.now(), splashDone = false;
   function hideSplash() {
     if (splashDone) return; splashDone = true;
-    setTimeout(function () { var el = $("splash"); if (el) el.className = "gone"; }, Math.max(0, 2000 - (Date.now() - t0)));
+    setTimeout(function () { var el = $("splash"); if (el) el.className = "gone"; }, Math.max(0, 1600 - (Date.now() - t0)));
   }
   setTimeout(hideSplash, 4200);
   setInterval(function () { if (tab === "chart" && !document.hidden) draw(); }, 1000); loadLev(); loadFut(); setInterval(loadFut, 36e5);
