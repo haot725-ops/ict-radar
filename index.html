@@ -1464,7 +1464,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.1";
+  var VER = "2026-11-08.2";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1505,7 +1505,13 @@ function analyze(c, tf, L) {
   var DS = lsGet("ictDS", "bitget"), DSFB = false, BG = "https://api.bitget.com", BGI = { "1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m", "30m": "30m", "1h": "1H", "4h": "4H", "1d": "1D", "1w": "1W" }, LEVMAP = lsGet("ictLev", {}), BGT = { t: 0, d: null, p: null };
   function isBG() { return DS === "bitget" && !DSFB; }
   function maxLev(sym) { return (isBG() && sym && LEVMAP[sym]) || 125; }
-  async function jf(u) { var r = await fetch(u); if (!r.ok) throw new Error("HTTP " + r.status); var j = await r.json(); if (j && j.code && j.code !== "00000") throw new Error(j.msg || j.code); return j; }
+  async function jf(u) {
+    var r = await fetch(u), j = null;
+    try { j = await r.json(); } catch (e) {}
+    if (j && j.code && j.code !== "00000") { var er = new Error(j.msg || j.code); er.api = 1; throw er; }
+    if (!r.ok) { var e2 = new Error("HTTP " + r.status); if (r.status >= 400 && r.status < 500 && r.status !== 403 && r.status !== 429) e2.api = 1; throw e2; }
+    return j;
+  }
   function bgRows(a) { return (a || []).map(function (k) { return [+k[0], k[1], k[2], k[3], k[4], k[5]]; }).sort(function (x, y) { return x[0] - y[0]; }); }
   async function bgCandles(sym, tf, lim, st, en) {
     var ms = TFMS[tf] || 9e5, g = BGI[tf] || tf;
@@ -1542,7 +1548,7 @@ function analyze(c, tf, L) {
   async function bget(path) {
     if (isBG()) {
       try { return await bgGet(path); }
-      catch (e) { if (!DS_NOTE) { DS_NOTE = 1; DSFB = true; try { toast("Không truy cập được Bitget, tạm dùng Binance"); } catch (z) {} setTimeout(function () { try { setSymSub(); } catch (z) {} }, 0); } else if (!DSFB) throw e; }
+      catch (e) { if (e.api) throw new Error("Mã này không có trên Bitget Future" + (e.message ? " (" + e.message + ")" : "")); if (!DS_NOTE) { DS_NOTE = 1; DSFB = true; try { toast("Không truy cập được Bitget, tạm dùng Binance"); } catch (z) {} setTimeout(function () { try { setSymSub(); } catch (z) {} }, 0); } else if (!DSFB) throw e; }
     }
     var last;
     for (var i = 0; i < BASES.length; i++) {
@@ -1772,6 +1778,7 @@ function analyze(c, tf, L) {
       C.forEach(function (x) { x.ny = ny(x.t); });
     } catch (e) {
       if (fx) { setStatus("Twelve Data: " + e.message + (e.code === 429 ? " (hết lượt phút này, đợi 1 phút rồi thử lại)" : ""), true); hideSplash(); if (e.code === 401 || e.code === 400 && /apikey/i.test(e.message)) askKey(); return; }
+      if (isBG() && /không có trên Bitget/.test(e.message) && S.sym !== "BTCUSDT") { var old = S.sym; $("sym").value = "BTCUSDT"; try { toast(old + " không có trên Bitget Future, chuyển sang BTC"); } catch (z) {} return load(); }
       setStatus("Không tải được dữ liệu (" + e.message + "). Kiểm tra mã giao dịch và mạng; nếu Binance bị chặn ở vùng của bạn, thử bật VPN.", true);
       hideSplash(); return;
     }
