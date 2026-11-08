@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ICT Radar">
 <title>ICT Radar</title>
-<script>try{var __t=JSON.parse(localStorage.getItem("ictTheme"));if(__t&&__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<script>try{var __t=JSON.parse(localStorage.getItem("ictTheme"))||"lux";if(__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Giao diện app hiện đại: nền xanh đen, thẻ bo tròn, thanh tab nổi, chữ số dùng font mono */
@@ -508,6 +508,49 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 .wallet-analysis .wc + .wc { border-top: 1px solid var(--line); border-radius: 0; }
 .wallet-analysis .eqc { height: 132px; }
 .wallet-open { margin-top: 2px; }
+
+/* ===== Giao diện Midnight · vàng sâm panh + biểu đồ nền đen ===== */
+html[data-theme="lux"] { --bg: #07090f; --card: #0e121b; --card2: #151a26; --line: rgba(217,184,114,.12); --fg: #eef0f5; --dim: #8d96a8; --acc: #d9b872; --blue: #c9a55a; --cyan: #d9b872; --violet: #b9a2ff; --accrgb: 217,184,114; --vrgb: 185,162,255; --onacc: #1a1406; --up: #1fd18f; --down: #f0525c; --amber: #e8b44a; }
+html[data-theme="lux"] body { background: radial-gradient(120% 60% at 50% -10%, #121a2b 0%, #07090f 55%) fixed; }
+html[data-theme="lux"] .top { background: linear-gradient(180deg, rgba(18,26,43,.9), rgba(7,9,15,0)); }
+html[data-theme="lux"] .card, html[data-theme="lux"] .sgc { background: linear-gradient(160deg, #121724 0%, #0d1119 100%); border: 1px solid rgba(217,184,114,.13); box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
+html[data-theme="lux"] .hero { background: linear-gradient(160deg, #1a2234, #0d1119); border-color: rgba(217,184,114,.22); }
+html[data-theme="lux"] .tabs { background: rgba(14,18,27,.92); border: 1px solid rgba(217,184,114,.16); box-shadow: 0 -8px 28px rgba(0,0,0,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+html[data-theme="lux"] .tab.on { color: var(--acc); } html[data-theme="lux"] .tab.on::after { background: linear-gradient(90deg, #f1dca4, #c9a55a); box-shadow: 0 0 10px rgba(217,184,114,.6); }
+html[data-theme="lux"] .tfs, html[data-theme="lux"] .icon { background: rgba(21,26,38,.85); border: 1px solid rgba(217,184,114,.10); }
+html[data-theme="lux"] .tf.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; font-weight: 800; }
+html[data-theme="lux"] .go { background: linear-gradient(135deg, #ecd391, #c19a45); color: #1a1406; box-shadow: 0 6px 18px rgba(193,154,69,.28); }
+html[data-theme="lux"] .go.ghost { background: var(--card2); color: var(--fg); box-shadow: none; border: 1px solid rgba(217,184,114,.14); }
+html[data-theme="lux"] .px b, html[data-theme="lux"] .symtx b { letter-spacing: -.02em; }
+html[data-theme="lux"] .card h2, html[data-theme="lux"] .herot b { background: linear-gradient(90deg, #fff, #e9d6a4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on, html[data-theme="lux"] .chs button.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; }
+/* khung biểu đồ: đen tuyền cho mọi giao diện */
+#v-chart .cwrap, .cwrap { background: #000 !important; }
+#v-chart { background: #000; }
+#v-chart .ohlc span { background: rgba(8,10,16,.88); }
+/* ===== Bìa mở đầu ===== */
+#splash { background: radial-gradient(90% 60% at 50% 38%, #141d33 0%, #05070c 62%, #000 100%); overflow: hidden; gap: 0; transition: opacity .55s ease .05s, transform .7s cubic-bezier(.7,0,.2,1), visibility .7s; }
+#splash.gone { opacity: 0; transform: scale(1.08); visibility: hidden; }
+#splash::before { content: ""; position: absolute; width: 140vmax; height: 140vmax; left: 50%; top: 38%; margin: -70vmax 0 0 -70vmax; background: conic-gradient(from 0deg, transparent 0 70%, rgba(217,184,114,.10) 85%, transparent 100%); animation: spl-rot 5s linear infinite; }
+#splash > * { position: relative; }
+.spl-ring { width: 128px; height: 128px; display: grid; place-items: center; animation: spl-in .9s cubic-bezier(.2,.8,.2,1) both; }
+.spl-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.spl-ring circle { fill: none; stroke-width: 2; }
+.spl-ring .c0 { stroke: rgba(217,184,114,.16); } .spl-ring .c1 { stroke: #d9b872; stroke-linecap: round; stroke-dasharray: 352; stroke-dashoffset: 352; animation: spl-draw 1.3s .15s ease-out forwards; filter: drop-shadow(0 0 6px rgba(217,184,114,.7)); }
+#splash img { width: 84px; height: 84px; border-radius: 22px; animation: none; box-shadow: 0 10px 40px rgba(0,0,0,.7), 0 0 0 1px rgba(217,184,114,.25); }
+#splash b { margin-top: 26px; font-size: 22px; font-weight: 800; letter-spacing: .34em; padding-left: .34em; background: linear-gradient(90deg, #fff 0%, #f1dca4 50%, #c9a55a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: spl-up .8s .35s both; }
+#splash small { margin-top: 8px; letter-spacing: .3em; color: #8d96a8; animation: spl-up .8s .55s both; }
+.spl-ch { margin-top: 30px; width: 170px; height: 46px; animation: spl-up .8s .7s both; }
+.spl-ch path { fill: none; stroke: #d9b872; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 260; animation: spl-draw 1.4s .8s ease-out forwards; filter: drop-shadow(0 0 5px rgba(217,184,114,.6)); }
+.spl-ch rect { opacity: 0; animation: spl-fade .5s ease-out forwards; }
+#splash i { margin-top: 26px; width: 150px; height: 2px; background: rgba(255,255,255,.07); border-radius: 2px; }
+#splash i::after { background: linear-gradient(90deg, transparent, #d9b872, transparent); animation: sweep 1.1s ease-in-out infinite; }
+@keyframes spl-rot { to { transform: rotate(360deg); } }
+@keyframes spl-in { from { opacity: 0; transform: scale(.6); } }
+@keyframes spl-up { from { opacity: 0; transform: translateY(14px); } }
+@keyframes spl-draw { to { stroke-dashoffset: 0; } }
+@keyframes spl-fade { to { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { #splash::before, .spl-ring, .spl-ring .c1, .spl-ch path, #splash b, #splash small, .spl-ch { animation: none; } .spl-ring .c1, .spl-ch path { stroke-dashoffset: 0; } .spl-ch rect { opacity: .9; animation: none; } }
 </style>
 </head>
 <body>
@@ -571,7 +614,8 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
   </nav>
 </div>
 
-<div id="splash"><img src="icon-192.png" alt=""><b>ICT RADAR</b><small>SMC · ICT · THỜI GIAN</small><i></i></div>
+<div id="splash"><div class="spl-ring"><svg viewBox="0 0 120 120"><circle class="c0" cx="60" cy="60" r="56"/><circle class="c1" cx="60" cy="60" r="56"/></svg><img src="icon-192.png" alt=""></div><b>ICT RADAR</b><small>SMC · ICT · THỜI GIAN</small>
+<svg class="spl-ch" viewBox="0 0 170 46"><path d="M4 38 L28 30 L44 34 L66 18 L84 24 L108 10 L128 16 L166 4"/><rect x="22" y="26" width="5" height="12" rx="1" fill="#1fd18f" style="animation-delay:1.0s"/><rect x="60" y="14" width="5" height="14" rx="1" fill="#1fd18f" style="animation-delay:1.2s"/><rect x="102" y="6" width="5" height="12" rx="1" fill="#1fd18f" style="animation-delay:1.4s"/><rect x="82" y="22" width="5" height="10" rx="1" fill="#f0525c" style="animation-delay:1.3s"/><rect x="124" y="14" width="5" height="9" rx="1" fill="#f0525c" style="animation-delay:1.5s"/></svg><i></i></div>
 <div id="toast"></div>
 <div id="dlg" hidden><div class="dlgc"><p id="dlgm"></p><div class="dlgb"><button id="dlgn">Huỷ</button><button id="dlgy">Đồng ý</button></div></div></div>
 <div id="pk" class="pk" hidden role="dialog" aria-label="Chọn mã">
@@ -1464,7 +1508,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.2";
+  var VER = "2026-11-08.3";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1486,7 +1530,7 @@ function analyze(c, tf, L) {
   var STABLE_RE = /^(USD.{0,2}|.*USD|EUR.?|AEUR|DAI|BUSD|TRY|PAXG|XAUT|PYUSD|FRAX|GUSD|LUSD|UST)$/, AXD = 2;
   function fmtD(p) { return p.toFixed(AXD); }
   var COL = { up: "#16c784", down: "#ea3943", amber: "#f5b73b", cyan: "#6188ff", violet: "#9b7bff", dim: "#9aa3b5", line: "rgba(255,255,255,.06)", fg: "#f2f4f8" };
-  var THM = [["base", "Gốc · xanh than", "#0f1115", "#6188ff", "#9b7bff", "#9aa3b5", "#f2f4f8", "rgba(255,255,255,.06)"], ["gold", "Đen vàng", "#0a0908", "#d4af37", "#e9cf8a", "#a89c82", "#f4ecd8", "rgba(214,178,94,.08)"], ["navy", "Xanh đêm bạc", "#060a13", "#a9bddb", "#c8d4ea", "#8a9bb8", "#e9eff9", "rgba(170,195,230,.08)"], ["cream", "Nâu kem", "#14100c", "#dcb98c", "#ead6b0", "#b5a58d", "#f6ecdb", "rgba(236,214,182,.08)"]], TH = lsGet("ictTheme", "base");
+  var THM = [["lux", "Midnight · vàng sâm panh", "#07090f", "#d9b872", "#b9a2ff", "#8d96a8", "#eef0f5", "rgba(217,184,114,.10)"], ["base", "Gốc · xanh than", "#0f1115", "#6188ff", "#9b7bff", "#9aa3b5", "#f2f4f8", "rgba(255,255,255,.06)"], ["gold", "Đen vàng", "#0a0908", "#d4af37", "#e9cf8a", "#a89c82", "#f4ecd8", "rgba(214,178,94,.08)"], ["navy", "Xanh đêm bạc", "#060a13", "#a9bddb", "#c8d4ea", "#8a9bb8", "#e9eff9", "rgba(170,195,230,.08)"], ["cream", "Nâu kem", "#14100c", "#dcb98c", "#ead6b0", "#b5a58d", "#f6ecdb", "rgba(236,214,182,.08)"]], TH = lsGet("ictTheme", "lux");
   function applyTheme(id) {
     var t = THM.filter(function (x) { return x[0] === id; })[0] || THM[0], de = document.documentElement, mt = document.querySelector("meta[name=theme-color]");
     TH = t[0]; if (TH === "base") de.removeAttribute("data-theme"); else de.setAttribute("data-theme", TH);
@@ -4024,9 +4068,9 @@ function analyze(c, tf, L) {
   var t0 = Date.now(), splashDone = false;
   function hideSplash() {
     if (splashDone) return; splashDone = true;
-    setTimeout(function () { var el = $("splash"); if (el) el.className = "gone"; }, Math.max(0, 900 - (Date.now() - t0)));
+    setTimeout(function () { var el = $("splash"); if (el) el.className = "gone"; }, Math.max(0, 2000 - (Date.now() - t0)));
   }
-  setTimeout(hideSplash, 3500);
+  setTimeout(hideSplash, 4200);
   setInterval(function () { if (tab === "chart" && !document.hidden) draw(); }, 1000); loadLev(); loadFut(); setInterval(loadFut, 36e5);
   function buzz() { try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {} }
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) buzz(); });
