@@ -612,6 +612,48 @@ html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on
 /* thanh tab con: nền đặc, phủ kín khe phía trên để nội dung không lọt qua */
 .subbar { top: -8px !important; margin: 0 -16px 0 !important; padding: 14px 16px 10px !important; background: var(--bg, #07090f) !important; z-index: 20; position: sticky; }
 .subbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; background: linear-gradient(180deg, var(--bg, #07090f), transparent); pointer-events: none; }
+
+/* ===== Animation kiểu Halvi ===== */
+.subbar, .tfs, .seg3, .chs { position: relative; }
+.slp { position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px; background: rgba(var(--accrgb, 217,184,114), .16); border: 1px solid var(--cyan); pointer-events: none; z-index: 0; transition: transform .32s cubic-bezier(.3,.9,.3,1), width .32s cubic-bezier(.3,.9,.3,1); }
+html[data-theme="lux"] .slp { background: linear-gradient(135deg, #e6c985, #c19a45); border: 0; box-shadow: 0 4px 14px rgba(217,184,114,.22); }
+.seg3 .slp { border-radius: 8px; }
+.subbar.slid button, .tfs.slid button, .seg3.slid button, .chs.slid button { position: relative; z-index: 1; }
+.subbar.slid button.on, .tfs.slid button.on, .seg3.slid button.on, .chs.slid button.on { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+html[data-theme="lux"] .subbar.slid button.on, html[data-theme="lux"] .tfs.slid button.on, html[data-theme="lux"] .seg3.slid button.on, html[data-theme="lux"] .chs.slid button.on { color: #1a1406; }
+.subbar.slid button, .tfs.slid button, .seg3.slid button, .chs.slid button { transition: color .25s; }
+/* thanh/tiến độ chạy từ 0 */
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.conf i, .tk-prog i, .pbar b { transform-origin: left center; animation: grow .8s cubic-bezier(.2,.8,.2,1) both; }
+.conf i { transition: width .5s ease; }
+/* thẻ hiện lần lượt */
+@keyframes cardin { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.view.on > .card, .view.on > div > .card, .view.on > .sggrid > .sgw { animation: cardin .45s cubic-bezier(.2,.8,.2,1) both; }
+.view.on > .card:nth-child(2), .view.on > div > .card:nth-child(2) { animation-delay: .05s; }
+.view.on > .card:nth-child(3), .view.on > div > .card:nth-child(3) { animation-delay: .1s; }
+.view.on > .card:nth-child(4), .view.on > div > .card:nth-child(4) { animation-delay: .15s; }
+.view.on > .card:nth-child(n+5), .view.on > div > .card:nth-child(n+5) { animation-delay: .2s; }
+.sggrid > .sgw:nth-child(2) { animation-delay: .04s; } .sggrid > .sgw:nth-child(3) { animation-delay: .08s; } .sggrid > .sgw:nth-child(4) { animation-delay: .12s; } .sggrid > .sgw:nth-child(n+5) { animation-delay: .16s; }
+/* đường vốn vẽ dần */
+@keyframes eqdraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes eqfade { from { opacity: 0; } to { opacity: 1; } }
+.eql { stroke-dasharray: 1; stroke-dashoffset: 0; animation: eqdraw 1.1s cubic-bezier(.3,.7,.2,1) both; }
+.eqa { animation: eqfade .9s .35s ease both; }
+/* hàng danh sách hiện lần lượt */
+@keyframes rowin { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.wr, .wk { animation: rowin .35s ease both; }
+.wr:nth-child(2), .wk:nth-child(2) { animation-delay: .03s; } .wr:nth-child(3), .wk:nth-child(3) { animation-delay: .06s; } .wr:nth-child(4), .wk:nth-child(4) { animation-delay: .09s; } .wr:nth-child(n+5), .wk:nth-child(n+5) { animation-delay: .12s; }
+/* bấm có phản hồi */
+.subbar button:active, .tfs .tf:active, .seg3 button:active, .tab:active, .go:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .slp, .conf i, .tk-prog i, .pbar b, .eql, .eqa, .view.on > .card, .wr, .wk { animation: none !important; transition: none !important; } }
+
+/* ICT gọn gàng hơn */
+#v-keo .card { padding: 14px 15px; margin-bottom: 10px; border-radius: 16px; }
+#v-keo .card h2, #v-keo .card h3 { font-size: 16px; margin: 0 0 8px; }
+#v-keo ul.why { gap: 6px; } #v-keo ul.why li { font-size: 13.5px; line-height: 1.45; padding-top: 0; padding-bottom: 0; }
+#v-keo .card p { font-size: 13.5px; line-height: 1.5; }
+#v-keo .card .note, #v-keo .card small { font-size: 11px; line-height: 1.45; }
+#v-keo .subbar { padding-bottom: 6px !important; }
 </style>
 </head>
 <body>
@@ -1569,7 +1611,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-08.20";
+  var VER = "2026-11-10.21";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -3883,7 +3925,8 @@ function analyze(c, tf, L) {
     var sv = "<svg class=\"eqc\" id=\"eqsvg\" viewBox=\"0 0 " + w + " " + H + "\" width=\"100%\" height=\"" + H + "\"><defs><linearGradient id=\"eqg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" style=\"stop-color:" + col + ";stop-opacity:.25\"/><stop offset=\"1\" style=\"stop-color:" + col + ";stop-opacity:0\"/></linearGradient></defs>";
     [hi - pd, (hi + lo) / 2, lo + pd].forEach(function (v) { sv += "<line x1=\"" + L + "\" x2=\"" + (L + PW) + "\" y1=\"" + Y(v).toFixed(1) + "\" y2=\"" + Y(v).toFixed(1) + "\" style=\"stroke:var(--line);stroke-width:1\"/><text x=\"" + (w - 1) + "\" y=\"" + (Y(v) + 3.5).toFixed(1) + "\" text-anchor=\"end\" style=\"" + tx + "\">" + f(v) + "</text>"; });
     if (SIM.cap > lo && SIM.cap < hi) sv += "<line x1=\"" + L + "\" x2=\"" + (L + PW) + "\" y1=\"" + Y(SIM.cap).toFixed(1) + "\" y2=\"" + Y(SIM.cap).toFixed(1) + "\" style=\"stroke:var(--dim);stroke-width:1;stroke-dasharray:4 4;opacity:.8\"/>";
-    sv += "<polygon points=\"" + P.join(" ") + " " + X(t1).toFixed(1) + "," + (T + MH) + " " + X(t0).toFixed(1) + "," + (T + MH) + "\" fill=\"url(#eqg)\"/><polyline points=\"" + P.join(" ") + "\" style=\"fill:none;stroke:" + col + ";stroke-width:2;stroke-linejoin:round;stroke-linecap:round\"/>";
+    var eqSig = pts.length + ":" + v1.toFixed(2), eqAn = eqSig !== window.__eqSig; window.__eqSig = eqSig;
+    sv += "<polygon " + (eqAn ? "class=\"eqa\" " : "") + "points=\"" + P.join(" ") + " " + X(t1).toFixed(1) + "," + (T + MH) + " " + X(t0).toFixed(1) + "," + (T + MH) + "\" fill=\"url(#eqg)\"/><polyline " + (eqAn ? "class=\"eql\" pathLength=\"1\" " : "") + "points=\"" + P.join(" ") + "\" style=\"fill:none;stroke:" + col + ";stroke-width:2;stroke-linejoin:round;stroke-linecap:round\"/>";
     sv += "<circle cx=\"" + X(t1).toFixed(1) + "\" cy=\"" + Y(v1).toFixed(1) + "\" r=\"3.5\" style=\"fill:" + col + "\"/>";
     var dl = function (t) { var q = new Date(t); return q.getDate() + "/" + (q.getMonth() + 1) + (t1 - t0 < 2e8 ? " " + pad2(q.getHours()) + "h" : ""); };
     sv += "<text x=\"" + L + "\" y=\"" + (H - 3) + "\" style=\"" + tx + "\">" + dl(t0) + "</text><text x=\"" + (L + PW / 2).toFixed(1) + "\" y=\"" + (H - 3) + "\" text-anchor=\"middle\" style=\"" + tx + "\">" + dl((t0 + t1) / 2) + "</text><text x=\"" + (L + PW) + "\" y=\"" + (H - 3) + "\" text-anchor=\"end\" style=\"" + tx + "\">bây giờ</text>";
@@ -4235,6 +4278,39 @@ function analyze(c, tf, L) {
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); ev = e; if (b) b.hidden = false; });
   if (b) b.addEventListener("click", function () { if (!ev) return; ev.prompt(); ev.userChoice.then(function () { ev = null; b.hidden = true; }); });
   window.addEventListener("appinstalled", function () { if (b) b.hidden = true; });
+})();
+</script>
+
+<script id="fx">
+(function () {
+  var SEL = ".subbar, .tfs, .seg3, .chs", busy = false;
+  function place(c, anim) {
+    var on = c.querySelector("button.on"), p = c.querySelector(":scope > .slp");
+    if (!on || on.offsetWidth === 0) { if (p) p.style.opacity = 0; return; }
+    var nx = on.offsetLeft, nw = on.offsetWidth;
+    if (!p) {
+      p = document.createElement("span"); p.className = "slp"; p.style.transition = "none";
+      var hasOld = c._lx !== undefined;
+      p.style.width = (hasOld ? c._lw : nw) + "px"; p.style.height = on.offsetHeight + "px"; p.style.top = on.offsetTop + "px";
+      p.style.transform = "translateX(" + (hasOld ? c._lx : nx) + "px)";
+      c.insertBefore(p, c.firstChild); void p.offsetWidth; p.style.transition = "";
+    }
+    p.style.opacity = 1; p.style.height = on.offsetHeight + "px"; p.style.top = on.offsetTop + "px";
+    p.style.width = nw + "px"; p.style.transform = "translateX(" + nx + "px)";
+    c._lx = nx; c._lw = nw; c.classList.add("slid");
+  }
+  function all(anim) { if (busy) return; busy = true; try { Array.prototype.forEach.call(document.querySelectorAll(SEL), function (c) { place(c, anim); }); } finally { busy = false; } }
+  var mo = new MutationObserver(function (ms) {
+    if (busy) return;
+    var hit = ms.some(function (m) { return !(m.target.classList && m.target.classList.contains("slp")) && !(m.addedNodes.length === 1 && m.addedNodes[0].className === "slp"); });
+    if (hit) requestAnimationFrame(function () { all(true); });
+  });
+  function start() { mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] }); all(false); }
+  window.addEventListener("resize", function () { all(false); });
+  document.addEventListener("click", function () { setTimeout(function () { all(true); }, 30); }, true);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { all(false); });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+  setTimeout(function () { all(false); }, 800);
 })();
 </script>
 </body>
