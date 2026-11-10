@@ -1611,7 +1611,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-10.21";
+  var VER = "2026-11-10.23";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1717,7 +1717,7 @@ function analyze(c, tf, L) {
     var b = document.createElement("button"); b.className = "tf" + (k === S.tf ? " on" : ""); b.textContent = k; b.dataset.tf = k;
     b.addEventListener("click", function () { S.tf = k; markTf(); saveState(); load(); }); tfsEl.appendChild(b);
   });
-  function markTf() { Array.prototype.forEach.call(tfsEl.children, function (b) { b.className = "tf" + (b.dataset.tf === S.tf ? " on" : ""); }); }
+  function markTf() { Array.prototype.forEach.call(tfsEl.querySelectorAll("button"), function (b) { b.className = "tf" + (b.dataset.tf === S.tf ? " on" : ""); }); }
   Object.keys(LAY).forEach(function (k) {
     var b = document.createElement("button"); b.className = "swrow" + (LAY[k] ? " on" : "");
     b.innerHTML = "<span>" + LABELS[k] + "</span><span class=\"tg\"></span>";
@@ -2334,7 +2334,7 @@ function analyze(c, tf, L) {
     if (drag) clearTimeout(drag.tm);
     if (drag && drag.touch && !drag.axis && !drag.ch && !drag.moved && hover >= 0) { hover = -1; hy = -1; draw(); }   /* chạm nhanh vào biểu đồ: tắt con trỏ */
     delete ptrs[e.pointerId]; lastDist = 0;
-    if (one && drag && !drag.axis && performance.now() - drag.t < 90 && Math.abs(drag.vx) > 0.002) { V.vel = Math.max(-0.08, Math.min(0.08, drag.vx)); draw(); }
+    V.vel = 0;   /* bỏ quán tính: thả tay là biểu đồ đứng yên */
     if (!Object.keys(ptrs).length) drag = null;
   }
   try { if (!lsGet("ictChHint", 0)) { setTimeout(function () { if (tab === "chart") { toast("Kéo để dời biểu đồ · nhấn giữ để hiện con trỏ"); lsSet("ictChHint", 1); } }, 4500); } } catch (e) {}
@@ -4300,10 +4300,21 @@ function analyze(c, tf, L) {
     c._lx = nx; c._lw = nw; c.classList.add("slid");
   }
   function all(anim) { if (busy) return; busy = true; try { Array.prototype.forEach.call(document.querySelectorAll(SEL), function (c) { place(c, anim); }); } finally { busy = false; } }
+  var pend = false;
+  function sched() { if (pend) return; pend = true; requestAnimationFrame(function () { pend = false; all(true); }); }
+  function relevant(n) {
+    if (n.nodeType !== 1) n = n.parentNode;
+    if (!n || !n.closest) return false;
+    if (n.classList && n.classList.contains("slp")) return false;
+    return !!n.closest(SEL) || (n.matches && n.matches(SEL));
+  }
   var mo = new MutationObserver(function (ms) {
     if (busy) return;
-    var hit = ms.some(function (m) { return !(m.target.classList && m.target.classList.contains("slp")) && !(m.addedNodes.length === 1 && m.addedNodes[0].className === "slp"); });
-    if (hit) requestAnimationFrame(function () { all(true); });
+    for (var i = 0; i < ms.length; i++) {
+      var m = ms[i];
+      if (relevant(m.target)) { sched(); return; }
+      if (m.type === "childList") for (var j = 0; j < m.addedNodes.length; j++) { var n = m.addedNodes[j]; if (n.nodeType === 1 && n.className !== "slp" && (n.matches(SEL) || (n.childElementCount > 2 && n.querySelector(SEL)))) { sched(); return; } }
+    }
   });
   function start() { mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] }); all(false); }
   window.addEventListener("resize", function () { all(false); });
