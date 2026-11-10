@@ -1618,7 +1618,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-10.24";
+  var VER = "2026-11-10.25";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1850,6 +1850,7 @@ function analyze(c, tf, L) {
     } catch (e) { $("pki").textContent = "Không tải được danh sách mã. Vẫn gõ tay được ở phần Cài đặt."; }
   }
   function openPicker() {
+    fxQuotesLoad();
     $("pk").hidden = false; $("pkq").value = ""; pkShown = 0; renderChips(); renderPicker();
     history.pushState({ app: 1 }, "");
   }
@@ -1865,9 +1866,33 @@ function analyze(c, tf, L) {
       b.addEventListener("click", function () { pkQuote = q === "Tất cả" ? "ALL" : q; saveState(); renderChips(); renderPicker(); }); c.appendChild(b);
     });
   }
+  /* Giá & % thay đổi Forex: ECB qua Frankfurter (miễn phí, không cần key) + vàng/bạc lấy từ Bitget */
+  var FXQ = null, FXQT = 0, FXQL = false;
+  function fxQuote(p) {
+    var a = p.split("/"), r = FXQ;
+    if (a[0] === "XAU" || a[0] === "XAG") {
+      for (var i = 0; i < ALL.length; i++) if (ALL[i].s === a[0] + "USDT") return { px: ALL[i].px, ch: ALL[i].ch };
+      return null;
+    }
+    if (!r) return null;
+    var cc = function (c) { return c === "CNH" ? "CNY" : c; }, f = function (d, c) { c = cc(c); return c === "USD" ? 1 : d[c]; };
+    var n1 = f(r.now, a[1]) / f(r.now, a[0]), n0 = f(r.prev, a[1]) / f(r.prev, a[0]);
+    if (!isFinite(n1) || !isFinite(n0) || !n0) return null;
+    return { px: n1, ch: (n1 / n0 - 1) * 100 };
+  }
+  function fxQuotesLoad() {
+    if (FXQL || (FXQ && Date.now() - FXQT < 18e5)) return;
+    FXQL = true;
+    var d0 = new Date(Date.now() - 9 * 864e5).toISOString().slice(0, 10);
+    fetch("https://api.frankfurter.dev/v1/" + d0 + "..?base=USD").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (j) {
+      var ds = Object.keys(j.rates || {}).sort(); if (ds.length < 2) throw 0;
+      FXQ = { now: j.rates[ds[ds.length - 1]], prev: j.rates[ds[ds.length - 2]] }; FXQT = Date.now();
+      if (pkQuote === "Forex") renderPicker();
+    }).catch(function () {}).then(function () { FXQL = false; });
+  }
   function renderPicker() {
     var q = $("pkq").value.trim().toUpperCase();
-    if (pkQuote === "Forex") pkList = FXL.map(function (p) { var a = p.split("/"); return { s: "FX:" + p, b: a[0], q: a[1], px: null, fx: 1, note: FXI[p] || "Forex" }; }).filter(function (x) { return !q || x.s.indexOf(q) >= 0; });
+    if (pkQuote === "Forex") pkList = FXL.map(function (p) { var a = p.split("/"); var qt = fxQuote(p); return { s: "FX:" + p, b: a[0], q: a[1], px: qt ? qt.px : null, ch: qt ? qt.ch : null, fx: 1, note: FXI[p] || "Forex" }; }).filter(function (x) { return !q || x.s.indexOf(q) >= 0; });
     else pkList = ALL.filter(function (x) { return (pkQuote === "ALL" || x.q === pkQuote) && (!q || x.s.indexOf(q) >= 0) && (!pkMk || isBG() || mkOf(x.s) === pkMk); });
     pkShown = 0; $("pkl").innerHTML = ""; $("pkl").scrollTop = 0; moreItems();
   }
@@ -1880,7 +1905,7 @@ function analyze(c, tf, L) {
         var b = document.createElement("button"); b.className = "it";
         var av = document.createElement("span"); av.className = "av"; fillIcon(av, x.b, x.fx);
         var nm = document.createElement("span"); nm.className = "nm"; nm.innerHTML = "<b>" + x.b + (x.q ? "<span style=\"color:var(--dim);font-weight:600\">/" + x.q + "</span>" : "") + mk(x.s) + "</b><small>" + (x.fx ? x.note + " · Twelve Data" : "Vol " + fmtVol(x.v) + " " + x.q) + "</small>";
-        var rt = document.createElement("span"); rt.className = "rt"; rt.innerHTML = (x.px === null ? "" : fmtP(x.px)) + (x.px === null ? "" : "") + "<span class=\"pill " + (x.ch >= 0 ? "bull" : "bear") + "\">" + (x.ch >= 0 ? "▲ " : "▼ ") + Math.abs(x.ch).toFixed(2) + "%</span>";
+        var rt = document.createElement("span"); rt.className = "rt"; rt.innerHTML = (x.px === null || x.px === undefined ? "" : fmtP(x.px)) + (isFinite(x.ch) && x.ch !== null ? "<span class=\"pill " + (x.ch >= 0 ? "bull" : "bear") + "\">" + (x.ch >= 0 ? "▲ " : "▼ ") + Math.abs(x.ch).toFixed(2) + "%</span>" : "<span class=\"pill\" style=\"opacity:.5\">–</span>");
         b.appendChild(av); b.appendChild(nm); b.appendChild(rt);
         b.addEventListener("click", function () { $("sym").value = x.s; closePicker(); if (x.fx && !tdKey()) { askKey(); return; } load(); });
         fr.appendChild(b);
