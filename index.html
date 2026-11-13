@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="var(--bg)">
+<meta name="theme-color" content="#0c0a08">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="icon" href="icon-192.png" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ICT Radar">
 <title>ICT Radar</title>
-<script>try{var __t=JSON.parse(localStorage.getItem("ictTheme"))||"lux";if(__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<script>try{if(!localStorage.getItem("ictHc1")){localStorage.setItem("ictTheme",JSON.stringify("hc"));localStorage.setItem("ictHc1","1")}var __t=JSON.parse(localStorage.getItem("ictTheme"))||"lux";if(__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Giao diện app hiện đại: nền xanh đen, thẻ bo tròn, thanh tab nổi, chữ số dùng font mono */
@@ -511,20 +511,28 @@ a.nfeat { position: relative; display: block; height: 190px; border-radius: 18px
 .wallet-open { margin-top: 2px; }
 
 /* ===== Giao diện Midnight · vàng sâm panh + biểu đồ nền đen ===== */
-html[data-theme="lux"] { --bg: #07090f; --card: #0e121b; --card2: #151a26; --line: rgba(217,184,114,.12); --fg: #eef0f5; --dim: #8d96a8; --acc: #d9b872; --blue: #c9a55a; --cyan: #d9b872; --violet: #b9a2ff; --accrgb: 217,184,114; --vrgb: 185,162,255; --onacc: #1a1406; --up: #1fd18f; --down: #f0525c; --amber: #e8b44a; }
-html[data-theme="lux"] body { background: radial-gradient(120% 60% at 50% -10%, #121a2b 0%, #07090f 55%) fixed; }
-html[data-theme="lux"] .top { background: linear-gradient(180deg, rgba(18,26,43,.9), rgba(7,9,15,0)); }
-html[data-theme="lux"] .card, html[data-theme="lux"] .sgc { background: linear-gradient(160deg, #121724 0%, #0d1119 100%); border: 1px solid rgba(217,184,114,.13); box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
-html[data-theme="lux"] .hero { background: linear-gradient(160deg, #1a2234, #0d1119); border-color: rgba(217,184,114,.22); }
-html[data-theme="lux"] .tabs { background: rgba(14,18,27,.92); border: 1px solid rgba(217,184,114,.16); box-shadow: 0 -8px 28px rgba(0,0,0,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-html[data-theme="lux"] .tab.on { color: var(--acc); } html[data-theme="lux"] .tab.on::after { background: linear-gradient(90deg, #f1dca4, #c9a55a); box-shadow: 0 0 10px rgba(217,184,114,.6); }
-html[data-theme="lux"] .icon { background: rgba(21,26,38,.85); border: 1px solid rgba(217,184,114,.10); }
-html[data-theme="lux"] .tf.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; font-weight: 800; }
-html[data-theme="lux"] .go { background: linear-gradient(135deg, #ecd391, #c19a45); color: #1a1406; box-shadow: 0 6px 18px rgba(193,154,69,.28); }
-html[data-theme="lux"] .go.ghost { background: var(--card2); color: var(--fg); box-shadow: none; border: 1px solid rgba(217,184,114,.14); }
-html[data-theme="lux"] .px b, html[data-theme="lux"] .symtx b { letter-spacing: -.02em; }
-html[data-theme="lux"] .card h2, html[data-theme="lux"] .herot b { background: linear-gradient(90deg, #fff, #e9d6a4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on, html[data-theme="lux"] .chs button.on { background: linear-gradient(135deg, #e6c985, #c19a45); color: #1a1406; }
+html[data-theme="lux"] { --bg: #0c0a08; --card: #16130f; --card2: #221c16; --line: rgba(230,201,138,.16); --fg: #f6f0e4; --dim: #b4a38c; --acc: #e6c98a; --blue: #c6a15a; --cyan: #e6c98a; --violet: #d9c4a0; --accrgb: 230,201,138; --vrgb: 217,196,160; --onacc: #1c1408; --up: #3ecf8e; --down: #e16b6b; --amber: #e6b15a; }
+html[data-theme="lux"] body { background: radial-gradient(80% 42% at 100% -8%, rgba(230,201,138,.12), transparent 52%), radial-gradient(60% 36% at 0% 0%, rgba(92,62,28,.22), transparent 48%), #0c0a08 fixed; }
+html[data-theme="lux"] .top { background: linear-gradient(180deg, rgba(22,18,14,.94), rgba(12,10,8,0)); border-bottom-color: rgba(230,201,138,.12); }
+html[data-theme="lux"] .card, html[data-theme="lux"] .sgc { background: linear-gradient(180deg, #1c1813 0%, #14110e 100%); border: 1px solid rgba(230,201,138,.18); box-shadow: 0 18px 40px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,236,200,.07); }
+html[data-theme="lux"] .hero { background: linear-gradient(165deg, #2a2318, #14110e); border-color: rgba(230,201,138,.28); }
+html[data-theme="lux"] .tabs { background: rgba(18,15,12,.94); border: 1px solid rgba(230,201,138,.22); box-shadow: 0 -10px 32px rgba(0,0,0,.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+html[data-theme="lux"] .tab.on { color: #f0d7a2; } html[data-theme="lux"] .tab.on::after { background: linear-gradient(90deg, #f6e7c4, #c6a15a); box-shadow: 0 0 10px rgba(230,201,138,.45); }
+html[data-theme="lux"] .icon { background: rgba(28,23,18,.9); border: 1px solid rgba(230,201,138,.16); color: #e6c98a; }
+html[data-theme="lux"] .tf.on { background: linear-gradient(135deg, #f0d7a2, #c6a15a); color: #1c1408; font-weight: 800; }
+html[data-theme="lux"] .go { background: linear-gradient(135deg, #f3e0b4, #c6a15a); color: #1c1408; box-shadow: 0 8px 20px rgba(198,161,90,.28); }
+html[data-theme="lux"] .go.ghost { background: #221c16; color: #f6f0e4; box-shadow: none; border: 1px solid rgba(230,201,138,.18); }
+html[data-theme="lux"] .px b { color: #f4e6c8; letter-spacing: -.03em; }
+html[data-theme="lux"] .symtx b { color: #f7f1e6; letter-spacing: -.02em; }
+html[data-theme="lux"] .card h2, html[data-theme="lux"] .herot b { color: #f6f0e4; }
+html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on, html[data-theme="lux"] .chs button.on { background: linear-gradient(135deg, #f0d7a2, #c6a15a); color: #1c1408; }
+html[data-theme="lux"] #chg.pill.bull { background: rgba(62,207,142,.14); color: #8ee7bc; border: 1px solid rgba(62,207,142,.32); }
+html[data-theme="lux"] #chg.pill.bear { background: rgba(225,107,107,.14); color: #f3b0b0; border: 1px solid rgba(225,107,107,.3); }
+html[data-theme="lux"] #v-chart, html[data-theme="lux"] #v-chart .cwrap, html[data-theme="lux"] .cwrap { background: #090807 !important; }
+html[data-theme="lux"] #v-chart .ohlc span { background: rgba(18,15,12,.88); border-color: rgba(230,201,138,.14); }
+html[data-theme="lux"] .bchip.bull { color: #8ee7bc; background: rgba(62,207,142,.12); }
+html[data-theme="lux"] .bchip.bear { color: #f3b0b0; background: rgba(225,107,107,.12); }
+html[data-theme="lux"] .bchip.neu { color: #e6c98a; background: rgba(230,201,138,.12); }
 /* thanh khung thời gian: không viền, mờ dần ở mép phải thay vì cắt cụt */
 .tfs { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 22px 0 0 !important; gap: 4px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); scroll-padding-right: 22px; }
 .tfs .tf { flex: none; }
@@ -616,11 +624,11 @@ html[data-theme="lux"] .subbar button.on, html[data-theme="lux"] .seg3 button.on
 /* ===== Animation kiểu Halvi ===== */
 .subbar, .tfs, .seg3, .chs { position: relative; }
 .slp { position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px; background: rgba(var(--accrgb, 217,184,114), .16); border: 1px solid var(--cyan); pointer-events: none; z-index: 0; transition: transform .32s cubic-bezier(.3,.9,.3,1), width .32s cubic-bezier(.3,.9,.3,1); }
-html[data-theme="lux"] .slp { background: linear-gradient(135deg, #e6c985, #c19a45); border: 0; box-shadow: 0 4px 14px rgba(217,184,114,.22); }
+html[data-theme="lux"] .slp { background: linear-gradient(135deg, #f0d7a2, #c6a15a); border: 0; box-shadow: 0 4px 14px rgba(198,161,90,.28); }
 .seg3 .slp { border-radius: 8px; }
 .subbar.slid button, .tfs.slid button, .seg3.slid button, .chs.slid button { position: relative; z-index: 1; }
 .subbar.slid button.on, .tfs.slid button.on, .seg3.slid button.on, .chs.slid button.on { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
-html[data-theme="lux"] .subbar.slid button.on, html[data-theme="lux"] .tfs.slid button.on, html[data-theme="lux"] .seg3.slid button.on, html[data-theme="lux"] .chs.slid button.on { color: #1a1406; }
+html[data-theme="lux"] .subbar.slid button.on, html[data-theme="lux"] .tfs.slid button.on, html[data-theme="lux"] .seg3.slid button.on, html[data-theme="lux"] .chs.slid button.on { color: #1c1408; }
 .subbar.slid button, .tfs.slid button, .seg3.slid button, .chs.slid button { transition: color .25s; }
 /* thanh/tiến độ chạy từ 0 */
 @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -661,6 +669,104 @@ body[data-tab="sig"] .top .row2, body[data-tab="sig"] .top .status,
 body[data-tab="mkt"] .top .row2, body[data-tab="mkt"] .top .status,
 body[data-tab="bt"] .top .row2, body[data-tab="bt"] .top .status { display: none; }
 body[data-tab="sig"] .top, body[data-tab="mkt"] .top, body[data-tab="bt"] .top { padding-bottom: 8px; }
+
+/* ===== polish: gọn hơn, chuyển động có chủ đích ===== */
+.top { gap: 6px; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 4px; }
+.row1 { min-height: 40px; }
+.av { width: 34px; height: 34px; }
+.symtx b { font-size: 16px; }
+.px b { font-size: 20px; }
+.icon { width: 40px; height: 40px; }
+.tf { min-height: 36px; padding: 6px 10px; }
+.status { min-height: 0; line-height: 1.3; opacity: .8; }
+.view.scroll { padding: 4px 12px 14px; gap: 10px; }
+.card, .sgc { border-radius: 14px; }
+#v-keo .card { padding: 12px 13px; margin-bottom: 8px; }
+.tabs { position: relative; padding: 4px !important; }
+.tab { min-height: 48px; padding: 6px 2px 7px; z-index: 1; }
+.tab svg { width: 18px; height: 18px; margin-bottom: 1px; }
+.tab.on::after { display: none; }
+.tabpill {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  border-radius: 14px; background: rgba(var(--accrgb), .16);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), width .28s cubic-bezier(.2,.8,.2,1), height .28s cubic-bezier(.2,.8,.2,1);
+}
+html[data-theme="lux"] .tabpill {
+  background: linear-gradient(180deg, rgba(240,215,162,.18), rgba(198,161,90,.1));
+  box-shadow: inset 0 0 0 1px rgba(230,201,138,.42);
+}
+html[data-theme="lux"] .card h2,
+html[data-theme="lux"] .herot b,
+html[data-theme="lux"] .sect b,
+html[data-theme="lux"] .wallet-head b {
+  background: none;
+  -webkit-text-fill-color: #f6f0e4;
+  color: #f6f0e4;
+}
+.subbar { padding: 8px 12px 8px !important; margin: 0 -12px 0 !important; }
+#sigl { gap: 10px; }
+.sggrid { gap: 8px; }
+.wr, .wk { animation: none; }
+#sigl.enter .wr, #sigl.enter .wk { animation: rowin .32s ease both; }
+#lastPx { display: inline-block; }
+#lastPx.tick-up { animation: tickUp .55s ease; }
+#lastPx.tick-dn { animation: tickDn .55s ease; }
+@keyframes tickUp { 0%, 35% { color: var(--up); } 100% { color: var(--fg); } }
+@keyframes tickDn { 0%, 35% { color: var(--down); } 100% { color: var(--fg); } }
+#chg { transition: background-color .2s ease, color .2s ease; }
+.rrow, .pk .it, .wk, .go, .icon, .symblk { transition: background-color .15s ease, transform .15s ease, opacity .15s ease; }
+.sheet { animation: up .28s cubic-bezier(.2,.8,.2,1); }
+.view.on { animation: vin .2s cubic-bezier(.2,.8,.2,1); }
+@media (min-width: 840px) {
+  #v-mkt.view.scroll.on { display: grid; grid-template-columns: 1fr 1fr; align-content: start; column-gap: 12px; }
+  #v-mkt > .subbar, #v-mkt > [data-sub="news"] { grid-column: 1 / -1; }
+  #v-keo .tgrp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #v-keo .tgrp > .card:first-child { grid-column: 1 / -1; }
+  .sggrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .sggrid { grid-template-columns: 1fr; }
+  .px b { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabpill, #lastPx.tick-up, #lastPx.tick-dn, .view.on, .sheet { animation: none; transition: none; }
+}
+
+/* ===== Tương phản cao: đen / trắng / vàng ===== */
+html[data-theme="hc"] {
+  --bg: #000; --card: #000; --card2: #0a0a0a; --line: rgba(255,255,255,.72);
+  --fg: #fff; --dim: #e4e4e4; --acc: #ffe14a; --blue: #ffe14a; --cyan: #ffe14a; --violet: #7af0ff;
+  --accrgb: 255,225,74; --vrgb: 122,240,255; --onacc: #000;
+  --up: #00f5a0; --down: #ff4d6a; --amber: #ffe14a;
+}
+html[data-theme="hc"] body, html[data-theme="hc"] .top { background: #000; }
+html[data-theme="hc"] .top { border-bottom: 1px solid #fff; }
+html[data-theme="hc"] .card, html[data-theme="hc"] .sgc, html[data-theme="hc"] .hero, html[data-theme="hc"] .sheet, html[data-theme="hc"] .pk {
+  background: #000; border: 1px solid #fff; box-shadow: none;
+}
+html[data-theme="hc"] .tabs { background: #000; border: 1px solid #fff; box-shadow: none; backdrop-filter: none; }
+html[data-theme="hc"] .tab { color: #fff; }
+html[data-theme="hc"] .tab.on { color: #000; }
+html[data-theme="hc"] .tabpill { background: #ffe14a; box-shadow: none; }
+html[data-theme="hc"] .icon, html[data-theme="hc"] .fab { background: #000; border: 1px solid #fff; color: #ffe14a; box-shadow: none; }
+html[data-theme="hc"] .tf { color: #fff; }
+html[data-theme="hc"] .tf.on, html[data-theme="hc"] .slp, html[data-theme="hc"] .go { background: #ffe14a; color: #000; box-shadow: none; border: 0; }
+html[data-theme="hc"] .go.ghost { background: #000; color: #fff; border: 1px solid #fff; }
+html[data-theme="hc"] .px b, html[data-theme="hc"] .symtx b, html[data-theme="hc"] .card h2, html[data-theme="hc"] .herot b, html[data-theme="hc"] .sect b, html[data-theme="hc"] .wallet-head b {
+  color: #fff; background: none; -webkit-text-fill-color: #fff;
+}
+html[data-theme="hc"] .status, html[data-theme="hc"] .note, html[data-theme="hc"] .muted, html[data-theme="hc"] .symtx span { opacity: 1; color: #eee; }
+html[data-theme="hc"] #chg.pill.bull, html[data-theme="hc"] .bchip.bull { background: #00f5a0; color: #000; border: 0; }
+html[data-theme="hc"] #chg.pill.bear, html[data-theme="hc"] .bchip.bear { background: #ff4d6a; color: #000; border: 0; }
+html[data-theme="hc"] .bchip.neu { background: #ffe14a; color: #000; }
+html[data-theme="hc"] .subbar { background: #000 !important; }
+html[data-theme="hc"] .subbar button, html[data-theme="hc"] .rrow { color: #fff; border-color: #fff; }
+html[data-theme="hc"] .subbar button.on, html[data-theme="hc"] .seg3 button.on, html[data-theme="hc"] .chs button.on,
+html[data-theme="hc"] .subbar.slid button.on, html[data-theme="hc"] .tfs.slid button.on, html[data-theme="hc"] .seg3.slid button.on, html[data-theme="hc"] .chs.slid button.on { background: #ffe14a; color: #000; }
+html[data-theme="hc"] input, html[data-theme="hc"] select, html[data-theme="hc"] textarea { background: #000; color: #fff; border: 1px solid #fff; }
+html[data-theme="hc"] #v-chart, html[data-theme="hc"] #v-chart .cwrap, html[data-theme="hc"] .cwrap { background: #000 !important; }
+html[data-theme="hc"] #v-chart .ohlc span { background: #000; color: #fff; border: 1px solid #fff; }
+html[data-theme="hc"] .lv > div, html[data-theme="hc"] .stat4 div, html[data-theme="hc"] .strow, html[data-theme="hc"] .verdict { background: #000; border: 1px solid rgba(255,255,255,.72); }
 </style>
 </head>
 <body>
@@ -724,7 +830,7 @@ body[data-tab="sig"] .top, body[data-tab="mkt"] .top, body[data-tab="bt"] .top {
   </nav>
 </div>
 
-<div id="splash"><div class="spl-cw" aria-hidden="true"><img id="cov" src="cover.jpg" alt=""><span class="shm"></span></div><span class="pt p1"></span><span class="pt p2"></span><span class="pt p3"></span><span class="pt p4"></span><span class="pt p5"></span><span class="pt p6"></span><div class="spl-ring"><svg viewBox="0 0 120 120"><circle class="c0" cx="60" cy="60" r="56"/><circle class="c1" cx="60" cy="60" r="56"/></svg><img src="icon-192.png" alt=""></div><b>ICT RADAR</b><small>SMC · ICT · THỜI GIAN</small>
+<div id="splash"><div class="spl-cw" aria-hidden="true"><span class="shm"></span></div><span class="pt p1"></span><span class="pt p2"></span><span class="pt p3"></span><span class="pt p4"></span><span class="pt p5"></span><span class="pt p6"></span><div class="spl-ring"><svg viewBox="0 0 120 120"><circle class="c0" cx="60" cy="60" r="56"/><circle class="c1" cx="60" cy="60" r="56"/></svg><img src="icon-192.png" alt=""></div><b>ICT RADAR</b><small>SMC · ICT · THỜI GIAN</small>
 <svg class="spl-ch" viewBox="0 0 170 46"><path d="M4 38 L28 30 L44 34 L66 18 L84 24 L108 10 L128 16 L166 4"/><rect x="22" y="26" width="5" height="12" rx="1" fill="#1fd18f" style="animation-delay:1.0s"/><rect x="60" y="14" width="5" height="14" rx="1" fill="#1fd18f" style="animation-delay:1.2s"/><rect x="102" y="6" width="5" height="12" rx="1" fill="#1fd18f" style="animation-delay:1.4s"/><rect x="82" y="22" width="5" height="10" rx="1" fill="#f0525c" style="animation-delay:1.3s"/><rect x="124" y="14" width="5" height="9" rx="1" fill="#f0525c" style="animation-delay:1.5s"/></svg><i></i></div>
 <div id="toast"></div>
 <div id="dlg" hidden><div class="dlgc"><p id="dlgm"></p><div class="dlgb"><button id="dlgn">Huỷ</button><button id="dlgy">Đồng ý</button></div></div></div>
@@ -1616,7 +1722,7 @@ function analyze(c, tf, L) {
   var TFMS = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m": 18e5, "1h": 36e5, "4h": 144e5, "1d": 864e5, "1w": 6048e5 };
   var BASES = ["https://api.binance.com", "https://data-api.binance.vision"];
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
-  var V = { start: 0, bars: 110, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart";
+  var V = { start: 0, bars: 110, barsTo: 0, yrTo: 0, zAnchor: 0, zPx: 0, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart", REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
   var VER = "2026-11-10.25";
   var ST = lsGet("ictState", {});
@@ -1640,11 +1746,15 @@ function analyze(c, tf, L) {
   var STABLE_RE = /^(USD.{0,2}|.*USD|EUR.?|AEUR|DAI|BUSD|TRY|PAXG|XAUT|PYUSD|FRAX|GUSD|LUSD|UST)$/, AXD = 2;
   function fmtD(p) { return p.toFixed(AXD); }
   var COL = { up: "#16c784", down: "#ea3943", amber: "#f5b73b", cyan: "#6188ff", violet: "#9b7bff", dim: "#9aa3b5", line: "rgba(255,255,255,.06)", fg: "#f2f4f8" };
-  var THM = [["lux", "Midnight · vàng sâm panh", "#07090f", "#d9b872", "#b9a2ff", "#8d96a8", "#eef0f5", "rgba(217,184,114,.10)"], ["base", "Gốc · xanh than", "#0f1115", "#6188ff", "#9b7bff", "#9aa3b5", "#f2f4f8", "rgba(255,255,255,.06)"], ["gold", "Đen vàng", "#0a0908", "#d4af37", "#e9cf8a", "#a89c82", "#f4ecd8", "rgba(214,178,94,.08)"], ["navy", "Xanh đêm bạc", "#060a13", "#a9bddb", "#c8d4ea", "#8a9bb8", "#e9eff9", "rgba(170,195,230,.08)"], ["cream", "Nâu kem", "#14100c", "#dcb98c", "#ead6b0", "#b5a58d", "#f6ecdb", "rgba(236,214,182,.08)"]], TH = lsGet("ictTheme", "lux");
+  var THM = [["lux", "Midnight · vàng sâm panh", "#0c0a08", "#e6c98a", "#d9c4a0", "#b4a38c", "#f6f0e4", "rgba(230,201,138,.16)"], ["hc", "Tương phản cao", "#000000", "#ffe14a", "#7af0ff", "#e4e4e4", "#ffffff", "rgba(255,255,255,.72)"], ["base", "Gốc · xanh than", "#0f1115", "#6188ff", "#9b7bff", "#9aa3b5", "#f2f4f8", "rgba(255,255,255,.06)"], ["gold", "Đen vàng", "#0a0908", "#d4af37", "#e9cf8a", "#a89c82", "#f4ecd8", "rgba(214,178,94,.08)"], ["navy", "Xanh đêm bạc", "#060a13", "#a9bddb", "#c8d4ea", "#8a9bb8", "#e9eff9", "rgba(170,195,230,.08)"], ["cream", "Nâu kem", "#14100c", "#dcb98c", "#ead6b0", "#b5a58d", "#f6ecdb", "rgba(236,214,182,.08)"]], TH = lsGet("ictTheme", "lux");
   function applyTheme(id) {
     var t = THM.filter(function (x) { return x[0] === id; })[0] || THM[0], de = document.documentElement, mt = document.querySelector("meta[name=theme-color]");
     TH = t[0]; if (TH === "base") de.removeAttribute("data-theme"); else de.setAttribute("data-theme", TH);
-    COL.cyan = t[3]; COL.violet = t[4]; COL.dim = t[5]; COL.fg = t[6]; COL.line = t[7]; if (mt) mt.setAttribute("content", t[2]);
+    COL.cyan = t[3]; COL.violet = t[4]; COL.dim = t[5]; COL.fg = t[6]; COL.line = t[7];
+    if (TH === "hc") { COL.up = "#00f5a0"; COL.down = "#ff4d6a"; COL.amber = "#ffe14a"; }
+    else if (TH === "lux") { COL.up = "#3ecf8e"; COL.down = "#e16b6b"; COL.amber = "#e6b15a"; }
+    else { COL.up = "#16c784"; COL.down = "#ea3943"; COL.amber = "#f5b73b"; }
+    if (mt) mt.setAttribute("content", t[2]);
     var el = document.getElementById("thm"); if (el) el.innerHTML = THM.map(function (x) { return "<button data-th=\"" + x[0] + "\" class=\"" + (x[0] === TH ? "on" : "") + "\"><i style=\"background:linear-gradient(135deg," + x[2] + " 50%," + x[3] + " 50%)\"></i>" + x[1] + "</button>"; }).join("");
     if (typeof draw === "function") draw();
   }
@@ -2053,9 +2163,21 @@ function analyze(c, tf, L) {
   function draw() { if (!raf) raf = requestAnimationFrame(frame); }
   function frame(ts) {
     raf = 0;
-    var dt = Math.min(64, lastTs ? ts - lastTs : 16); lastTs = ts;
+    var dt = Math.min(40, lastTs ? ts - lastTs : 16); lastTs = ts;
     var moving = false;
-    if (Math.abs(V.vel) > 0.0004 && C.length) { V.start += V.vel * dt; V.vel *= Math.exp(-dt / 320); clampView(); moving = true; } else V.vel = 0;
+    if (!drag && Math.abs(V.vel) > 0.00025 && C.length) { V.start += V.vel * dt; V.vel *= Math.exp(-dt / 420); clampView(); moving = true; } else if (!drag) V.vel = 0;
+    if (!drag && V.barsTo) {
+      var zk = REDUCED ? 1 : 1 - Math.exp(-dt / 120);
+      var next = V.bars + (V.barsTo - V.bars) * zk;
+      if (G && G.pw) V.start = V.zAnchor - V.zPx / (G.pw / next);
+      V.bars = next;
+      if (Math.abs(V.bars - V.barsTo) < 0.25) { V.bars = V.barsTo; V.barsTo = 0; } else moving = true;
+      clampView();
+    }
+    if (!drag && V.yrTo && !V.auto) {
+      V.yr += (V.yrTo - V.yr) * (REDUCED ? 1 : 1 - Math.exp(-dt / 120));
+      if (Math.abs(V.yr - V.yrTo) / V.yr < 0.004) { V.yr = V.yrTo; V.yrTo = 0; } else moving = true;
+    }
     busy = false; drawNow(dt);
     if (moving || busy) raf = requestAnimationFrame(frame); else lastTs = 0;
   }
@@ -2067,8 +2189,9 @@ function analyze(c, tf, L) {
     if (!C.length || !A) return;
     var AX = 58, AY = 20, pw = W - AX, ph = H - AY, bw = pw / V.bars, n = C.length;
     var i0 = Math.max(0, Math.floor(V.start)), i1 = Math.min(n - 1, Math.ceil(V.start + V.bars)), i, mn = 1e18, mx = -1e18;
-    var ek = snap ? 1 : 1 - Math.exp(-(dt || 16) / 70), lk = C[n - 1], tol = Math.abs(lk.c) * 2e-6 + 1e-12;
-    if (snap || !D.init || D.t !== lk.t) { D.t = lk.t; D.c = lk.c; D.h = lk.h; D.l = lk.l; }
+    var ek = snap || REDUCED ? 1 : 1 - Math.exp(-(dt || 16) / 170), ekS = snap || REDUCED ? 1 : 1 - Math.exp(-(dt || 16) / 360), lk = C[n - 1], tol = Math.abs(lk.c) * 2e-6 + 1e-12;
+    if (snap || !D.init) { D.t = lk.t; D.c = lk.c; D.h = lk.h; D.l = lk.l; }
+    else if (D.t !== lk.t) { var seed = D.c; D.t = lk.t; D.c = seed; D.h = Math.max(seed, lk.o); D.l = Math.min(seed, lk.o); busy = true; }
     else {
       D.c += (lk.c - D.c) * ek; D.h += (lk.h - D.h) * ek; D.l += (lk.l - D.l) * ek;
       if (Math.abs(lk.c - D.c) > tol || Math.abs(lk.h - D.h) > tol || Math.abs(lk.l - D.l) > tol) busy = true;
@@ -2082,7 +2205,7 @@ function analyze(c, tf, L) {
     if (V.auto) {
       if (snap || !D.init) { D.mn = tmn; D.mx = tmx; }
       else {
-        D.mn += (tmn - D.mn) * ek; D.mx += (tmx - D.mx) * ek;
+        D.mn += (tmn - D.mn) * ekS; D.mx += (tmx - D.mx) * ekS;
         var rg = (tmx - tmn) * 1e-4; if (Math.abs(tmn - D.mn) > rg || Math.abs(tmx - D.mx) > rg) busy = true;
       }
     } else { D.mn = V.yc - V.yr / 2; D.mx = V.yc + V.yr / 2; }
@@ -2200,14 +2323,13 @@ function analyze(c, tf, L) {
         x.fillStyle = col; x.fillText(q.type + (q.swept !== null ? " ✓" : ""), Math.max(xa + 3, 3), y - 3); x.globalAlpha = 1;
       });
     }
-    var bdv = Math.max(1, Math.floor(bw * 0.8 * d)); if (bdv > 1 && bdv % 2 === 0) bdv -= 1;   /* thân nến chiếm ~80% bước nến, luôn chừa khe rõ giữa các nến */
     for (i = i0; i <= i1; i++) {
-      var k = kc(i), up = k.c >= k.o, col2 = up ? COL.up : COL.down, cxd = Math.floor(X(i) * d);
+      var k = kc(i), up = k.c >= k.o, col2 = up ? COL.up : COL.down, cx = X(i);
+      var yH = Y(k.h), yL = Y(k.l), yO = Y(k.o), yC = Y(k.c), yT = Math.min(yO, yC), yB = Math.max(yO, yC);
+      var bodyW = Math.max(1, Math.min(bw * 0.72, Math.max(1, bw - 1.25)));
       x.fillStyle = col2;
-      var yH = Math.round(Y(k.h) * d), yL = Math.round(Y(k.l) * d), yO = Math.round(Y(k.o) * d), yC = Math.round(Y(k.c) * d), yT = Math.min(yO, yC), yB = Math.max(yO, yC);
-      x.fillRect(cxd / d, yH / d, 1 / d, Math.max(1, yL - yH) / d);
-      if (bdv > 1) x.fillRect((cxd - (bdv - 1) / 2) / d, yT / d, bdv / d, Math.max(1, yB - yT) / d);
-      else if (yB - yT > 1) x.fillRect(cxd / d, yT / d, 1 / d, (yB - yT) / d);
+      x.fillRect(cx - 0.5, yH, 1, Math.max(0.6, yL - yH));
+      x.fillRect(cx - bodyW / 2, yT, bodyW, Math.max(0.8, yB - yT));
     }
     if (PLB.length && !(SIGLV && SIGLV.sym === S.sym)) {
       x.save(); x.beginPath(); x.rect(0, 0, pw + 2, ph); x.clip(); x.font = "700 10px Inter, sans-serif";
@@ -2315,7 +2437,7 @@ function analyze(c, tf, L) {
   function enterManual() { if (V.auto && G) { V.auto = false; V.yc = (G.mn + G.mx) / 2; V.yr = G.mx - G.mn; syncAuto(); } }
   function posOf(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
   cv.addEventListener("pointerdown", function (e) {
-    cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; V.vel = 0;
+    cv.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; V.vel = 0; V.barsTo = 0; V.yrTo = 0;
     var p = posOf(e);
     if (SLH && Object.keys(ptrs).length === 1 && Math.abs(p.x - SLH.x) < 26 && Math.abs(p.y - SLH.hy) < 26) { drag = { sl: 1 }; SLD = SIGLV && SIGLV.ms > 0 ? SIGLV.ms : 0; draw(); return; }
     if (Object.keys(ptrs).length === 1) {
@@ -2366,7 +2488,9 @@ function analyze(c, tf, L) {
     if (drag) clearTimeout(drag.tm);
     if (drag && drag.touch && !drag.axis && !drag.ch && !drag.moved && hover >= 0) { hover = -1; hy = -1; draw(); }   /* chạm nhanh vào biểu đồ: tắt con trỏ */
     delete ptrs[e.pointerId]; lastDist = 0;
-    V.vel = 0;   /* bỏ quán tính: thả tay là biểu đồ đứng yên */
+    var flick = one && drag && drag.moved && !drag.axis && !drag.ch ? drag.vx : 0;
+    V.vel = (!REDUCED && Math.abs(flick) > 0.0012) ? Math.max(-0.016, Math.min(0.016, flick * 0.32)) : 0;
+    if (V.vel) draw();
     if (!Object.keys(ptrs).length) drag = null;
   }
   try { if (!lsGet("ictChHint", 0)) { setTimeout(function () { if (tab === "chart") { toast("Kéo để dời biểu đồ · nhấn giữ để hiện con trỏ"); lsSet("ictChHint", 1); } }, 4500); } } catch (e) {}
@@ -2375,8 +2499,11 @@ function analyze(c, tf, L) {
   cv.addEventListener("wheel", function (e) {
     if (!G) return; e.preventDefault();
     var p = posOf(e), up2 = e.deltaY > 0;
-    if (p.x > G.pw) { enterManual(); V.yr *= up2 ? 1.1 : 0.9; }
-    else { var anchor = p.x / G.bw + V.start; V.bars *= up2 ? 1.12 : 0.89; V.start = anchor - p.x / (G.pw / V.bars); clampView(); }
+    if (p.x > G.pw) { enterManual(); if (!V.yrTo) V.yrTo = V.yr; V.yrTo = Math.max(Math.abs(D.c) * 1e-5, V.yrTo * (up2 ? 1.1 : 0.9)); }
+    else {
+      if (!V.barsTo) { V.barsTo = V.bars; V.zAnchor = p.x / G.bw + V.start; V.zPx = p.x; }
+      V.barsTo = Math.max(20, Math.min(400, V.barsTo * (up2 ? 1.1 : 0.91)));
+    }
     draw();
   }, { passive: false });
   if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe($("v-chart")); else window.addEventListener("resize", draw);
@@ -4356,5 +4483,48 @@ function analyze(c, tf, L) {
   setTimeout(function () { all(false); }, 800);
 })();
 </script>
+
+<script id="polish">
+(function () {
+  var nav = document.getElementById("tabs");
+  if (nav && !nav.querySelector(".tabpill")) {
+    var pill = document.createElement("span");
+    pill.className = "tabpill";
+    pill.setAttribute("aria-hidden", "true");
+    nav.appendChild(pill);
+    function place() {
+      var on = nav.querySelector(".tab.on");
+      if (!on) return;
+      pill.style.width = on.offsetWidth + "px";
+      pill.style.height = on.offsetHeight + "px";
+      pill.style.transform = "translate(" + on.offsetLeft + "px," + on.offsetTop + "px)";
+    }
+    new MutationObserver(place).observe(nav, { attributes: true, subtree: true, attributeFilter: ["class"] });
+    window.addEventListener("resize", place);
+    requestAnimationFrame(function () { requestAnimationFrame(place); });
+  }
+  var px = document.getElementById("lastPx");
+  if (px && window.MutationObserver) {
+    var prev = px.textContent;
+    function num(s) {
+      var t = String(s || "").replace(/[^0-9.\-]/g, "");
+      var n = parseFloat(t);
+      return isFinite(n) ? n : null;
+    }
+    new MutationObserver(function () {
+      var now = px.textContent;
+      if (now === prev) return;
+      var a = num(prev), b = num(now);
+      px.classList.remove("tick-up", "tick-dn");
+      if (a != null && b != null && a !== b) {
+        void px.offsetWidth;
+        px.classList.add(b > a ? "tick-up" : "tick-dn");
+      }
+      prev = now;
+    }).observe(px, { childList: true, characterData: true, subtree: true });
+  }
+})();
+</script>
+
 </body>
 </html>
