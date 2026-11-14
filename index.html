@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ICT Radar">
 <title>ICT Radar</title>
-<script>try{if(!localStorage.getItem("ictHc1")){localStorage.setItem("ictTheme",JSON.stringify("hc"));localStorage.setItem("ictHc1","1")}var __t=JSON.parse(localStorage.getItem("ictTheme"))||"lux";if(__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
+<script>try{var __savedTheme=localStorage.getItem("ictTheme"),__legacyTheme=localStorage.getItem("ictHc1"),__themeMigration=localStorage.getItem("ictThemeDefaultV2");if(__legacyTheme&&!__themeMigration&&__savedTheme&&JSON.parse(__savedTheme)==="hc"){__savedTheme=JSON.stringify("lux");localStorage.setItem("ictTheme",__savedTheme)}localStorage.removeItem("ictHc1");localStorage.setItem("ictThemeDefaultV2","1");var __t=__savedTheme?JSON.parse(__savedTheme):"lux";if(__t!=="base")document.documentElement.setAttribute("data-theme",__t)}catch(e){}</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Giao diện app hiện đại: nền xanh đen, thẻ bo tròn, thanh tab nổi, chữ số dùng font mono */
