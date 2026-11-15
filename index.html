@@ -1724,7 +1724,7 @@ function analyze(c, tf, L) {
   var C = [], A = null, S = { sym: "BTCUSDT", tf: "15m", lim: 500, sw: 5 }, tfms = 9e5;
   var V = { start: 0, bars: 110, barsTo: 0, yrTo: 0, zAnchor: 0, zPx: 0, auto: true, yc: 0, yr: 1, vel: 0 }, G = null, hover = -1, hy = -1, raf = 0, lastTs = 0, snap = true, busy = false, D = { init: false, t: 0, c: 0, h: 0, l: 0, mn: 0, mx: 1 }, ws = null, statsFor = "", reTimer = null, tab = "chart", REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LAY = { struct: 1, ob: 1, fvg: 1, inv: 0, mdl: 1, tested: 0, weak: 0, plan: 1, vp: 0, liq: 0, pd: 1, kz: 0, sess: 0, opens: 0, cyc: 0, m90: 0 };
-  var VER = "2026-11-10.25";
+  var VER = "2026-11-15.26";
   var ST = lsGet("ictState", {});
   (function () { var tz = document.getElementById("tzm"); if (tz) { tz.value = lsGet("ictTz", "local"); tz.addEventListener("change", function () { TZL = tz.value; lsSet("ictTz", TZL); if (typeof draw === "function") draw(); }); } })();
   (function () { var fx = lsGet("ictFx", 0); document.documentElement.className = fx ? "lite" : ""; var el = document.getElementById("fxm"); if (el) { el.value = String(fx ? 1 : 0); el.addEventListener("change", function () { var v = +el.value; lsSet("ictFx", v); document.documentElement.className = v ? "lite" : ""; toast(v ? "Đã bật hiệu ứng nhẹ" : "Đã bật hiệu ứng đầy đủ"); }); } })();
@@ -1786,6 +1786,15 @@ function analyze(c, tf, L) {
     if (!rows.length && st) { try { rows = bgRows((await jf(BG + "/api/v2/mix/market/history-candles?" + q.replace(/limit=\d+/, "limit=200"))).data); } catch (e) {} }
     if (st) rows = rows.filter(function (r) { return r[0] >= st; });
     if (en) rows = rows.filter(function (r) { return r[0] <= en; });
+    /* khung lớn (1D, 1W…): endpoint "candles" chỉ giữ một đoạn ngắn → nối thêm từ history-candles, mỗi lượt 200 nến */
+    for (var gd = 0; lim > 5 && rows.length && rows.length < lim && gd < 12; gd++) {
+      var e2 = rows[0][0] - 1; if (st && e2 < st) break;
+      var pg = [];
+      try { pg = bgRows((await jf(BG + "/api/v2/mix/market/history-candles?symbol=" + sym + "&productType=USDT-FUTURES&granularity=" + g + "&limit=200&endTime=" + e2)).data); } catch (e) { break; }
+      pg = pg.filter(function (r) { return r[0] <= e2 && (!st || r[0] >= st); });
+      if (!pg.length) break;
+      rows = pg.concat(rows);
+    }
     return rows.slice(-lim);
   }
   async function bgTickers() { if (BGT.d && Date.now() - BGT.t < 1500) return BGT.d; var d = (await jf(BG + "/api/v2/mix/market/tickers?productType=USDT-FUTURES")).data || []; BGT = { t: Date.now(), d: d }; return d; }
@@ -4528,3 +4537,4 @@ function analyze(c, tf, L) {
 
 </body>
 </html>
+successfully downloaded text file (SHA: 76fb2a58df551cbe518217a184c5ddaae8c3a0ce)
